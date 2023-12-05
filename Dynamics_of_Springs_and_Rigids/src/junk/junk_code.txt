@@ -1,0 +1,631 @@
+
+
+
+/*
+//_________________________________________________________________
+//_________________________________________________________________
+//_________________________________________________________________
+//_________________________________________________________________
+//_________________________________________________________________
+
+#include "elementtri_list_store.h"
+
+elementtri_list_store::elementtri_list_store()
+{
+	// Empty constructor
+}
+
+elementtri_list_store::~elementtri_list_store()
+{
+	// Empty destructor
+}
+
+void elementtri_list_store::init(geom_parameters* geom_param_ptr)
+{
+	// Set the geometry parameters
+	this->geom_param_ptr = geom_param_ptr;
+
+	// Set the geometry parameters for the labels (and clear the labels)
+		element_tris.init(geom_param_ptr);
+	element_tris_shrunk.init(geom_param_ptr);
+	element_materialid.init(geom_param_ptr);
+	selected_element_tris_shrunk.init(geom_param_ptr);
+	element_boundarylines.init(geom_param_ptr);
+	element_boundarypts.init(geom_param_ptr);
+
+	// Clear the triangles
+	elementtri_count = 0;
+	elementtriMap.clear();
+}
+
+void elementtri_list_store::add_elementtriangle(int& tri_id, node_store* nd1, node_store* nd2, node_store* nd3)
+{
+	// Add the line to the list
+	elementtri_store temp_tri;
+	temp_tri.tri_id = tri_id; // Triangle ID
+	temp_tri.nd1 = nd1;
+	temp_tri.nd2 = nd2;
+	temp_tri.nd3 = nd3;
+
+	// Check whether the node_id is already there
+	if (elementtriMap.find(tri_id) != elementtriMap.end())
+	{
+		// Element ID already exist (do not add)
+		return;
+	}
+
+	// Insert to the lines
+	elementtriMap.insert({ tri_id, temp_tri });
+	elementtri_count++;
+
+	//__________________________ Add the Triangle
+	glm::vec2 node_pt1 = (*nd1).node_pt;
+	glm::vec2 node_pt2 = (*nd2).node_pt;
+	glm::vec2 node_pt3 = (*nd3).node_pt;
+
+	glm::vec3 temp_tri_color = geom_param_ptr->geom_colors.triangle_color;
+	// Main triangle
+	element_tris.add_tri(tri_id, node_pt1, node_pt2, node_pt3,
+		glm::vec2(0), glm::vec2(0), glm::vec2(0),
+		temp_tri_color, temp_tri_color, temp_tri_color, false);
+
+	// Main triangle as shrunk
+	double midpt_x = (node_pt1.x + node_pt2.x + node_pt3.x) / 3.0f;
+	double midpt_y = (node_pt1.y + node_pt2.y + node_pt3.y) / 3.0f;
+	double shrink_factor = geom_param_ptr->traingle_shrunk_factor;
+
+	glm::vec2 shrunk_node_pt1 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt1.x * shrink_factor)),
+		(midpt_y * (1 - shrink_factor) + (node_pt1.y * shrink_factor)));
+	glm::vec2 shrunk_node_pt2 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt2.x * shrink_factor)),
+		(midpt_y * (1 - shrink_factor) + (node_pt2.y * shrink_factor)));
+	glm::vec2 shrunk_node_pt3 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt3.x * shrink_factor)),
+		(midpt_y * (1 - shrink_factor) + (node_pt3.y * shrink_factor)));
+
+	element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
+		glm::vec2(0), glm::vec2(0), glm::vec2(0),
+		temp_tri_color, temp_tri_color, temp_tri_color, false);
+
+
+	//__________________________ Add the Triangle boundary points
+	addtriangle_boundarylines(node_pt1, node_pt2, node_pt3);
+
+	//__________________________ Add the Triangle boundary lines
+	addtriangle_boundarypts(node_pt1, node_pt2, node_pt3);
+
+}
+
+void elementtri_list_store::add_selection_triangles(const std::vector<int>& selected_element_ids)
+{
+	// Clear the existing selected triangles
+	selected_element_tris_shrunk.clear_triangles();
+
+	// Add to Selected Element triangles
+	glm::vec3 temp_color = geom_param_ptr->geom_colors.node_selected_color;
+
+	for (const auto& it : selected_element_ids)
+	{
+		int tri_id = elementtriMap[it].tri_id;
+		glm::vec2 node_pt1 = elementtriMap[it].nd1->node_pt; // Node pt 1
+		glm::vec2 node_pt2 = elementtriMap[it].nd2->node_pt; // Node pt 2
+		glm::vec2 node_pt3 = elementtriMap[it].nd3->node_pt; // Node pt 3
+
+
+		double midpt_x = (node_pt1.x + node_pt2.x + node_pt3.x) / 3.0f; // mid pt x
+		double midpt_y = (node_pt1.y + node_pt2.y + node_pt3.y) / 3.0f; // mid pt y
+		double shrink_factor = geom_param_ptr->traingle_shrunk_factor;
+
+		glm::vec2 shrunk_node_pt1 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt1.x * shrink_factor)),
+			(midpt_y * (1 - shrink_factor) + (node_pt1.y * shrink_factor)));
+		glm::vec2 shrunk_node_pt2 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt2.x * shrink_factor)),
+			(midpt_y * (1 - shrink_factor) + (node_pt2.y * shrink_factor)));
+		glm::vec2 shrunk_node_pt3 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt3.x * shrink_factor)),
+			(midpt_y * (1 - shrink_factor) + (node_pt3.y * shrink_factor)));
+
+		selected_element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
+			glm::vec2(0), glm::vec2(0), glm::vec2(0),
+			temp_color, temp_color, temp_color, false);
+	}
+
+	// Set the selected element triangles buffer
+	selected_element_tris_shrunk.set_buffer();
+
+}
+
+void elementtri_list_store::update_material(const std::vector<int> selected_element_tri,const int& material_id)
+{
+	// Update the material ID
+	for (const int& it : selected_element_tri)
+	{
+		elementtriMap[it].material_id = material_id;
+	}
+
+	// Update the material ID label
+	update_material_id_labels();
+}
+
+
+void elementtri_list_store::execute_delete_material(const int& del_material_id)
+{
+	// Update delete material
+	bool is_del_material_found = false; // Flag to check whether material id deleted
+
+	// Delete the material
+	for (const auto& tri : elementtriMap)
+	{
+		int id = tri.first; // get the id
+		if (elementtriMap[id].material_id == del_material_id)
+		{
+			// Delete material is removed and the material ID of that element to 0
+			elementtriMap[id].material_id = 0;
+			is_del_material_found = true;
+		}
+	}
+
+	// Update the material ID label
+	if (is_del_material_found == true)
+	{
+		update_material_id_labels();
+	}
+
+}
+
+void elementtri_list_store::set_buffer()
+{
+	// Set the buffers for the Model
+	element_tris.set_buffer();
+	element_tris_shrunk.set_buffer();
+	element_boundarylines.set_buffer();
+	element_boundarypts.set_buffer();
+	update_material_id_labels();
+}
+
+void elementtri_list_store::update_material_id_labels()
+{
+	// Clear the labels
+	element_materialid.clear_labels();
+
+	// Update the material id labels
+	glm::vec3 temp_color;
+	std::string temp_str = "";
+
+	for (auto it = elementtriMap.begin(); it != elementtriMap.end(); ++it)
+	{
+		elementtri_store elementtri = it->second;
+
+		// Get the triangle node points
+		glm::vec2 nd_pt1 = elementtri.nd1->node_pt;
+		glm::vec2 nd_pt2 = elementtri.nd2->node_pt;
+		glm::vec2 nd_pt3 = elementtri.nd3->node_pt;
+
+		// Calculate the midpoint of the triangle
+		glm::vec2 tri_mid_pt = glm::vec2((nd_pt1.x + nd_pt2.x + nd_pt3.x) * 0.33333f, 
+										  (nd_pt1.y + nd_pt2.y + nd_pt3.y) * 0.33333f);
+
+		// Add the material ID
+		temp_color = geom_parameters::get_standard_color(elementtri.material_id);
+		temp_str = " M = " + std::to_string(elementtri.material_id);
+		element_materialid.add_text(temp_str, tri_mid_pt, glm::vec2(0), temp_color, 0, true, false);
+	}
+
+	// Set the buffer for the labels
+	element_materialid.set_buffer();
+}
+
+void elementtri_list_store::paint_elementtriangles()
+{
+	// Paint the triangles
+	element_tris.paint_triangles();
+}
+
+void elementtri_list_store::paint_selected_elementtriangles()
+{
+	// Paint the selected triangles
+	selected_element_tris_shrunk.paint_triangles();
+}
+
+void elementtri_list_store::paint_elementtriangles_shrunk()
+{
+	// Paint the triangles shrunk
+	element_tris_shrunk.paint_triangles();
+}
+
+void elementtri_list_store::paint_tri_material_id()
+{
+	// Paint the element material ID
+	element_materialid.paint_text();
+}
+
+void elementtri_list_store::paint_elementtriangles_boundarylines()
+{
+	// Paint the element boundaries;
+	element_boundarylines.paint_lines();
+}
+
+void elementtri_list_store::paint_elementtriangles_boundarypts()
+{
+	// Paint the element boundary points
+	element_boundarypts.paint_points();
+}
+
+std::vector<int> elementtri_list_store::is_tri_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2)
+{
+	// Return the node id of node which is inside the rectangle
+	// Covert mouse location to screen location
+	int max_dim = geom_param_ptr->window_width > geom_param_ptr->window_height ? geom_param_ptr->window_width : geom_param_ptr->window_height;
+
+	// Selected node list index;
+	std::vector<int> selected_tri_index;
+
+	// Transform the mouse location to openGL screen coordinates
+	// Corner Point 1
+	glm::vec2 screen_cpt1 = glm::vec2(2.0f * ((corner_pt1.x - (geom_param_ptr->window_width * 0.5f)) / max_dim),
+		2.0f * (((geom_param_ptr->window_height * 0.5f) - corner_pt1.y) / max_dim));
+
+	// Corner Point 2
+	glm::vec2 screen_cpt2 = glm::vec2(2.0f * ((corner_pt2.x - (geom_param_ptr->window_width * 0.5f)) / max_dim),
+		2.0f * (((geom_param_ptr->window_height * 0.5f) - corner_pt2.y) / max_dim));
+
+	// Nodal location
+	glm::mat4 scaling_matrix = glm::mat4(1.0) * static_cast<float>(geom_param_ptr->zoom_scale);
+	scaling_matrix[3][3] = 1.0f;
+
+	glm::mat4 scaledModelMatrix = scaling_matrix * geom_param_ptr->modelMatrix;
+
+	// Loop through all edges in map
+	for (auto it = elementtriMap.begin(); it != elementtriMap.end(); ++it)
+	{
+		const glm::vec2& node_pt1 = it->second.nd1->node_pt;
+		const glm::vec2& node_pt2 = it->second.nd2->node_pt;
+		const glm::vec2& node_pt3 = it->second.nd3->node_pt;
+		glm::vec2 md_pt_12 = geom_param_ptr->linear_interpolation(node_pt1, node_pt2, 0.50);
+		glm::vec2 md_pt_23 = geom_param_ptr->linear_interpolation(node_pt2, node_pt3, 0.50);
+		glm::vec2 md_pt_31 = geom_param_ptr->linear_interpolation(node_pt3, node_pt1, 0.50);
+		glm::vec2 tri_midpt = glm::vec2((node_pt1.x + node_pt2.x + node_pt3.x) * 0.33f, (node_pt1.y + node_pt2.y + node_pt3.y) * 0.33f);
+
+		//______________________________
+		glm::vec4 node_pt1_fp = scaledModelMatrix * glm::vec4(node_pt1.x, node_pt1.y, 0, 1.0f) * geom_param_ptr->panTranslation;
+		glm::vec4 node_pt2_fp = scaledModelMatrix * glm::vec4(node_pt2.x, node_pt2.y, 0, 1.0f) * geom_param_ptr->panTranslation;
+		glm::vec4 node_pt3_fp = scaledModelMatrix * glm::vec4(node_pt3.x, node_pt3.y, 0, 1.0f) * geom_param_ptr->panTranslation;
+		glm::vec4 md_pt_12_fp = scaledModelMatrix * glm::vec4(md_pt_12.x, md_pt_12.y, 0, 1.0f) * geom_param_ptr->panTranslation;
+		glm::vec4 md_pt_23_fp = scaledModelMatrix * glm::vec4(md_pt_23.x, md_pt_23.y, 0, 1.0f) * geom_param_ptr->panTranslation;
+		glm::vec4 md_pt_31_fp = scaledModelMatrix * glm::vec4(md_pt_31.x, md_pt_31.y, 0, 1.0f) * geom_param_ptr->panTranslation;
+		glm::vec2 tri_midpt_fp = scaledModelMatrix * glm::vec4(tri_midpt.x, tri_midpt.y, 0, 1.0f) * geom_param_ptr->panTranslation;
+
+		// Check whether the point inside a rectangle
+		if (geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, node_pt1_fp) == true ||
+			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, node_pt2_fp) == true ||
+			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, node_pt3_fp) == true ||
+			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, md_pt_12_fp) == true ||
+			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, md_pt_23_fp) == true ||
+			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, md_pt_31_fp) == true ||
+			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, tri_midpt_fp) == true)
+		{
+			selected_tri_index.push_back(it->first);
+		}
+	}
+
+	// Return the tri index find
+	return selected_tri_index;
+
+}
+
+void elementtri_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+{
+	// Update model openGL uniforms
+	element_tris.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	element_tris_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	element_materialid.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	selected_element_tris_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	element_boundarylines.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	element_boundarypts.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+}
+
+void elementtri_list_store::addtriangle_boundarylines(const glm::vec2& nd_pt1, const glm::vec2& nd_pt2, const glm::vec2& nd_pt3)
+{
+	// Function to add 3 boundary lines of triangle mesh
+		// add the boundary line 1
+	line_store boundary_line1 = getLine(nd_pt1, nd_pt2);
+	bool lineExists = true;
+	int line_count = element_boundarylines.line_count;
+
+	lineExists = customLineStoreBinarySearch(element_boundarylines.lineMap, boundary_line1);
+
+	if (lineExists == false)
+	{
+		element_boundarylines.add_line(line_count,
+			boundary_line1.line_startpt_loc,
+			boundary_line1.line_endpt_loc,
+			boundary_line1.line_startpt_offset,
+			boundary_line1.line_endpt_offset,
+			boundary_line1.line_startpt_color,
+			boundary_line1.line_endpt_color,
+			boundary_line1.is_offset);
+
+		customLineStoreSort(element_boundarylines.lineMap);
+
+		line_count++;
+	}
+
+	// add the boundary line 2
+	line_store boundary_line2 = getLine(nd_pt2, nd_pt3);
+
+	lineExists = customLineStoreBinarySearch(element_boundarylines.lineMap, boundary_line2);
+
+	if (lineExists == false)
+	{
+		element_boundarylines.add_line(line_count,
+			boundary_line2.line_startpt_loc,
+			boundary_line2.line_endpt_loc,
+			boundary_line2.line_startpt_offset,
+			boundary_line2.line_endpt_offset,
+			boundary_line2.line_startpt_color,
+			boundary_line2.line_endpt_color,
+			boundary_line2.is_offset);
+
+		customLineStoreSort(element_boundarylines.lineMap);
+
+		line_count++;
+	}
+
+	// Add the boundary line 3
+	line_store boundary_line3 = getLine(nd_pt3, nd_pt1);
+
+	lineExists = customLineStoreBinarySearch(element_boundarylines.lineMap, boundary_line3);
+
+	if (lineExists == false)
+	{
+		element_boundarylines.add_line(line_count,
+			boundary_line3.line_startpt_loc,
+			boundary_line3.line_endpt_loc,
+			boundary_line3.line_startpt_offset,
+			boundary_line3.line_endpt_offset,
+			boundary_line3.line_startpt_color,
+			boundary_line3.line_endpt_color,
+			boundary_line3.is_offset);
+
+		// Sort the vector again
+		customLineStoreSort(element_boundarylines.lineMap);
+
+		line_count++;
+	}
+}
+
+bool elementtri_list_store::customLineStoreBinarySearch(const std::vector<line_store>& vec, const line_store& target)
+{
+	int left = 0;
+	int right = static_cast<int>(vec.size()) - 1;
+
+	while (left <= right)
+	{
+		int mid = left + (right - left) / 2;
+
+		if (compareLines(vec[mid], target))
+		{
+			left = mid + 1;
+		}
+		else if (compareLines(target, vec[mid]))
+		{
+			right = mid - 1;
+		}
+		else
+		{
+			// Element found
+			return true;
+		}
+	}
+
+	// Element not found
+	return false;
+}
+
+void elementtri_list_store::customLineStoreSort(std::vector<line_store>& vec)
+{
+	// custom sort the lines
+	for (int i = 1; i < static_cast<int>(vec.size()); ++i)
+	{
+		line_store key = vec[i];
+		int j = i - 1;
+
+		while (j >= 0 && compareLines(vec[j], key))
+		{
+			vec[j + 1] = vec[j];
+			--j;
+		}
+
+		vec[j + 1] = key;
+	}
+}
+
+line_store elementtri_list_store::getLine(const glm::vec2& line_startpt_loc, const glm::vec2& line_endpt_loc)
+{
+	// return the line as line_store
+	line_store temp_line;
+
+	// Boundary line color
+	glm::vec3 temp_boundry_color = geom_param_ptr->geom_colors.triangle_boundary;
+
+	// Line location
+	temp_line.line_startpt_loc = line_startpt_loc;
+	temp_line.line_endpt_loc = line_endpt_loc;
+
+	// Line offset
+	temp_line.line_startpt_offset = glm::vec2(0);
+	temp_line.line_endpt_offset = glm::vec2(0);
+
+	// Line color
+	temp_line.line_startpt_color = temp_boundry_color;
+	temp_line.line_endpt_color = temp_boundry_color;
+
+	temp_line.is_offset = false;
+
+	return temp_line;
+}
+
+bool elementtri_list_store::compareLines(const line_store& a, const line_store& b)
+{
+	// Custom comparison function for line_store
+	// Compare based on start point's x and y values, and then end point's x and y values
+	if (a.line_startpt_loc.x != b.line_startpt_loc.x)
+	{
+		return a.line_startpt_loc.x < b.line_startpt_loc.x;
+	}
+	else if (a.line_startpt_loc.y != b.line_startpt_loc.y)
+	{
+		return a.line_startpt_loc.y < b.line_startpt_loc.y;
+	}
+	else if (a.line_endpt_loc.x != b.line_endpt_loc.x)
+	{
+		return a.line_endpt_loc.x < b.line_endpt_loc.x;
+	}
+	else
+	{
+		return a.line_endpt_loc.y < b.line_endpt_loc.y;
+	}
+}
+
+void elementtri_list_store::addtriangle_boundarypts(const glm::vec2& nd_pt1, const glm::vec2& nd_pt2, const glm::vec2& nd_pt3)
+{
+	// Function to add 3 boundary points of triangle mesh
+	// add the boundary point 1
+	point_store boundary_point1 = getPoint(nd_pt1);
+	bool pointExists = true;
+	int point_count = element_boundarypts.point_count;
+
+	pointExists = customPointStoreBinarySearch(element_boundarypts.pointMap, boundary_point1);
+
+	if (pointExists == false)
+	{
+		// Add to point store 
+		element_boundarypts.add_point(point_count,
+			boundary_point1.point_loc,
+			boundary_point1.point_offset,
+			boundary_point1.point_color,
+			boundary_point1.is_offset);
+
+		customPointStoreSort(element_boundarypts.pointMap);
+
+		point_count++;
+	}
+
+	// add the boundary point 2
+	point_store boundary_point2 = getPoint(nd_pt2);
+
+	pointExists = customPointStoreBinarySearch(element_boundarypts.pointMap, boundary_point2);
+
+	if (pointExists == false)
+	{
+		// Add to point store 
+		element_boundarypts.add_point(point_count,
+			boundary_point2.point_loc,
+			boundary_point2.point_offset,
+			boundary_point2.point_color,
+			boundary_point2.is_offset);
+
+		customPointStoreSort(element_boundarypts.pointMap);
+
+		point_count++;
+	}
+
+	// add the boundary point 3
+	point_store boundary_point3 = getPoint(nd_pt3);
+
+	pointExists = customPointStoreBinarySearch(element_boundarypts.pointMap, boundary_point3);
+
+	if (pointExists == false)
+	{
+		// Add to point store 
+		element_boundarypts.add_point(point_count,
+			boundary_point3.point_loc,
+			boundary_point3.point_offset,
+			boundary_point3.point_color,
+			boundary_point3.is_offset);
+
+		customPointStoreSort(element_boundarypts.pointMap);
+
+		point_count++;
+	}
+}
+
+bool elementtri_list_store::customPointStoreBinarySearch(const std::vector<point_store>& vec, const point_store& target)
+{
+	int left = 0;
+	int right = static_cast<int>(vec.size()) - 1;
+
+	while (left <= right)
+	{
+		int mid = left + (right - left) / 2;
+
+		if (comparePoints(vec[mid], target))
+		{
+			left = mid + 1;
+		}
+		else if (comparePoints(target, vec[mid]))
+		{
+			right = mid - 1;
+		}
+		else
+		{
+			// Element found
+			return true;
+		}
+	}
+
+	// Element not found
+	return false;
+}
+
+void elementtri_list_store::customPointStoreSort(std::vector<point_store>& vec)
+{
+	// custom sort the points
+	for (int i = 1; i < static_cast<int>(vec.size()); ++i)
+	{
+		point_store key = vec[i];
+		int j = i - 1;
+
+		while (j >= 0 && comparePoints(vec[j], key))
+		{
+			vec[j + 1] = vec[j];
+			--j;
+		}
+
+		vec[j + 1] = key;
+	}
+}
+
+point_store elementtri_list_store::getPoint(const glm::vec2& pt_loc)
+{
+	// Return the point as point_store
+	point_store temp_point;
+
+	// Boundary color
+	glm::vec3 temp_boundarypt_color = geom_param_ptr->geom_colors.triangle_node;
+
+	temp_point.point_id = 0;
+	temp_point.point_loc = pt_loc;
+	temp_point.point_offset = glm::vec2(0);
+	temp_point.point_color = temp_boundarypt_color;
+	temp_point.is_offset = false;
+
+	return temp_point;
+}
+
+bool elementtri_list_store::comparePoints(const point_store& a, const point_store& b)
+{
+	// Define a custom comparison function for point_store
+	// Compare based on point location's x and y values
+	if (a.point_loc.x != b.point_loc.x)
+	{
+		return a.point_loc.x < b.point_loc.x;
+	}
+	else
+	{
+		return a.point_loc.y < b.point_loc.y;
+	}
+}
+
+
+
+//_________________________________________________________________
+//_________________________________________________________________
+//_________________________________________________________________
+*/
