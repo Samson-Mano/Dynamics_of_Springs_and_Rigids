@@ -6,7 +6,6 @@
 // FE Objects
 #include "../geometry_store/fe_objects/nodes_list_store.h"
 #include "../geometry_store/fe_objects/elementline_list_store.h"
-#include "../geometry_store/fe_objects/elementtri_list_store.h"
 #include "../geometry_store/fe_objects/nodeconstraint_list_store.h"
 
 // FE Result Objects Heat analysis

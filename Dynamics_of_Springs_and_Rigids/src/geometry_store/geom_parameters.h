@@ -15,15 +15,16 @@ struct geom_color_theme
 	glm::vec3 load_color = glm::vec3(0);
 	glm::vec3 constraint_color = glm::vec3(0);
 	glm::vec3 triangle_color = glm::vec3(0);
+	glm::vec3 ptmass_color = glm::vec3(0);
+	glm::vec3 inlcond_displ_color = glm::vec3(0);
+	glm::vec3 inlcond_velo_color = glm::vec3(0);
 };
 
 struct material_data
 {
 	unsigned int material_id = 0;
 	std::string material_name = "";
-	double thermal_conductivity_kx = 0.0;
-	double thermal_conductivity_ky = 0.0;
-	double element_thickness = 0.0;
+	double material_stiffness = 0.0;
 };
 
 class Stopwatch
@@ -50,7 +51,9 @@ public:
 	const int coord_precision = 2;
 	const int constraint_precision = 2;
 	const int load_precision = 2;
-	
+	const int inlcond_precision = 3;
+	const int defl_precision = 6;
+
 	// Triangle mesh shrunk factor
 	const double traingle_shrunk_factor = 0.8;
 
@@ -106,6 +109,12 @@ public:
 
 	static glm::vec2 calculateCatmullRomPoint(const std::vector<glm::vec2>& controlPoints, float t);
 
+	static double get_lerp(const double& max_value, const double& min_value, const double& param_t);
+
+	static double get_invlerp(const double& max_value, const double& min_value, const double& value);
+
+	static double get_remap(const double& max_value, const double& min_value, const double& limit_max, 
+		const double& limit_min,		const double& value);
 
 private:
 	static double HueToRGB(double v1, double v2, double vH);

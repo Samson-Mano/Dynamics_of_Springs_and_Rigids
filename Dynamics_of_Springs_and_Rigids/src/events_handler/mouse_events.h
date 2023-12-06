@@ -10,8 +10,9 @@ public:
 	options_window* op_window = nullptr;
 	node_constraint_window* nd_cnst_window = nullptr;
 	node_load_window* nd_load_window = nullptr;
+	pointmass_window* nd_ptmass_window = nullptr;
+	inlcondition_window* nd_inlcond_window = nullptr;
 	element_prop_window* elm_prop_window = nullptr;
-
 
 	glm::vec2 click_pt = glm::vec2(0);
 	glm::vec2 curr_pt = glm::vec2(0);
@@ -25,7 +26,9 @@ public:
 	mouse_events();
 	~mouse_events();
 	void init(geom_store* geom, analysis_window* sol_window, options_window* op_window,
-		node_constraint_window* nd_cnst_window, node_load_window* nd_load_window, element_prop_window* elm_prop_window);
+		node_constraint_window* nd_cnst_window, node_load_window* nd_load_window, 
+		pointmass_window* nd_ptmass_window, inlcondition_window* nd_inlcond_window,
+		element_prop_window* elm_prop_window);
 
 	void mouse_location(glm::vec2& loc);
 

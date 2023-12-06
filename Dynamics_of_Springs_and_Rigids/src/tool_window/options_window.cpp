@@ -13,11 +13,23 @@ options_window::~options_window()
 void options_window::init()
 {
 	// Initialize the options
-	is_show_constraint = true;
-	is_show_loads = true;
-	is_show_loadvalues = true;
-	is_show_modelnodes = true;
-	is_show_modelelements = true;
+	is_show_constraint = true; // Show constraints
+	is_show_loads = true; // Show loads
+	is_show_loadvalues = true; // Show load values;
+	is_show_ptmass = true; // Show point mass
+	is_show_ptmass_labels = true; // show point mass labels
+	is_show_inlcondition = true; // show initial condition
+
+	// Model Nodes
+	is_show_modelnodes = true; // Show model nodes
+	is_show_modelnodeids = true; // Show model node ids 
+	is_show_modelnodecoords = true; // Show model node co-ordinates
+
+	// Model elements
+	is_show_modelelements = true; // Show model elements
+	is_show_modelelementids = true; // Show model element ids
+	is_show_modelelementlengths = true; // show model element lengths
+
 	is_show_window = false;
 }
 
@@ -29,12 +41,28 @@ void options_window::render_window()
 	// Create a new ImGui options window
 	ImGui::Begin("View Options");
 
-	// Add 4 checkboxes
+	// Add Constraints check box
+	ImGui::Text("Constraint options");
 	ImGui::Checkbox("Show Constraints", &is_show_constraint);
 	ImGui::Checkbox("Show Loads", &is_show_loads);
 	ImGui::Checkbox("Show Load values", &is_show_loadvalues);
+	ImGui::Checkbox("Show Point mass", &is_show_ptmass);
+	ImGui::Checkbox("Show Point mass values", &is_show_ptmass_labels);
+	ImGui::Checkbox("Show Point initial condition", &is_show_inlcondition);
+	ImGui::Spacing();
+
+	// Model nodes
+	ImGui::Text("Node options");
 	ImGui::Checkbox("Show Nodes", &is_show_modelnodes);
+	ImGui::Checkbox("Show Node IDs", &is_show_modelnodeids);
+	ImGui::Checkbox("Show Node Co-ordinates", &is_show_modelnodecoords);
+	ImGui::Spacing();
+
+	// Model elements
+	ImGui::Text("Element options");
 	ImGui::Checkbox("Show Elements", &is_show_modelelements);
+	ImGui::Checkbox("Show Element IDs", &is_show_modelelementids);
+	ImGui::Checkbox("Show Element Lengths", &is_show_modelelementlengths);
 
 
 

@@ -11,7 +11,9 @@ mouse_events::~mouse_events()
 }
 
 void mouse_events::init(geom_store* geom, analysis_window* sol_window, options_window* op_window,
-	node_constraint_window* nd_cnst_window, node_load_window* nd_load_window, element_prop_window* elm_prop_window)
+	node_constraint_window* nd_cnst_window, node_load_window* nd_load_window,
+	pointmass_window* nd_ptmass_window, inlcondition_window* nd_inlcond_window,
+	element_prop_window* elm_prop_window)
 {
 	// Intialize the geometry and tool window pointers
 	this->geom = geom;
@@ -21,6 +23,8 @@ void mouse_events::init(geom_store* geom, analysis_window* sol_window, options_w
 	this->op_window = op_window; // option window
 	this->nd_cnst_window = nd_cnst_window; // node constraint window
 	this->nd_load_window = nd_load_window; // node load window
+	this->nd_ptmass_window = nd_ptmass_window; // node point mass window
+	this->nd_inlcond_window = nd_inlcond_window; // node initial condition window
 	this->elm_prop_window = elm_prop_window; // element properties window
 }
 

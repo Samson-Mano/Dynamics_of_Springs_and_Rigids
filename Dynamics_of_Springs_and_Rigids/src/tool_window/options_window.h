@@ -7,11 +7,25 @@
 class options_window
 {
 public:
-	bool is_show_constraint = true;
-	bool is_show_loads = true;
-	bool is_show_loadvalues = true;
-	bool is_show_modelnodes = true;
-	bool is_show_modelelements = true;
+	// Model constraints
+	bool is_show_constraint = true; // Show constraints
+	bool is_show_loads = true; // Show loads
+	bool is_show_loadvalues = true; // Show load values;
+	bool is_show_ptmass = true; // Show point mass
+	bool is_show_ptmass_labels = true; // show point mass labels
+	bool is_show_inlcondition = true; // show initial condition
+
+	// Model Nodes
+	bool is_show_modelnodes = true; // Show model nodes
+	bool is_show_modelnodeids = true; // Show model node ids 
+	bool is_show_modelnodecoords = true; // Show model node co-ordinates
+
+	// Model elements
+	bool is_show_modelelements = true; // Show model elements
+	bool is_show_modelelementids = true; // Show model element ids
+	bool is_show_modelelementlengths = true; // show model element lengths
+
+	// Window
 	bool is_show_window = false;
 
 	options_window();

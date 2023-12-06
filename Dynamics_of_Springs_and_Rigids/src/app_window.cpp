@@ -70,19 +70,23 @@ void app_window::init()
 	// Intialize tool windows
 	nd_cnst_window.init(); // Node constraint window
 	nd_load_window.init(); // Node load window
+	nd_ptmass_window.init(); // Node point mass window
+	nd_inlcond_window.init(); // Node initial condition window
 	op_window.init(); // Option window
 	sol_window.init(); // Analysis solver window
 	elm_prop_window.init(); // Element properties window
 
 	geom.update_WindowDimension(window_width, window_height);
 	// Initialize the geometry (initialize only after model window is initialized)
-	geom.init(&sol_window, &op_window, &nd_cnst_window,&nd_load_window, &elm_prop_window);
+	geom.init(&sol_window, &op_window, &nd_cnst_window, &nd_load_window,
+		&nd_ptmass_window, &nd_inlcond_window, &elm_prop_window);
 
 	// Set the mouse button callback function with the user pointer pointing to the mouseHandler object
 	glfwSetWindowUserPointer(window, &mouse_Handler);
 
 	// Passing the address of geom and window dimensions to mouse handler
-	mouse_Handler.init(&geom, &sol_window, &op_window, &nd_cnst_window, &nd_load_window, &elm_prop_window);
+	mouse_Handler.init(&geom, &sol_window, &op_window, &nd_cnst_window, &nd_load_window,
+		&nd_ptmass_window, &nd_inlcond_window, &elm_prop_window);
 
 	// Pass the address of options window, material window, solver window
 	// geom.add_window_ptr(&op_window, &mat_window, &fe_window);
@@ -250,6 +254,16 @@ void app_window::menu_events()
 				// Nodal Loads
 				nd_load_window.is_show_window = true;
 			}
+			if (ImGui::MenuItem("Nodal Point Mass"))
+			{
+				// Nodal Point Mass
+				nd_ptmass_window.is_show_window = true;
+			}
+			if (ImGui::MenuItem("Nodal Initial Condition"))
+			{
+				// Nodal Intitial condition
+				nd_inlcond_window.is_show_window = true;
+			}
 			if (ImGui::MenuItem("Element Properties"))
 			{
 				// Element Properties
@@ -277,6 +291,8 @@ void app_window::menu_events()
 	// Execute window render operation
 	nd_cnst_window.render_window(); // Node constraint window
 	nd_load_window.render_window(); // Node load window
+	nd_ptmass_window.render_window(); // Node point mass window
+	nd_inlcond_window.render_window(); // Node initial condition window
 	elm_prop_window.render_window(); // Element Properties window
 	op_window.render_window(); // Option window
 	sol_window.render_window(); // Solver window

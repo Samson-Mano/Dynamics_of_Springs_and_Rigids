@@ -59,14 +59,14 @@ void element_prop_window::render_window()
 
 	ImGui::TextColored(text_color, "Material ID: %i", selected_material_data.material_id);
 	ImGui::TextColored(text_color, "Selected Material: %s", selected_material_data.material_name.c_str());
-	ImGui::TextColored(text_color, "Thermal Conductivity Kx: %.3f", selected_material_data.thermal_conductivity_kx);
-	ImGui::TextColored(text_color, "Thermal Conductivity Ky: %.3f", selected_material_data.thermal_conductivity_ky);
-	ImGui::TextColored(text_color, "Element Thickness: %.3f", selected_material_data.element_thickness);
+	ImGui::TextColored(text_color, "Spring Stiffness K: %.3f", selected_material_data.material_stiffness);
+	
 
-	// Diable delete if the selected option is Default (0)
-	const bool is_delete_button_disabled = selected_list_option == 0 ? true : false;
+	// Diable delete if the selected option is Default (0 & 1)
+	const bool is_delete_button_disabled = selected_list_option < 2 ? true : false;
 	ImGui::BeginDisabled(is_delete_button_disabled);
-	if (ImGui::Button("Delete Material")) {
+	if (ImGui::Button("Delete Material")) 
+	{
 		// Delete material
 		execute_delete_materialid = selected_material_data.material_id;
 		material_list.erase(selected_material_data.material_id);
@@ -113,14 +113,11 @@ void element_prop_window::render_window()
 	if (ImGui::CollapsingHeader("Create Material  ", ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		static char new_material_name[256] = "New Material";
-		static double new_material_thermalKx = 100; // W/m degC
-		static double new_material_thermalKy = 100; // W/m degC
-		static double new_material_thickness = 0.2; // cm
+		static double new_material_springstiff = 100; // W/m degC
+
 
 		ImGui::InputText("Material Name", new_material_name, IM_ARRAYSIZE(new_material_name));
-		ImGui::InputDouble("Thermal Conductivity Kx", &new_material_thermalKx, 0, 0, "%.3f");
-		ImGui::InputDouble("Thermal Conductivity Ky", &new_material_thermalKy, 0, 0, "%.3f");
-		ImGui::InputDouble("Element Thickness", &new_material_thickness, 0, 0, "%.3f");
+		ImGui::InputDouble("Spring Stiffness K", &new_material_springstiff, 0, 0, "%.3f");
 
 		if (ImGui::Button("Create Material"))
 		{
@@ -128,9 +125,7 @@ void element_prop_window::render_window()
 			material_data new_material;
 			new_material.material_id = get_unique_material_id();
 			new_material.material_name = new_material_name;
-			new_material.thermal_conductivity_kx = new_material_thermalKx;
-			new_material.thermal_conductivity_ky = new_material_thermalKy;
-			new_material.element_thickness = new_material_thickness;
+			new_material.material_stiffness = new_material_springstiff;
 			material_list[new_material.material_id] = new_material;
 
 			// Update the combo box

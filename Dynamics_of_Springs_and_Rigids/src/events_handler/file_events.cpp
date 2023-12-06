@@ -173,7 +173,7 @@ void file_events::import_varai2d_geometry(geom_store& geom)
 	}
 
 	// Read the model as varai2d
-	// geom.read_varai2d(input_file);
+	geom.read_varai2d(input_file);
 
 	input_file.close();
 }
@@ -474,7 +474,7 @@ void file_events::import_dxfdata_geometry(geom_store& geom)
 	// std::string dxf_inputStr = dxf_input.str(); // Get the string from the ostringstream
 	//  std::cout << dxf_inputStr; // Print on console to check
 
-	// geom.read_dxfdata(dxf_input);
+	geom.read_dxfdata(dxf_input);
 
 	input_file.close();
 }

@@ -18,6 +18,8 @@
 //____ Tool Window
 #include "tool_window/node_constraint_window.h"
 #include "tool_window/node_load_window.h"
+#include "tool_window/inlcondition_window.h"
+#include "tool_window/pointmass_window.h"
 #include "tool_window/analysis_window.h"
 #include "tool_window/options_window.h"
 #include "tool_window/element_prop_window.h"
@@ -44,6 +46,8 @@ public:
 	// Tool window variable
 	node_constraint_window nd_cnst_window;
 	node_load_window nd_load_window;
+	pointmass_window nd_ptmass_window;
+	inlcondition_window nd_inlcond_window;
 	options_window op_window;
 	analysis_window sol_window;
 	element_prop_window elm_prop_window;

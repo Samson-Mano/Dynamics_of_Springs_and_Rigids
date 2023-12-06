@@ -29,6 +29,8 @@ public:
 	void add_selection_nodes(const std::vector<int>& selected_node_ids);
 	void set_buffer();
 	void paint_model_nodes();
+	void paint_label_node_ids();
+	void paint_label_node_coords();
 	void paint_selected_model_nodes();
 
 	int is_node_hit(glm::vec2& loc);
@@ -40,4 +42,6 @@ private:
 
 	point_list_store node_points;
 	point_list_store selected_node_points;
+	label_list_store node_id_labels;
+	label_list_store node_coord_labels;
 };

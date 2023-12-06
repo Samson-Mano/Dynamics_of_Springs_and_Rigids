@@ -24,6 +24,9 @@ void geom_parameters::init()
 	geom_colors.selection_color = glm::vec3(0.862745f, 0.078431f, 0.23529f); // Crimson
 	geom_colors.constraint_color = glm::vec3(0.0f, 0.50196f, 0.0f); // Green
 	geom_colors.load_color = glm::vec3(0.6f, 0.0f, 0.6f);
+	geom_colors.ptmass_color = glm::vec3(0.82f, 0.77f, 0.92f);
+	geom_colors.inlcond_displ_color = glm::vec3(0.96f, 0.5f, 0.1f);
+	geom_colors.inlcond_velo_color = glm::vec3(0.54f, 0.06f, 0.31f);
 
 	// Theme 1 
 	geom_colors.node_color = glm::vec3(0.54509f, 0.0f, 0.4f); // Dark Red
@@ -318,6 +321,27 @@ glm::vec2 geom_parameters::calculateCatmullRomPoint(const std::vector<glm::vec2>
 		(-p0 + p2) * t +
 		2.0f * p1
 		);
+}
+
+double geom_parameters::get_lerp(const double& max_value, const double& min_value, const double& param_t)
+{
+	// Linear interpolation based on paramter t (between max and min value)
+	return ((1.0f - param_t) * min_value) + (max_value * param_t);
+}
+
+double geom_parameters::get_invlerp(const double& max_value, const double& min_value, const double& value)
+{
+	// Returns the value normalized between 0 and 1 (based on max & min)
+	return ((value - min_value) / (max_value - min_value));
+}
+
+
+double geom_parameters::get_remap(const double& max_value, const double& min_value, const double& limit_max,
+	const double& limit_min, const double& value)
+{
+	// Remap the value between limit_max and limit min
+	double param_t = get_invlerp(max_value, min_value, value);
+	return get_lerp(limit_max, limit_min, param_t);
 }
 
 

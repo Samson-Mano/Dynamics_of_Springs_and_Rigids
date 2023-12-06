@@ -58,8 +58,8 @@ void analysis_window::render_window()
 	if (heat_analysis_complete == true)
 	{
 		// Contour Bar
-		float minValue = contour_minvalue;
-		float maxValue = contour_maxvalue;
+		float minValue = static_cast<float>(contour_minvalue);
+		float maxValue = static_cast<float>(contour_maxvalue);
 		int numLevels = 5;
 
 		// Show contour bars in the ImGui window
