@@ -102,6 +102,40 @@ std::string file_events::ShowOpenFileDialog_dxf()
 }
 
 
+std::string file_events::ShowOpenFileDialog_bin()
+{
+	OPENFILENAMEW ofn;                         // Structure to store the file dialog options (wide-character version)
+	wchar_t fileName[MAX_PATH];                // Buffer to store the selected file path (wide-character version)
+
+	// Initialize the OPENFILENAMEW structure
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = NULL;
+	ofn.lpstrFile = fileName;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrFilter = L"Binary Files (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+	// Show the file dialog
+	if (GetOpenFileNameW(&ofn))             // Note the 'W' suffix for wide-character version of the function
+	{
+		// Convert the wide-character string to narrow-character string (UTF-8)
+		int bufferSize = WideCharToMultiByte(CP_UTF8, 0, ofn.lpstrFile, -1, nullptr, 0, nullptr, nullptr);
+		std::string fileName(bufferSize, '\0');
+		WideCharToMultiByte(CP_UTF8, 0, ofn.lpstrFile, -1, &fileName[0], bufferSize, nullptr, nullptr);
+		return fileName;
+	}
+
+	return "";  // Return an empty string if the file dialog was cancelled or an error occurred
+}
+
+
+
 std::string file_events::ShowSaveFileDialog()
 {
 	OPENFILENAMEW ofn;                         // Structure to store the file dialog options (wide-character version)
@@ -114,13 +148,13 @@ std::string file_events::ShowSaveFileDialog()
 	ofn.lpstrFile = fileName;
 	ofn.lpstrFile[0] = '\0';
 	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFilter = L"Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+	ofn.lpstrFilter = L"Binary Files (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = NULL;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-	ofn.lpstrDefExt = L"txt";  // Add this line to set the default file extension
+	ofn.lpstrDefExt = L"bin";  // Add this line to set the default file extension
 
 	// Show the file dialog
 	if (GetSaveFileNameW(&ofn))             // Note the 'W' suffix for wide-character version of the function
@@ -153,7 +187,7 @@ void file_events::export_rawdata_geometry(geom_store& geom)
 	}
 
 	// Write the model as raw data
-	// geom.write_rawdata(output_file);
+	geom.write_rawdata(output_file);
 
 	// Close the file
 	output_file.close();
@@ -180,7 +214,7 @@ void file_events::import_varai2d_geometry(geom_store& geom)
 
 void file_events::import_rawdata_geometry(geom_store& geom)
 {
-	std::string file_path = ShowOpenFileDialog();
+	std::string file_path = ShowOpenFileDialog_bin();
 	std::cout << "Selected File: " << file_path << std::endl;
 
 	// Open the input file

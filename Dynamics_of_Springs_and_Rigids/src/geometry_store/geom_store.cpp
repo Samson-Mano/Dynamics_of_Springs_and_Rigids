@@ -11,7 +11,7 @@ geom_store::~geom_store()
 }
 
 void geom_store::init(analysis_window* sol_window, options_window* op_window,
-	node_constraint_window* nd_cnst_window, node_load_window* nd_load_window,  
+	node_constraint_window* nd_cnst_window, node_load_window* nd_load_window,
 	pointmass_window* nd_ptmass_window, inlcondition_window* nd_inlcond_window,
 	element_prop_window* elm_prop_window)
 {
@@ -118,7 +118,8 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 			std::cout << "Nodes read completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 		}
 		// Check for the start of lines input
-		else if (lines[j].find("[+] Lines") != std::string::npos) {
+		else if (lines[j].find("[+] Lines") != std::string::npos)
+		{
 			int num_lines;
 			// Read the number of nodes
 			std::stringstream ss(lines[j]);
@@ -146,7 +147,7 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 				// Create lines_store object using references to startNode and endNode
 				int mat_id = 1;
 				this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[start_node_id],
-					&model_nodes.nodeMap[end_node_id],mat_id);
+					&model_nodes.nodeMap[end_node_id], mat_id);
 
 				j++;
 			}
@@ -163,6 +164,8 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 	if (model_nodes.node_count < 1 || model_lineelements.elementline_count < 1)
 	{
 		// No elements added
+		is_geometry_set = false;
+		std::cerr << "Input error !!" << std::endl;
 		return;
 	}
 
@@ -183,7 +186,6 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 
 	// Add to the material list
 	elm_prop_window->material_list[inpt_material.material_id] = inpt_material;
-
 
 	// Re-initalized the ptmass, constraints, initial conditions & loads
 	this->node_constraints.init(&geom_param);
@@ -224,43 +226,157 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 
 void geom_store::read_dxfdata(std::ostringstream& input_data)
 {
-
-
-}
-
-
-void geom_store::read_rawdata(std::ifstream& input_file)
-{
 	// Create stopwatch
 	Stopwatch_events stopwatch;
 	stopwatch.start();
 	std::stringstream stopwatch_elapsed_str;
 	stopwatch_elapsed_str << std::fixed << std::setprecision(6);
 
-	std::cout << "Reading of input started" << std::endl;
+	std::cout << "Reading of DXF Data input started" << std::endl;
 
-	// Read the Raw Data
-	// Read the entire file into a string
-	std::string file_contents((std::istreambuf_iterator<char>(input_file)),
-		std::istreambuf_iterator<char>());
+	// Read the data from string
+	std::string inputStr = input_data.str();
+	std::stringstream ss(inputStr);
 
-	// Split the string into lines
-	std::istringstream iss(file_contents);
-	std::string line;
+	std::string temp;
 	std::vector<std::string> lines;
-	while (std::getline(iss, line))
+	while (std::getline(ss, temp))
 	{
-		lines.push_back(line);
+		lines.push_back(temp);
 	}
-
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Lines loaded at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	int j = 0, i = 0;
 
-	// Reinitialize the model geometry
-	is_geometry_set = false;
-	is_heat_analysis_complete = false;
+	// Re initialize the geometry variable
+	this->model_nodes.init(&geom_param);
+	this->model_lineelements.init(&geom_param);
+
+	std::vector<glm::vec2> all_nodepts;
+
+	// Process the lines
+	while (j < lines.size())
+	{
+		std::string line = lines[j];
+		std::string type = line.substr(0, 4);  // Extract the first 4 characters of the line
+
+		// Split the line into comma-separated fields
+		std::istringstream iss(line);
+		std::string field;
+		std::vector<std::string> fields;
+		while (std::getline(iss, field, ','))
+		{
+			fields.push_back(field);
+		}
+
+		if (type == "node")
+		{
+			// Read the nodes
+			int node_id = std::stoi(fields[1]); // node ID
+			double x = std::stod(fields[2]); // Node coordinate x
+			double y = std::stod(fields[3]); // Node coordinate y
+
+			// Add to node Map
+			glm::vec2 node_pt = glm::vec2(x, y);
+			this->model_nodes.add_node(node_id, node_pt);
+
+			all_nodepts.push_back(node_pt);
+		}
+		else if (type == "line")
+		{
+			int line_id = std::stoi(fields[1]); // line ID
+			int start_node_id = std::stoi(fields[2]); // line id start node
+			int end_node_id = std::stoi(fields[3]); // line id end node
+			int material_id = std::stoi(fields[4]); // materail ID of the line
+
+			// Add to line Map (Note that Nodes needed to be added before the start of line addition !!!!)
+			int mat_id = 1;
+			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[start_node_id], &model_nodes.nodeMap[end_node_id], mat_id);
+		}
+
+		// Iterate line
+		j++;
+	}
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Nodes & Lines read completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+	if (model_nodes.node_count < 1 || model_lineelements.elementline_count < 1)
+	{
+		// No elements added
+		is_geometry_set = false;
+		std::cerr << "Input error !!" << std::endl;
+		return;
+	}
+
+	// add a default Rigid to the material list
+	material_data inpt_material;
+	inpt_material.material_id = 0; // Get the material id
+	inpt_material.material_name = "Default Rigid"; //Default material name
+	inpt_material.material_stiffness = INFINITY; // N/mm
+
+	// Add to materail list
+	elm_prop_window->material_list.clear();
+	elm_prop_window->material_list[inpt_material.material_id] = inpt_material;
+
+	// add a default Spring to the material list
+	inpt_material.material_id = 1; // Get the material id
+	inpt_material.material_name = "Default Spring"; //Default material name
+	inpt_material.material_stiffness = 100; // N/mm
+
+	// Add to the material list
+	elm_prop_window->material_list[inpt_material.material_id] = inpt_material;
+
+	// Re-initalized the ptmass, constraints, initial conditions & loads
+	this->node_constraints.init(&geom_param);
+	this->node_ptmass.init(&geom_param);
+	this->node_loads.init(&geom_param);
+	this->node_inlcond.init(&geom_param);
+
+	// Set the buffer
+	// Geometry is loaded
+	is_geometry_set = true;
+
+	// Set the boundary of the geometry
+	std::pair<glm::vec2, glm::vec2> result = geom_parameters::findMinMaxXY(all_nodepts);
+	this->geom_param.min_b = result.first;
+	this->geom_param.max_b = result.second;
+	this->geom_param.geom_bound = geom_param.max_b - geom_param.min_b;
+
+	// Set the center of the geometry
+	this->geom_param.center = geom_parameters::findGeometricCenter(all_nodepts);
+
+	// Set the geometry
+	update_model_matrix();
+	update_model_zoomfit();
+
+	// Set the geometry buffers
+	this->model_nodes.set_buffer();
+	this->model_lineelements.set_buffer();
+	this->node_constraints.set_buffer();
+	this->node_loads.set_buffer();
+	this->node_ptmass.set_buffer();
+	this->node_inlcond.set_buffer();
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Model read completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+}
+
+
+void geom_store::read_rawdata(std::ifstream& input_file)
+{
+
+	// Create stopwatch
+	Stopwatch_events stopwatch;
+	stopwatch.start();
+	std::stringstream stopwatch_elapsed_str;
+	stopwatch_elapsed_str << std::fixed << std::setprecision(6);
+
+	std::cout << "Reading of raw data input started" << std::endl;
 
 	// Initialize the model items
 	this->model_nodes.init(&geom_param);
@@ -272,118 +388,154 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	this->node_ptmass.init(&geom_param);
 	this->node_inlcond.init(&geom_param);
 
+	// Material data list
+	std::unordered_map<int, material_data> mat_data;
+
 	// Initialize the result store
 
 	//Node Point list
 	std::vector<glm::vec2> node_pts_list;
 
-	// Process the lines
-	while (j < lines.size())
+	// Read all the nodes
+	while (!input_file.eof())
 	{
-		std::istringstream iss(lines[j]);
+		char type[5];
+		input_file.read(type, sizeof(type));
 
-		std::string inpt_type;
-		char comma;
-		iss >> inpt_type;
-
-		if (inpt_type == "*NODE")
+		if (std::strcmp(type, "node") == 0)
 		{
-			// Nodes
-			while (j < lines.size())
-			{
-				std::istringstream nodeIss(lines[j + 1]);
+			int nd_id; // node id
+			glm::vec2 nd_pt; // node pt
 
-				// Vector to store the split values
-				std::vector<std::string> splitValues;
+			input_file.read(reinterpret_cast<char*>(&nd_id), sizeof(nd_id));
+			input_file.read(reinterpret_cast<char*>(&nd_pt), sizeof(nd_pt));
 
-				// Split the string by comma
-				std::string token;
-				while (std::getline(nodeIss, token, ','))
-				{
-					splitValues.push_back(token);
-				}
+			node_pts_list.push_back(nd_pt); // node points
 
-				if (static_cast<int>(splitValues.size()) != 3)
-				{
-					break;
-				}
-
-				int node_id = std::stoi(splitValues[0]); // node ID
-				double x = std::stod(splitValues[1]); // Node coordinate x
-				double y = std::stod(splitValues[2]); // Node coordinate y
-
-				glm::vec2 node_pt = glm::vec2(x, y);
-				node_pts_list.push_back(node_pt);
-
-				// Add the nodes
-				this->model_nodes.add_node(node_id, node_pt);
-				j++;
-			}
-
-			stopwatch_elapsed_str.str("");
-			stopwatch_elapsed_str << stopwatch.elapsed();
-			std::cout << "Nodes read completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+			// Add to the nodes
+			this->model_nodes.add_node(nd_id, nd_pt);
 		}
-
-		if (inpt_type == "*ELEMENT,TYPE=S3")
+		else if (std::strcmp(type, "line") == 0)
 		{
-			// Triangle Element
-			while (j < lines.size())
-			{
-				std::istringstream elementIss(lines[j + 1]);
+			int line_id, start_node_id, end_node_id, material_id; // line id, start node id, end node id, material id
 
-				// Vector to store the split values
-				std::vector<std::string> splitValues;
+			input_file.read(reinterpret_cast<char*>(&line_id), sizeof(line_id));
+			input_file.read(reinterpret_cast<char*>(&start_node_id), sizeof(start_node_id));
+			input_file.read(reinterpret_cast<char*>(&end_node_id), sizeof(end_node_id));
+			input_file.read(reinterpret_cast<char*>(&material_id), sizeof(material_id));
 
-				// Split the string by comma
-				std::string token;
-				while (std::getline(elementIss, token, ','))
-				{
-					splitValues.push_back(token);
-				}
-
-				if (static_cast<int>(splitValues.size()) != 4)
-				{
-					break;
-				}
-
-				int tri_id = std::stoi(splitValues[0]); // triangle ID
-				int nd1 = std::stoi(splitValues[1]); // Node id 1
-				int nd2 = std::stoi(splitValues[2]); // Node id 2
-				int nd3 = std::stoi(splitValues[3]); // Node id 3
-
-				// Add the Triangle Elements
-				/*this->model_trielements.add_elementtriangle(tri_id, &model_nodes.nodeMap[nd1], &model_nodes.nodeMap[nd2],
-					&model_nodes.nodeMap[nd3]);*/
-				j++;
-			}
-
-
-			stopwatch_elapsed_str.str("");
-			stopwatch_elapsed_str << stopwatch.elapsed();
-			std::cout << "Elements read completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+			// Add to the lines
+			this->model_lineelements.add_elementline(line_id, &this->model_nodes.nodeMap[start_node_id],
+				&this->model_nodes.nodeMap[end_node_id], material_id);
 		}
+		else if (std::strcmp(type, "cnst") == 0)
+		{
+			int node_id, constraint_type; // constraint node id, constraint type
+			glm::vec2 constraint_loc; // constraint location
+			double constraint_angle; // constraint angle
 
-		// Iterate the line
-		j++;
+			input_file.read(reinterpret_cast<char*>(&node_id), sizeof(node_id)); // node id
+			input_file.read(reinterpret_cast<char*>(&constraint_loc), sizeof(constraint_loc)); // constraint location
+			input_file.read(reinterpret_cast<char*>(&constraint_type), sizeof(constraint_type)); // constraint type
+			input_file.read(reinterpret_cast<char*>(&constraint_angle), sizeof(constraint_angle)); // constraint angle
+
+			// Add to the constraints
+			this->node_constraints.add_constraint(node_id, constraint_loc, constraint_type, constraint_angle);
+		}
+		else if (std::strcmp(type, "load") == 0)
+		{
+			int load_id, node_id; // Load id, id of the node its applied to
+			glm::vec2 load_loc = glm::vec2(0); // Load location
+			// Load start time, Load end time, Load value, Load angle, Load phase angle
+			double load_start_time, load_end_time, load_value, load_angle, load_phase; 
+
+			input_file.read(reinterpret_cast<char*>(&load_id), sizeof(load_id)); // Load id
+			input_file.read(reinterpret_cast<char*>(&node_id), sizeof(node_id)); // Node id
+			input_file.read(reinterpret_cast<char*>(&load_loc), sizeof(load_loc)); // Load location
+			input_file.read(reinterpret_cast<char*>(&load_start_time), sizeof(load_start_time)); // Load start time
+			input_file.read(reinterpret_cast<char*>(&load_end_time), sizeof(load_end_time)); // Load end time
+			input_file.read(reinterpret_cast<char*>(&load_value), sizeof(load_value)); // Load value
+			input_file.read(reinterpret_cast<char*>(&load_angle), sizeof(load_angle)); // Load angle
+			input_file.read(reinterpret_cast<char*>(&load_phase), sizeof(load_phase)); // Load phase angle
+
+			// Add to the loads
+			this->node_loads.add_load(load_id, load_loc, load_start_time, load_end_time, load_value, load_angle);
+		}
+		else if (std::strcmp(type, "mass") == 0)
+		{
+			int node_id; // node id
+			glm::vec2 ptmass_loc, ptmass_defl; // pt mass location
+			double ptmass_x, ptmass_y; // value of ptmass x and ptmass y
+			bool is_offset; // offset
+
+			input_file.read(reinterpret_cast<char*>(&node_id), sizeof(node_id)); // Node id
+			input_file.read(reinterpret_cast<char*>(&ptmass_loc), sizeof(ptmass_loc)); // ptmass location
+			input_file.read(reinterpret_cast<char*>(&ptmass_defl), sizeof(ptmass_defl)); // ptmass deflection
+			input_file.read(reinterpret_cast<char*>(&ptmass_x), sizeof(ptmass_x)); // ptmass x value
+			input_file.read(reinterpret_cast<char*>(&ptmass_y), sizeof(ptmass_y)); // ptmass y value
+			input_file.read(reinterpret_cast<char*>(&is_offset), sizeof(is_offset)); // is offset
+
+			// Add to the point mass
+			this->node_ptmass.add_pointmass(node_id, ptmass_loc, ptmass_defl, ptmass_x, ptmass_y, is_offset);
+		}
+		else if (std::strcmp(type, "ilcd") == 0)
+		{
+			int node_id; // node id
+			glm::vec2 inlcond_loc; // initial condition location
+			// initial displacement x, initial displacement y, initial velocity x, initial velocity y
+			double inl_displacement_x,  inl_displacement_y,inl_velocity_x, inl_velocity_y;
+
+			input_file.read(reinterpret_cast<char*>(&node_id), sizeof(node_id)); // Node id
+			input_file.read(reinterpret_cast<char*>(&inlcond_loc), sizeof(inlcond_loc)); // Initial condition location
+			input_file.read(reinterpret_cast<char*>(&inl_displacement_x), sizeof(inl_displacement_x)); // Initial displacement x
+			input_file.read(reinterpret_cast<char*>(&inl_displacement_y), sizeof(inl_displacement_y)); // Initial displacement y
+			input_file.read(reinterpret_cast<char*>(&inl_velocity_x), sizeof(inl_velocity_x)); // Initial velocity x
+			input_file.read(reinterpret_cast<char*>(&inl_velocity_y), sizeof(inl_velocity_y)); // Initial velocity y
+
+			// Add to the initial condition
+			this->node_inlcond.add_inlcondition(node_id, inlcond_loc,
+				inl_displacement_x, inl_displacement_y, inl_velocity_x, inl_velocity_y);
+		}
+		else if (std::strcmp(type, "matr") == 0)
+		{
+			unsigned int material_id;
+			size_t material_name_length;
+			double material_stiffness;
+
+			input_file.read(reinterpret_cast<char*>(&material_id), sizeof(material_id)); // Material id
+			input_file.read(reinterpret_cast<char*>(&material_name_length), sizeof(material_name_length)); // Material name length
+
+			// Allocate a buffer to hold the material name
+			char buffer[256]; // Assuming a reasonable maximum length for the material name
+			input_file.read(buffer, material_name_length);
+			buffer[material_name_length] = '\0'; // Null-terminate the string
+
+			std::string material_name(buffer);
+			input_file.read(reinterpret_cast<char*>(&material_stiffness), sizeof(material_stiffness)); // Material stiffness
+
+			// Create the temporary material
+			material_data inpt_material;
+			inpt_material.material_id = material_id; // Get the material id
+			inpt_material.material_name = material_name; //Default material name
+			inpt_material.material_stiffness = material_stiffness; // N/m
+
+			 // Add to material list
+			 mat_data[material_id] = inpt_material;
+		}
 	}
 
+	// Clear the material list
+	elm_prop_window->material_list.clear();
+	elm_prop_window->material_list = mat_data;
+
+
 	// Input read failed??
-	if (model_nodes.node_count == 0)
+	if (model_nodes.node_count < 1 || model_lineelements.elementline_count < 1)
 	{
+		is_geometry_set = false;
 		std::cerr << "Input error !!" << std::endl;
 		return;
 	}
-
-	// Create the default material
-	material_data inpt_material;
-	inpt_material.material_id = 0; // Get the material id
-	inpt_material.material_name = "Default material"; //Default material name
-	inpt_material.material_stiffness = 100; // N/m
-
-	// Add to materail list
-	elm_prop_window->material_list.clear();
-	elm_prop_window->material_list[inpt_material.material_id] = inpt_material;
 
 	// Geometry is loaded
 	is_geometry_set = true;
@@ -405,6 +557,12 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	this->model_nodes.set_buffer();
 	this->model_lineelements.set_buffer();
 
+	// Set the constraints buffer
+	this->node_constraints.set_buffer();
+	this->node_loads.set_buffer();
+	this->node_ptmass.set_buffer();
+	this->node_inlcond.set_buffer();
+
 	// Set the result object buffers
 
 	stopwatch_elapsed_str.str("");
@@ -412,10 +570,129 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	std::cout << "Model read completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 }
 
+
 void geom_store::write_rawdata(std::ofstream& output_file)
 {
 
+	// Write all the nodes
+	for (auto& nd_m : model_nodes.nodeMap)
+	{
+		char type[5] = { 'n','o','d','e' }; // Identifier for node
+		output_file.write(type, sizeof(type));
+
+		const node_store& node = nd_m.second;
+
+		// Write node data to the binary file
+		output_file.write(reinterpret_cast<const char*>(&node.node_id), sizeof(node.node_id)); // node id
+		output_file.write(reinterpret_cast<const char*>(&node.node_pt), sizeof(node.node_pt)); // node pt
+	}
+
+	// Write all the lines
+	for (auto& ln_m : model_lineelements.elementlineMap)
+	{
+		char type[5] = { 'l','i','n','e' };  // Identifier for line
+		output_file.write(type, sizeof(type));
+
+		const elementline_store& line = ln_m.second;
+
+		// Write line data to the binary file
+		output_file.write(reinterpret_cast<const char*>(&line.line_id), sizeof(line.line_id)); // line id
+		output_file.write(reinterpret_cast<const char*>(&line.startNode->node_id), sizeof(line.startNode->node_id)); // line start node id
+		output_file.write(reinterpret_cast<const char*>(&line.endNode->node_id), sizeof(line.endNode->node_id)); // line end node id
+		output_file.write(reinterpret_cast<const char*>(&line.material_id), sizeof(line.material_id)); // line end node id
+	}
+
+	// Write all the constraints
+	for (auto& cnst_m : node_constraints.constraintMap)
+	{
+		char type[5] = { 'c','n','s','t' };  // Identifier for constraint
+		output_file.write(type, sizeof(type));
+
+		const constraint_data& cnst = cnst_m.second;
+
+		// Write constraint data to the binary file
+		output_file.write(reinterpret_cast<const char*>(&cnst.node_id), sizeof(cnst.node_id)); // node id
+		output_file.write(reinterpret_cast<const char*>(&cnst.constraint_loc), sizeof(cnst.constraint_loc)); // constraint location
+		output_file.write(reinterpret_cast<const char*>(&cnst.constraint_type), sizeof(cnst.constraint_type)); // constraint type
+		output_file.write(reinterpret_cast<const char*>(&cnst.constraint_angle), sizeof(cnst.constraint_angle)); // constraint angle
+	}
+
+	// Write all the loads
+	for (auto& ld_m : node_loads.loadMap)
+	{
+		char type[5] = { 'l','o','a','d' };  // Identifier for load
+		output_file.write(type, sizeof(type));
+
+		const load_data ld = ld_m.second;
+
+		// Write load data to the binary file
+		output_file.write(reinterpret_cast<const char*>(&ld.load_id), sizeof(ld.load_id)); // Load id
+		output_file.write(reinterpret_cast<const char*>(&ld.node_id), sizeof(ld.node_id)); // Node id
+		output_file.write(reinterpret_cast<const char*>(&ld.load_loc), sizeof(ld.load_loc)); // Load location
+		output_file.write(reinterpret_cast<const char*>(&ld.load_start_time), sizeof(ld.load_start_time)); // Load start time
+		output_file.write(reinterpret_cast<const char*>(&ld.load_end_time), sizeof(ld.load_end_time)); // Load end time
+		output_file.write(reinterpret_cast<const char*>(&ld.load_value), sizeof(ld.load_value)); // Load value
+		output_file.write(reinterpret_cast<const char*>(&ld.load_angle), sizeof(ld.load_angle)); // Load angle
+		output_file.write(reinterpret_cast<const char*>(&ld.load_phase), sizeof(ld.load_phase)); // Load phase angle
+	}
+
+	// Write all the point mass
+	for (auto& ptm_m : node_ptmass.ptmassMap)
+	{
+		char type[5] = { 'm','a','s','s' };  // Identifier for point mass
+		output_file.write(type, sizeof(type));
+
+		const nodepointmass_data ptm = ptm_m.second;
+
+		// Write point mass data to the binary file
+		output_file.write(reinterpret_cast<const char*>(&ptm.node_id), sizeof(ptm.node_id)); // Node id
+		output_file.write(reinterpret_cast<const char*>(&ptm.ptmass_loc), sizeof(ptm.ptmass_loc)); // ptmass location
+		output_file.write(reinterpret_cast<const char*>(&ptm.ptmass_defl), sizeof(ptm.ptmass_defl)); // ptmass deflection
+		output_file.write(reinterpret_cast<const char*>(&ptm.ptmass_x), sizeof(ptm.ptmass_x)); // ptmass x value
+		output_file.write(reinterpret_cast<const char*>(&ptm.ptmass_y), sizeof(ptm.ptmass_y)); // ptmass y value
+		output_file.write(reinterpret_cast<const char*>(&ptm.is_offset), sizeof(ptm.is_offset)); // is offset
+		
+	}
+
+	// Write all the initial condition data
+	for (auto& inl_m : node_inlcond.inlcondMap)
+	{
+		char type[5] = { 'i','l','c','d' };  // Identifier for initial condition
+		output_file.write(type, sizeof(type));
+
+		const nodeinl_condition_data inl = inl_m.second;
+
+		// Write initial condition data to the binary file
+		output_file.write(reinterpret_cast<const char*>(&inl.node_id), sizeof(inl.node_id)); // Node id
+		output_file.write(reinterpret_cast<const char*>(&inl.inlcond_loc), sizeof(inl.inlcond_loc)); // Initial condition location
+		output_file.write(reinterpret_cast<const char*>(&inl.inl_displacement_x), sizeof(inl.inl_displacement_x)); // Initial displacement x
+		output_file.write(reinterpret_cast<const char*>(&inl.inl_displacement_y), sizeof(inl.inl_displacement_y)); // Initial displacement y
+		output_file.write(reinterpret_cast<const char*>(&inl.inl_velocity_x), sizeof(inl.inl_velocity_x)); // Initial velocity x
+		output_file.write(reinterpret_cast<const char*>(&inl.inl_velocity_y), sizeof(inl.inl_velocity_y)); // Initial velocity y
+
+	}
+
+	// Write all the material property
+	for (auto& mat_d : elm_prop_window->material_list)
+	{
+		char type[5] = { 'm','a','t','r' };  // Identifier for material properties
+		output_file.write(type, sizeof(type));
+
+		material_data mat = mat_d.second;
+
+		// Write material property data to the binary file
+		output_file.write(reinterpret_cast<const char*>(&mat.material_id), sizeof(mat.material_id)); // Material id
+
+		// Write the length of the material_name and then write the characters
+		size_t material_name_length = mat.material_name.size(); //size of the material name
+		output_file.write(reinterpret_cast<const char*>(&material_name_length), sizeof(material_name_length));
+		output_file.write(mat.material_name.c_str(), material_name_length);
+		output_file.write(reinterpret_cast<const char*>(&mat.material_stiffness), sizeof(mat.material_stiffness)); // Material stiffness
+
+	}
+
 }
+
 
 void geom_store::update_WindowDimension(const int& window_width, const int& window_height)
 {
@@ -464,7 +741,7 @@ void geom_store::update_model_matrix()
 
 	// Update the modal analysis result matrix
 
-	
+
 }
 
 void geom_store::update_model_zoomfit()
@@ -487,7 +764,7 @@ void geom_store::update_model_zoomfit()
 	node_inlcond.update_geometry_matrices(false, true, true, false, false);
 
 	// Update the modal analysis result matrix
-	
+
 }
 
 void geom_store::update_model_pan(glm::vec2& transl)
@@ -510,7 +787,7 @@ void geom_store::update_model_pan(glm::vec2& transl)
 	node_inlcond.update_geometry_matrices(false, true, false, false, false);
 
 	// Update the modal analysis result matrix
-	
+
 }
 
 void geom_store::update_model_zoom(double& z_scale)
@@ -530,7 +807,7 @@ void geom_store::update_model_zoom(double& z_scale)
 	node_inlcond.update_geometry_matrices(false, false, true, false, false);
 
 	// Update the modal analysis result matrix
-	
+
 }
 
 void geom_store::update_model_transperency(bool is_transparent)
@@ -604,9 +881,8 @@ void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::ve
 		if (elm_prop_window->is_show_window == true)
 		{
 			// Selected Element Index
-			/*std::vector<int> selected_elm_ids = model_trielements.is_tri_selected(o_pt, c_pt);
-			elm_prop_window->add_to_element_list(selected_elm_ids, is_rightbutton);*/
-
+			std::vector<int> selected_elm_ids = model_lineelements.is_line_selected(o_pt, c_pt);
+			elm_prop_window->add_to_element_list(selected_elm_ids, is_rightbutton);
 		}
 	}
 }
@@ -647,7 +923,7 @@ void geom_store::paint_model()
 		{
 			// Show model element ids
 			model_lineelements.paint_label_line_ids();
-		
+
 		}
 		if (op_window->is_show_modelelementlengths == true)
 		{
@@ -656,7 +932,7 @@ void geom_store::paint_model()
 		}
 
 	}
-		
+
 	if (op_window->is_show_modelnodes == true)
 	{
 		// Show the model nodes
@@ -738,59 +1014,15 @@ void geom_store::paint_model()
 
 	if (elm_prop_window->is_show_window == true)
 	{
-		// Element Properties Window 
-			// Selection rectangle
-		selection_rectangle.paint_selection_rectangle();
-
-				// Paint the selected elements
-		if (elm_prop_window->is_selected_count == true)
-		{
-			//model_trielements.paint_selected_elementtriangles();
-		}
-
-		// Check whether the selection changed
-		if (elm_prop_window->is_selection_changed == true)
-		{
-			//model_trielements.add_selection_triangles(elm_prop_window->selected_elements);
-			elm_prop_window->is_selection_changed = false;
-		}
-
-		// Material deleted
-		if (elm_prop_window->execute_delete_materialid != -1)
-		{
-			// Delete material
-			// Execute delete material id
-			//model_trielements.execute_delete_material(elm_prop_window->execute_delete_materialid);
-			elm_prop_window->execute_delete_materialid = -1;
-
-			// Remove the selection
-			elm_prop_window->selected_elements.clear();
-			elm_prop_window->is_selection_changed = true;
-		}
-
-		// Apply the Element properties
-		if (elm_prop_window->apply_element_properties == true)
-		{
-			// Apply material properties to the selected triangle elements
-			int material_id = elm_prop_window->material_list[elm_prop_window->selected_material_option].material_id; // get the material id
-			//model_trielements.update_material(elm_prop_window->selected_elements, material_id);
-			elm_prop_window->apply_element_properties = false;
-
-			// Remove the selection
-			elm_prop_window->selected_elements.clear();
-			elm_prop_window->is_selection_changed = true;
-		}
-
-		// Paint the material ID
-		//model_trielements.paint_tri_material_id();
+		// Element properties window
+		paint_element_prop_operation();
 	}
-
 }
 
 void geom_store::paint_model_results()
 {
 	// Paint the results
-	
+
 }
 
 
@@ -802,9 +1034,9 @@ void geom_store::paint_node_constraint_operation()
 	// Paint the selected nodes
 	if (nd_cnst_window->is_selected_count == true)
 	{
-		glPointSize(6.0f);
+		glPointSize(geom_param.selected_point_size);
 		model_nodes.paint_selected_model_nodes();
-		glPointSize(3.0f);
+		glPointSize(geom_param.point_size);
 	}
 
 	// Check whether the selection changed
@@ -865,9 +1097,9 @@ void  geom_store::paint_node_load_operation()
 	// Paint the selected nodes
 	if (nd_load_window->is_selected_count == true)
 	{
-		glPointSize(6.0f);
+		glPointSize(geom_param.selected_point_size);
 		model_nodes.paint_selected_model_nodes();
-		glPointSize(3.0f);
+		glPointSize(geom_param.point_size);
 	}
 
 	// Check whether the selection changed
@@ -888,7 +1120,7 @@ void  geom_store::paint_node_load_operation()
 		for (int& id : nd_load_window->selected_nodes)
 		{
 			// Add the loads
-			node_loads.add_load(id, model_nodes.nodeMap[id].node_pt, 
+			node_loads.add_load(id, model_nodes.nodeMap[id].node_pt,
 				load_start_time, load_end_time, load_amplitude, load_angle);
 		}
 
@@ -932,9 +1164,9 @@ void geom_store::paint_node_ptmass_operation()
 	// Paint the selected nodes
 	if (nd_ptmass_window->is_selected_count == true)
 	{
-		glPointSize(6.0f);
+		glPointSize(geom_param.selected_point_size);
 		model_nodes.paint_selected_model_nodes();
-		glPointSize(3.0f);
+		glPointSize(geom_param.point_size);
 	}
 
 	// Check whether the selection changed
@@ -949,12 +1181,12 @@ void geom_store::paint_node_ptmass_operation()
 	{
 		double pt_mass_x = nd_ptmass_window->mass_x; // Point mass x values
 		double pt_mass_y = nd_ptmass_window->mass_y; // Point mass y values
-		
+
 		for (int& id : nd_ptmass_window->selected_nodes)
 		{
 			// Add the point mass
-			node_ptmass.add_pointmass(id, model_nodes.nodeMap[id].node_pt,glm::vec2(0),
-				pt_mass_x,pt_mass_y,false);
+			node_ptmass.add_pointmass(id, model_nodes.nodeMap[id].node_pt, glm::vec2(0),
+				pt_mass_x, pt_mass_y, false);
 		}
 
 		node_ptmass.set_buffer();
@@ -997,9 +1229,9 @@ void geom_store::paint_node_inlcond_operation()
 	// Paint the selected nodes
 	if (nd_inlcond_window->is_selected_count == true)
 	{
-		glPointSize(6.0f);
+		glPointSize(geom_param.selected_point_size);
 		model_nodes.paint_selected_model_nodes();
-		glPointSize(3.0f);
+		glPointSize(geom_param.point_size);
 	}
 
 	// Check whether the selection changed
@@ -1056,3 +1288,56 @@ void geom_store::paint_node_inlcond_operation()
 	}
 }
 
+
+void geom_store::paint_element_prop_operation()
+{
+	// Paint the element properties application pre processing
+	// Element Properties Window 
+			// Selection rectangle
+	selection_rectangle.paint_selection_rectangle();
+
+	// Paint the selected elements
+	if (elm_prop_window->is_selected_count == true)
+	{
+		glLineWidth(geom_param.selected_line_width);
+		model_lineelements.paint_selected_elementlines();
+		glLineWidth(geom_param.line_width);
+	}
+
+	// Check whether the selection changed
+	if (elm_prop_window->is_selection_changed == true)
+	{
+		model_lineelements.add_selection_lines(elm_prop_window->selected_elements);
+		elm_prop_window->is_selection_changed = false;
+	}
+
+	// Material deleted
+	if (elm_prop_window->execute_delete_materialid != -1)
+	{
+		// Delete material
+		// Execute delete material id
+		model_lineelements.execute_delete_material(elm_prop_window->execute_delete_materialid);
+		elm_prop_window->execute_delete_materialid = -1;
+
+		// Remove the selection
+		elm_prop_window->selected_elements.clear();
+		elm_prop_window->is_selection_changed = true;
+	}
+
+	// Apply the Element properties
+	if (elm_prop_window->apply_element_properties == true)
+	{
+		// Apply material properties to the selected line elements
+		int material_id = elm_prop_window->material_list[elm_prop_window->selected_material_option].material_id; // get the material id
+		model_lineelements.update_material(elm_prop_window->selected_elements, material_id);
+		elm_prop_window->apply_element_properties = false;
+
+		// Remove the selection
+		elm_prop_window->selected_elements.clear();
+		elm_prop_window->is_selection_changed = true;
+	}
+
+	// Paint the material ID
+	model_lineelements.paint_lines_material_id();
+
+}

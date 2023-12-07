@@ -11,10 +11,11 @@ struct geom_color_theme
 	glm::vec3 background_color = glm::vec3(0);
 	glm::vec3 node_color = glm::vec3(0);
 	glm::vec3 selection_color = glm::vec3(0);
-	glm::vec3 line_color = glm::vec3(0);
+	glm::vec3 rigid_line_color = glm::vec3(0);
+	glm::vec3 spring_line_color = glm::vec3(0);
+	glm::vec3 line_length_color = glm::vec3(0);
 	glm::vec3 load_color = glm::vec3(0);
 	glm::vec3 constraint_color = glm::vec3(0);
-	glm::vec3 triangle_color = glm::vec3(0);
 	glm::vec3 ptmass_color = glm::vec3(0);
 	glm::vec3 inlcond_displ_color = glm::vec3(0);
 	glm::vec3 inlcond_velo_color = glm::vec3(0);
@@ -45,6 +46,14 @@ public:
 	// Standard sizes
 	const float font_size = static_cast<float>(12.0f * std::pow(10, -5));
 	const float node_circle_radii = 0.005f;
+
+	// Geometry size
+	const float point_size = 3.0f;
+	const float selected_point_size = 6.0f;
+	const float line_width = 1.6f;
+	const float selected_line_width = 4.2f;
+	const float spring_element_width = 2.4f;
+	const float rigid_element_width = 0.6f;
 
 	// Precision for various values
 	const int length_precision = 2;

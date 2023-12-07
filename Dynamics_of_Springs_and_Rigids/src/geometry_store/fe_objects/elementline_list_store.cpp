@@ -65,7 +65,7 @@ void elementline_list_store::add_elementline(int& line_id, node_store* startNode
 	elementline_count++;
 
 	//__________________________ Get the node points
-	glm::vec3 temp_color = geom_param_ptr->geom_colors.line_color;
+	glm::vec3 temp_color = glm::vec3(0);
 	glm::vec2 start_node_pt = (*startNode).node_pt;
 	glm::vec2 end_node_pt = (*endNode).node_pt;
 
@@ -85,16 +85,9 @@ void elementline_list_store::add_elementline(int& line_id, node_store* startNode
 
 	//__________________________ Add the Line ID labels
 	std::string temp_str = "";
-	if (material_id == 0)
-	{
-		// Rigid element
-		temp_str = "R[" + std::to_string(line_id) + "]";
-	}
-	else
-	{
-		// Spring element
-		temp_str = "K[" + std::to_string(line_id) + "]";
-	}
+	temp_color = geom_param_ptr->geom_colors.line_length_color;
+
+	temp_str = "[" + std::to_string(line_id) + "]";
 	glm::vec2 line_mid_pt = (start_node_pt + end_node_pt) / 2.0f;
 
 	// Calculate the angle between the line segment and the x-axis
@@ -123,8 +116,117 @@ void elementline_list_store::add_selection_lines(const std::vector<int>& selecte
 
 	for (const auto& it : selected_edge_ids)
 	{
-		selected_element_lines.add_line(elementlineMap[it].line_id, elementlineMap[it].startNode->node_pt, elementlineMap[it].endNode->node_pt,
-			glm::vec2(0),glm::vec2(0), temp_color, temp_color, false);
+		// ID, Start node pt and End node pt of the selected line
+		glm::vec2 start_node_pt = elementlineMap[it].startNode->node_pt;
+		glm::vec2 end_node_pt = elementlineMap[it].endNode->node_pt;
+
+		// Line length
+		double element_length = geom_parameters::get_line_length(start_node_pt, end_node_pt);
+		
+		// Flat ends of the spring
+		int line_id = selected_element_lines.line_count;
+		glm::vec2 curr_pt = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.25f);
+
+		// Flat end 1
+		selected_element_lines.add_line(line_id, start_node_pt, curr_pt,
+			glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
+
+		curr_pt = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.75f);
+
+		// Flat end 2
+		line_id = selected_element_lines.line_count;
+		selected_element_lines.add_line(line_id, curr_pt, end_node_pt,
+			glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
+
+		// Spring portion
+		double l_cos = (end_node_pt.x - start_node_pt.x) / element_length; // l cosine
+		double m_sin = (start_node_pt.y - end_node_pt.y) / element_length; // m sine
+
+		glm::vec2 origin_pt = geom_parameters::linear_interpolation(start_node_pt, 
+			end_node_pt, 0.25f); // origin pt for adding the spring portion
+		glm::vec2 prev_pt = glm::vec2(0);
+
+		if (elementlineMap[it].material_id < 1)
+		{
+			// Rigid elements
+			//__________________________ Add the lines
+				double rigid_width_amplitude = geom_param_ptr->rigid_element_width * 
+				(geom_param_ptr->node_circle_radii / geom_param_ptr->geom_scale);
+
+			// Rigid segment 1
+			double pt_x = 0;
+			double pt_y = rigid_width_amplitude*1;
+
+			curr_pt = glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+			curr_pt = curr_pt + origin_pt;
+
+			pt_x = element_length * 0.5f;
+			pt_y = rigid_width_amplitude * 1;
+
+			prev_pt = glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+			prev_pt = prev_pt + origin_pt;
+
+			line_id = selected_element_lines.line_count;
+			selected_element_lines.add_line(line_id, curr_pt, prev_pt,
+				glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
+
+			// Rigid segment 2
+			pt_x = 0;
+			pt_y = rigid_width_amplitude * -1;
+
+			curr_pt = glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+			curr_pt = curr_pt + origin_pt;
+
+			pt_x = element_length * 0.5f;
+			pt_y = rigid_width_amplitude * -1;
+
+			prev_pt = glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+			prev_pt = prev_pt + origin_pt;
+
+			line_id = selected_element_lines.line_count;
+			selected_element_lines.add_line(line_id, curr_pt, prev_pt,
+				glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
+		}
+		else
+		{
+		
+			int turn_count = static_cast<int>(geom_parameters::get_remap(element_max_length, element_min_length,
+				spring_turn_max, spring_turn_min, element_length)); // spring turn frequency
+
+			glm::vec2 prev_pt = origin_pt;
+			curr_pt = glm::vec2(0);
+
+			double spring_width_amplitude = geom_param_ptr->spring_element_width * 
+				(geom_param_ptr->node_circle_radii / geom_param_ptr->geom_scale);
+
+			// Points of springs
+			for (int i = 1; i < turn_count; i++)
+			{
+				double param_t = i / static_cast<double>(turn_count);
+
+				double pt_x = (param_t * element_length * 0.5f);
+				double pt_y = spring_width_amplitude * ((i % 2 == 0) ? 1 : -1);
+
+				curr_pt = glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+				curr_pt = curr_pt + origin_pt;
+
+				line_id = selected_element_lines.line_count;
+
+				selected_element_lines.add_line(line_id, prev_pt, curr_pt,
+					glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
+
+				// set the previous pt
+				prev_pt = curr_pt;
+			}
+
+			// Last point
+			curr_pt = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.75f);
+
+			line_id = selected_element_lines.line_count;
+
+			selected_element_lines.add_line(line_id, prev_pt, curr_pt,
+				glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
+		}
 	}
 
 	// Set the selected element lines buffer
@@ -132,11 +234,50 @@ void elementline_list_store::add_selection_lines(const std::vector<int>& selecte
 }
 
 
+void elementline_list_store::update_material(const std::vector<int> selected_element_line, const int& material_id)
+{
+	// Update the material ID
+	for (const int& it : selected_element_line)
+	{
+		elementlineMap[it].material_id = material_id;
+	}
+
+	// Update the material ID label
+	update_material_id_labels();
+}
+
+
+void elementline_list_store::execute_delete_material(const int& del_material_id)
+{
+	// Update delete material
+	bool is_del_material_found = false; // Flag to check whether material id deleted
+
+	// Delete the material
+	for (const auto& ln : elementlineMap)
+	{
+		int id = ln.first; // get the id
+		if (elementlineMap[id].material_id == del_material_id)
+		{
+			// Delete material is removed and the material ID of that element to 1 (Default spring element)
+			elementlineMap[id].material_id = 1;
+			is_del_material_found = true;
+		}
+	}
+
+	// Update the material ID label
+	if (is_del_material_found == true)
+	{
+		update_material_id_labels();
+	}
+
+}
+
+
 void elementline_list_store::set_buffer()
 {
 	// Set the buffers for the Model
 	recreate_element_lines();
-
+	update_material_id_labels();
 	// Line ID and Line Length labels
 	line_id_labels.set_buffer();
 	line_length_labels.set_buffer();
@@ -167,13 +308,19 @@ void elementline_list_store::paint_label_line_lengths()
 	line_length_labels.paint_text();
 }
 
+void elementline_list_store::paint_lines_material_id()
+{
+	// Paint line material ID
+	line_material_id_labels.paint_text();
+}
+
 void elementline_list_store::recreate_element_lines()
 {
 	// Re-create the element lines
 		// clear the element lines
 	element_lines.clear_lines();
 
-	glm::vec3 temp_color = geom_param_ptr->geom_colors.line_color;
+	glm::vec3 temp_color = glm::vec3(0);
 
 	for (const auto& ln_m : elementlineMap)
 	{
@@ -182,23 +329,86 @@ void elementline_list_store::recreate_element_lines()
 		// ID, Start node pt and End node pt
 		glm::vec2 start_node_pt = ln.startNode->node_pt;
 		glm::vec2 end_node_pt = ln.endNode->node_pt;
+		glm::vec2 curr_pt = glm::vec2(0);
+		glm::vec2 origin_pt = glm::vec2(0);
+		glm::vec2 prev_pt = glm::vec2(0);
 
 		// Line length
 		double element_length = geom_parameters::get_line_length(start_node_pt, end_node_pt);
+
+		// Direction cosines
+		double l_cos = (end_node_pt.x - start_node_pt.x) / element_length; // l cosine
+		double m_sin = (start_node_pt.y - end_node_pt.y) / element_length; // m sine
+
 
 		if (ln.material_id < 1)
 		{
 			// Rigid elements
 			//__________________________ Add the lines
+			temp_color = geom_param_ptr->geom_colors.rigid_line_color;
+
+			// Flat ends of rigid
+			// Flat end 1
+			curr_pt = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.25f);
+
 			int line_id = element_lines.line_count;
-			element_lines.add_line(line_id, start_node_pt, end_node_pt,
+			element_lines.add_line(line_id, start_node_pt, curr_pt,
+				glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
+
+			// Flat end 2
+			curr_pt = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.75f);
+
+			line_id = element_lines.line_count;
+			element_lines.add_line(line_id, curr_pt, end_node_pt,
+				glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
+
+
+			// Rigid segment 1
+			double rigid_width_amplitude = geom_param_ptr->rigid_element_width *
+				(geom_param_ptr->node_circle_radii / geom_param_ptr->geom_scale);
+
+
+			origin_pt = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.25f); // origin point
+
+			double pt_x = 0;
+			double pt_y = rigid_width_amplitude * 1;
+
+			curr_pt = glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+			curr_pt = curr_pt + origin_pt;
+
+			pt_x = element_length * 0.5f;
+			pt_y = rigid_width_amplitude * 1;
+
+			prev_pt = glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+			prev_pt = prev_pt + origin_pt;
+
+			line_id = element_lines.line_count;
+			element_lines.add_line(line_id, curr_pt, prev_pt,
+				glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
+
+			// Rigid segment 2
+			pt_x = 0;
+			pt_y = rigid_width_amplitude * -1;
+
+			curr_pt = glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+			curr_pt = curr_pt + origin_pt;
+
+			pt_x = element_length * 0.5f;
+			pt_y = rigid_width_amplitude * -1;
+
+			prev_pt = glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+			prev_pt = prev_pt + origin_pt;
+
+			line_id = element_lines.line_count;
+			element_lines.add_line(line_id, curr_pt, prev_pt,
 				glm::vec2(0), glm::vec2(0), temp_color, temp_color, false);
 		}
 		else
 		{
 			// Flat ends of the spring
 			int line_id = element_lines.line_count;
-			glm::vec2 curr_pt = geom_parameters::linear_interpolation(start_node_pt,end_node_pt,0.25f);
+			temp_color = geom_param_ptr->geom_colors.spring_line_color;
+			curr_pt = geom_parameters::linear_interpolation(start_node_pt,end_node_pt,0.25f);
 
 			// Flat end 1
 			element_lines.add_line(line_id, start_node_pt, curr_pt,
@@ -213,20 +423,18 @@ void elementline_list_store::recreate_element_lines()
 
 
 			// Spring portion
-			double l_cos = (end_node_pt.x - start_node_pt.x) / element_length; // l cosine
-			double m_sin = (start_node_pt.y - end_node_pt.y) / element_length; // m sine
-
-			int turn_count = static_cast<int>(geom_parameters::get_remap(element_max_length, element_min_length,
+					int turn_count = static_cast<int>(geom_parameters::get_remap(element_max_length, element_min_length,
 				spring_turn_max,spring_turn_min,element_length)); // spring turn frequency
 
-			glm::vec2 origin_pt = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.25f); // previous point
-			glm::vec2 prev_pt = origin_pt;
+			origin_pt = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.25f); // origin point
+			prev_pt = origin_pt;
 			curr_pt = glm::vec2(0);
 
-			double spring_width_amplitude = 2.4f*(geom_param_ptr->node_circle_radii / geom_param_ptr->geom_scale);
+			double spring_width_amplitude = geom_param_ptr->spring_element_width *
+				(geom_param_ptr->node_circle_radii / geom_param_ptr->geom_scale);
 
 			// Points of springs
-			for (int i = 0; i <= turn_count; i++)
+			for (int i = 1; i < turn_count; i++)
 			{
 				double param_t = i / static_cast<double>(turn_count);
 
@@ -302,7 +510,7 @@ int elementline_list_store::is_line_hit(glm::vec2& loc)
 	return -1;
 }
 
-std::vector<int> elementline_list_store::is_edge_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2)
+std::vector<int> elementline_list_store::is_line_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2)
 {
 	// Return the node id of node which is inside the rectangle
 	// Covert mouse location to screen location
@@ -413,12 +621,12 @@ void elementline_list_store::update_material_id_labels()
 		if (elementline.material_id < 1)
 		{
 			// Rigid element
-			temp_str = "                 Rigid [" + std::to_string(elementline.material_id) + "]";
+			temp_str = "                       Rigid [" + std::to_string(elementline.material_id) + "]";
 		}
 		else
 		{
 			// Spring element
-			temp_str = "                 Spring [" + std::to_string(elementline.material_id) + "]";
+			temp_str = "                         Spring [" + std::to_string(elementline.material_id) + "]";
 		}
 		
 		line_material_id_labels.add_text(temp_str, line_mid_pt, glm::vec2(0), temp_color, line_angle, true, false);
@@ -440,7 +648,7 @@ void elementline_list_store::update_geometry_matrices(bool set_modelmatrix, bool
 	line_material_id_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
 }
 
-int elementline_list_store::get_edge_id(const int& startNode_id, const int& endNode_id)
+int elementline_list_store::get_line_id(const int& startNode_id, const int& endNode_id)
 {
 	// Return the edge id
 	for (const auto& line_m : elementlineMap)

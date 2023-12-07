@@ -108,6 +108,6 @@ private:
 	void paint_node_load_operation(); // Paint the node load pre processing
 	void paint_node_ptmass_operation(); // Paint the node point mass pre processing
 	void paint_node_inlcond_operation(); // Paint the node initial condition pre processing
-
+	void paint_element_prop_operation(); // Paint the Element properties pre processing
 };
 

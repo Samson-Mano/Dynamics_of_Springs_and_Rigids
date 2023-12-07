@@ -23,6 +23,7 @@ public:
 private:
 	std::string ShowOpenFileDialog();
 	std::string ShowOpenFileDialog_dxf();
+	std::string ShowOpenFileDialog_bin();
 	std::string ShowSaveFileDialog();
 
 	void import_varai2d_geometry(geom_store& geom);

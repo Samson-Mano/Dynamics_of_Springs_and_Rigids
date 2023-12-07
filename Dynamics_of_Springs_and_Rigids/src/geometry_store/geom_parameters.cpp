@@ -20,34 +20,59 @@ void geom_parameters::init()
 	main_font.create_atlas(resourcePath);
 
 	// Initialize the color theme
-	geom_colors.background_color = glm::vec3(0.62f, 0.62f, 0.62f); // White
-	geom_colors.selection_color = glm::vec3(0.862745f, 0.078431f, 0.23529f); // Crimson
-	geom_colors.constraint_color = glm::vec3(0.0f, 0.50196f, 0.0f); // Green
+	//geom_colors.background_color = glm::vec3(0.62f, 0.62f, 0.62f); // White
+	//geom_colors.selection_color = glm::vec3(0.862745f, 0.078431f, 0.23529f); // Crimson
+	//geom_colors.constraint_color = glm::vec3(0.0f, 0.50196f, 0.0f); // Green
+	//geom_colors.load_color = glm::vec3(0.6f, 0.0f, 0.6f);
+	//geom_colors.ptmass_color = glm::vec3(0.82f, 0.77f, 0.92f);
+	//geom_colors.inlcond_displ_color = glm::vec3(0.96f, 0.5f, 0.1f);
+	//geom_colors.inlcond_velo_color = glm::vec3(0.54f, 0.06f, 0.31f);
+	//geom_colors.node_color = glm::vec3(0.54509f, 0.0f, 0.4f); // Dark Red
+	//geom_colors.line_color = glm::vec3(1.0f, 0.54901f, 0.6f); // Dark Orange
+
+	geom_colors.node_color = glm::vec3(0.8f, 0.2f, 0.2f); // Light Red
+	geom_colors.rigid_line_color = glm::vec3(0.7f, 0.3f, 0.7f); // Purple 
+	geom_colors.spring_line_color = glm::vec3(0.1f, 0.1f, 0.8f); // Dark Blue 
+	geom_colors.line_length_color = glm::vec3(1.0f, 0.54901f, 0.6f); //  Dark Orange
+
+	geom_colors.ptmass_color = glm::vec3(0.2f, 0.7f, 0.2f); // Green
+	geom_colors.constraint_color = glm::vec3(0.5f, 0.5f, 0.5f); // Gray
 	geom_colors.load_color = glm::vec3(0.6f, 0.0f, 0.6f);
-	geom_colors.ptmass_color = glm::vec3(0.82f, 0.77f, 0.92f);
+
+	geom_colors.background_color = glm::vec3(0.95f, 0.95f, 0.95f); // Light gray
+	geom_colors.selection_color = glm::vec3(0.862745f, 0.078431f, 0.23529f); // Crimson
+
 	geom_colors.inlcond_displ_color = glm::vec3(0.96f, 0.5f, 0.1f);
 	geom_colors.inlcond_velo_color = glm::vec3(0.54f, 0.06f, 0.31f);
 
-	// Theme 1 
-	geom_colors.node_color = glm::vec3(0.54509f, 0.0f, 0.4f); // Dark Red
-	geom_colors.line_color = glm::vec3(1.0f, 0.54901f, 0.6f); // Dark Orange
-	geom_colors.triangle_color = glm::vec3(0.90196f, 0.90196f, 0.98039f); // Lavender
 
-	//// Theme 2
-	//geom_colors.node_color = glm::vec3(135.0f / 255.0f, 206.0f / 255.0f, 250.0f / 255.0f); // Sky Blue
-	//geom_colors.line_color = glm::vec3(47.0f / 255.0f, 79.0f / 255.0f, 79.0f / 255.0f); // Dark Slate Gray
-	//geom_colors.triangle_color = glm::vec3(240.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f); // Light Coral
 
-	//// Theme 3
-	//geom_colors.node_color = glm::vec3(144.0f / 255.0f, 238.0f / 255.0f, 144.0f / 255.0f); // Light Green
-	//geom_colors.line_color = glm::vec3(105.0f / 255.0f, 105.0f / 255.0f, 105.0f / 255.0f); // Dim Gray
-	//geom_colors.triangle_color = glm::vec3(147.0f / 255.0f, 112.0f / 255.0f, 219.0f / 255.0f); // Medium Purple
-
-	//// Theme 4
-	//geom_colors.node_color = glm::vec3(255.0f / 255.0f, 215.0f / 255.0f, 0.0f); // Gold
-	//geom_colors.line_color = glm::vec3(85.0f / 255.0f, 107.0f / 255.0f, 47.0f / 255.0f); // Dark Olive Green
-	//geom_colors.triangle_color = glm::vec3(218.0f / 255.0f, 112.0f / 255.0f, 214.0f / 255.0f); // Orchid
-
+//	Theme 1:
+//
+//	Nodes: glm::vec3(0.8, 0.2, 0.2) (Light Red)
+//	Rigid Elements : glm::vec3(0.1, 0.1, 0.8) (Dark Blue)
+//	Spring Elements : glm::vec3(0.9, 0.6, 0.1) (Orange)
+//	Mass Elements : glm::vec3(0.2, 0.7, 0.2) (Green)
+//	Supports : glm::vec3(0.5, 0.5, 0.5) (Gray)
+//	Background : glm::vec3(0.95, 0.95, 0.95) (Light Gray)
+//
+//	Theme 2 :
+//
+//	Nodes : glm::vec3(0.2, 0.6, 0.8) (Sky Blue)
+//	Rigid Elements : glm::vec3(0.7, 0.3, 0.7) (Purple)
+//	Spring Elements : glm::vec3(0.95, 0.8, 0.3) (Light Yellow)
+//	Mass Elements : glm::vec3(0.3, 0.8, 0.4) (Light Green)
+//	Supports : glm::vec3(0.4, 0.4, 0.4) (Dark Gray)
+//	Background : glm::vec3(0.1, 0.1, 0.1) (Dark Black)
+//
+//	Theme 3 :
+//
+//	Nodes : glm::vec3(1.0, 0.0, 0.0) (Red)
+//	Rigid Elements : glm::vec3(0.0, 0.0, 1.0) (Blue)
+//	Spring Elements : glm::vec3(1.0, 1.0, 0.0) (Yellow)
+//	Mass Elements : glm::vec3(0.0, 1.0, 0.0) (Green)
+//	Supports : glm::vec3(0.5, 0.5, 0.5) (Gray)
+//	Background : glm::vec3(0.9, 0.9, 0.9) (Light Gray)
 
 	/*
 	// Initialize the color theme

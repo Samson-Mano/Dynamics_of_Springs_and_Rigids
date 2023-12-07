@@ -10,6 +10,7 @@ struct load_data
 	double load_end_time = 0.0; // Load end time
 	double load_value = 0.0; // Load value
 	double load_angle = 0.0; // Load angle
+	double load_phase = 0.0; // Load phase angle
 };
 
 class nodeload_list_store

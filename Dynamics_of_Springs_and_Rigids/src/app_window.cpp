@@ -149,8 +149,8 @@ void app_window::app_render()
 
 	// Set the point size and line width
 	// Set the point size
-	glPointSize(4.0f);
-	glLineWidth(1.2f);
+	glPointSize(geom.geom_param.point_size);
+	glLineWidth(geom.geom_param.line_width);
 
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
@@ -275,12 +275,24 @@ void app_window::menu_events()
 		// Solve
 		if (ImGui::BeginMenu("Solve"))
 		{
-			if (ImGui::MenuItem("Finite Element Solve"))
+			if (ImGui::MenuItem("Modal Analysis Solve"))
 			{
-				// Finite Element Solve
+				// Modal Analysis Solve
 				sol_window.execute_open = true;
 				sol_window.is_show_window = true;
 			}
+			if (ImGui::MenuItem("Pulse Analysis Solve"))
+			{
+				// Pulse Analysis Solve
+			
+
+			}
+			if (ImGui::MenuItem("Forced Response Analysis Solve"))
+			{
+				// Forced Response Analysis Solve
+	 
+			}
+
 			ImGui::EndMenu();
 		}
 
