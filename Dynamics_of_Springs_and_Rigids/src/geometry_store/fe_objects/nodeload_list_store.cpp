@@ -31,7 +31,7 @@ void nodeload_list_store::init(geom_parameters* geom_param_ptr)
 }
 
 void nodeload_list_store::add_load(int& node_id, glm::vec2& load_loc, double& load_start_time, double& load_end_time,
-	double& load_value, double& load_angle)
+	double& load_value, double& load_angle, double& load_phase_angle)
 {
 	load_data temp_load;
 	temp_load.load_id = get_unique_load_id(); // Load id
@@ -41,6 +41,7 @@ void nodeload_list_store::add_load(int& node_id, glm::vec2& load_loc, double& lo
 	temp_load.load_end_time = load_end_time; // Load end time
 	temp_load.load_value = load_value; // Load value
 	temp_load.load_angle = load_angle; // Load angle
+	temp_load.load_phase = load_phase_angle; // Load phase angle
 
 	// Insert the load to line
 	loadMap.insert({ temp_load.load_id, temp_load });

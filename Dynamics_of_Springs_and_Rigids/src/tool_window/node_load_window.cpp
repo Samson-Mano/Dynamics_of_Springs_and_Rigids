@@ -50,6 +50,11 @@ void node_load_window::render_window()
 	get_load_angle_input();
 
 	//_________________________________________________________________________________________
+	// Get the load phase angle input
+
+	get_load_phase_angle_input();
+
+	//_________________________________________________________________________________________
 
 	// Selected Node list
 	ImGui::Spacing();
@@ -294,6 +299,55 @@ void node_load_window::get_load_angle_input()
 }
 
 
+void node_load_window::get_load_phase_angle_input()
+{
+	// Input box to give input via text
+	static bool input_mode = false;
+	static char phase_angle_str[8] = ""; // buffer to store input phase angle string
+	static float phase_angle_input = static_cast<float>(load_phase_angle); // buffer to store input phase angle value
+
+	// Button to switch to input mode
+	if (!input_mode)
+	{
+		if (ImGui::Button("Input Load Phase Angle"))
+		{
+			input_mode = true;
+			snprintf(phase_angle_str, 8, "%.2f", phase_angle_input); // set the buffer to current angle
+		}
+	}
+	else // input mode
+	{
+		// Text box to input angle value
+		ImGui::SetNextItemWidth(60.0f);
+		if (ImGui::InputText("##InputPhaseAngle", phase_angle_str, IM_ARRAYSIZE(phase_angle_str), ImGuiInputTextFlags_CharsDecimal)) // ImGuiInputTextFlags_CharsDecimal
+		{
+			// convert the input string to float
+			phase_angle_input = static_cast<float>(atof(phase_angle_str));
+			// limit the value to 0 - 360 range
+			phase_angle_input = fmaxf(0.0f, fminf(phase_angle_input, 360.0f));
+			// set the angle to input value
+			load_phase_angle = phase_angle_input;
+		}
+
+		// Button to switch back to slider mode
+		ImGui::SameLine();
+		if (ImGui::Button("OK"))
+		{
+			input_mode = false;
+		}
+	}
+
+	// Slider for angle
+	phase_angle_input = static_cast<float>(load_phase_angle);
+
+	ImGui::Text("Angle");
+	ImGui::SameLine();
+	ImGui::SliderFloat("Phase", &phase_angle_input, 0.0f, 360.0f, "%.2f");
+
+	load_phase_angle = phase_angle_input;
+
+}
+
 void node_load_window::add_to_node_list(const std::vector<int>& selected_nodes, const bool& is_right)
 {
 	if (is_right == false)
@@ -346,7 +400,8 @@ void node_load_window::draw_load()
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
 
-		draw_list->AddRect(window_pos, ImVec2(window_pos.x + window_size.x, window_pos.y + window_size.y), ImColor(255, 255, 255));
+		draw_list->AddRect(window_pos, ImVec2(window_pos.x + window_size.x, window_pos.y + window_size.y),
+			ImColor(255, 255, 255));
 
 		ImVec2 img_pos_top_left(0, 0);
 		ImVec2 img_pos_top_right(0, 0);

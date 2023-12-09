@@ -459,7 +459,8 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 			input_file.read(reinterpret_cast<char*>(&load_phase), sizeof(load_phase)); // Load phase angle
 
 			// Add to the loads
-			this->node_loads.add_load(load_id, load_loc, load_start_time, load_end_time, load_value, load_angle);
+			this->node_loads.add_load(load_id, load_loc, load_start_time, load_end_time, 
+				load_value, load_angle, load_phase);
 		}
 		else if (std::strcmp(type, "mass") == 0)
 		{
@@ -1116,12 +1117,13 @@ void  geom_store::paint_node_load_operation()
 		double load_start_time = nd_load_window->load_start_time; // load start time
 		double load_end_time = nd_load_window->load_end_time; // load end time
 		double load_angle = nd_load_window->load_angle; // load angle
+		double load_phase = nd_load_window->load_phase_angle; // load phase angle
 
 		for (int& id : nd_load_window->selected_nodes)
 		{
 			// Add the loads
 			node_loads.add_load(id, model_nodes.nodeMap[id].node_pt,
-				load_start_time, load_end_time, load_amplitude, load_angle);
+				load_start_time, load_end_time, load_amplitude, load_angle, load_phase);
 		}
 
 		node_loads.set_buffer();

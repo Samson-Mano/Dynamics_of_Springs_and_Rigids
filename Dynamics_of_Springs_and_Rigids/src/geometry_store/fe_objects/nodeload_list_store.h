@@ -22,7 +22,8 @@ public:
 	nodeload_list_store();
 	~nodeload_list_store();
 	void init(geom_parameters* geom_param_ptr);
-	void add_load(int& node_id, glm::vec2& load_loc, double& load_start_time, double& load_end_time, double& load_value, double& load_angle);
+	void add_load(int& node_id, glm::vec2& load_loc, double& load_start_time, double& load_end_time,
+		double& load_value, double& load_angle,double& load_phase_angle);
 	void delete_load(int& node_id);
 	void set_buffer();
 	void paint_loads();

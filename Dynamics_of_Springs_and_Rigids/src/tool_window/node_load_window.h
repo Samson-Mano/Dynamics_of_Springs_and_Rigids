@@ -33,6 +33,7 @@ public:
 	double load_start_time = 0.2; // load start time
 	double load_end_time = 0.6; // load end time
 	double load_angle = 90.0; // load angle
+	double load_phase_angle = 0.0; // Phase angle
 
 	node_load_window();
 	~node_load_window();
@@ -46,6 +47,7 @@ private:
 	void get_load_starttime_input();
 	void get_load_endtime_input();
 	void get_load_angle_input();
+	void get_load_phase_angle_input();
 	void draw_load();
 	void LoadTextureFromFile(const char* filename, load_image_data& load_image);
 	bool get_image_min_max_coord(ImVec2& window_pos, ImVec2& window_size, ImVec2& img_pos_top_left,

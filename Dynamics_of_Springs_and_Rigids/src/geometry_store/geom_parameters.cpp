@@ -31,7 +31,7 @@ void geom_parameters::init()
 	//geom_colors.line_color = glm::vec3(1.0f, 0.54901f, 0.6f); // Dark Orange
 
 	geom_colors.node_color = glm::vec3(0.8f, 0.2f, 0.2f); // Light Red
-	geom_colors.rigid_line_color = glm::vec3(0.7f, 0.3f, 0.7f); // Purple 
+	geom_colors.rigid_line_color = glm::vec3(0.25f, 0.88f, 0.82f); // Purple  0.7f, 0.3f, 0.7f
 	geom_colors.spring_line_color = glm::vec3(0.1f, 0.1f, 0.8f); // Dark Blue 
 	geom_colors.line_length_color = glm::vec3(1.0f, 0.54901f, 0.6f); //  Dark Orange
 

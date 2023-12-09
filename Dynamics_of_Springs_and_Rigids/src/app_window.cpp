@@ -120,6 +120,7 @@ void app_window::init()
 	style.Colors[ImGuiCol_Text] = text_color;  // Set the text color
 	style.Colors[ImGuiCol_Button] = button_color;  // Set the button color
 
+
 	framebufferSizeCallback(window, window_width, window_height);
 }
 
@@ -159,6 +160,10 @@ void app_window::app_render()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		// ImGui windows default window size
+		ImVec2 defaultWindowSize(450, 300);  // Set your desired default size
+		ImGui::SetNextWindowSize(defaultWindowSize, ImGuiCond_FirstUseEver);
 
 		// menu events
 		menu_events();
