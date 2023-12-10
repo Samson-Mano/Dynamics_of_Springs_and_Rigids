@@ -7,16 +7,18 @@
 #include <iomanip>
 
 // Window includes
-#include "../tool_window/analysis_window.h"
 #include "../tool_window/node_constraint_window.h"
 #include "../tool_window/node_load_window.h"
 #include "../tool_window/inlcondition_window.h"
 #include "../tool_window/pointmass_window.h"
 #include "../tool_window/options_window.h"
 #include "../tool_window/element_prop_window.h"
+#include "../tool_window/modal_analysis_window.h"
+#include "../tool_window/pulse_analysis_window.h"
+#include "../tool_window/forced_analysis_window.h"
 
 // Solver
-#include "../fe_solver/analysis_solver.h"
+#include "../fe_solver/modal_analysis_solver.h"
 
 // FE Objects
 #include "fe_objects/nodes_list_store.h"
@@ -45,7 +47,10 @@ public:
 	geom_store();
 	~geom_store();
 
-	void init(analysis_window* sol_window, options_window* op_window,
+	void init(modal_analysis_window* modal_solver_window,
+		pulse_analysis_window* pulse_solver_window,
+		forced_analysis_window* forced_solver_window,
+		options_window* op_window,
 		node_constraint_window* nd_cnst_window, node_load_window* nd_load_window, 
 		pointmass_window* nd_ptmass_window,	inlcondition_window* nd_inlcond_window,
 		element_prop_window* elm_prop_window);
@@ -86,21 +91,32 @@ private:
 
 	// Modal analysis result 
 
+
 	// Pulse analysis result
 
 	// Forced response analysis result
 
 	// Analysis
-	bool is_heat_analysis_complete = false;
+	bool is_modal_analysis_complete = false;
+	bool is_pulse_analysis_complete = false;
+	bool is_forced_analysis_complete = false;
+
+	// Solver object
+
 
 	// Window pointers
-	analysis_window* sol_window = nullptr;
 	options_window* op_window = nullptr;
 	node_constraint_window* nd_cnst_window = nullptr;
 	node_load_window* nd_load_window = nullptr;
 	pointmass_window* nd_ptmass_window = nullptr;
 	inlcondition_window* nd_inlcond_window = nullptr;
 	element_prop_window* elm_prop_window = nullptr;
+
+	// Analysis window
+	modal_analysis_window* modal_solver_window = nullptr;
+	pulse_analysis_window* pulse_solver_window = nullptr;
+	forced_analysis_window* forced_solver_window = nullptr;
+
 
 	void paint_model(); // Paint the model
 	void paint_model_results(); // Paint the results
@@ -109,5 +125,11 @@ private:
 	void paint_node_ptmass_operation(); // Paint the node point mass pre processing
 	void paint_node_inlcond_operation(); // Paint the node initial condition pre processing
 	void paint_element_prop_operation(); // Paint the Element properties pre processing
+
+	//_____________________________________________________________________________________
+	void paint_modal_analysis_results(); // Paint the modal analysis results
+	void paint_pulse_analysis_results(); // Paint the pulse analysis results
+	void paint_forced_resp_analysis_results(); // Paint the forced response analysis results
+
 };
 

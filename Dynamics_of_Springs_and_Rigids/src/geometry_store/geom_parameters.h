@@ -6,6 +6,9 @@
 #include "geometry_buffers/font_atlas.h"
 #include <chrono>
 
+// Stopwatch
+#include "../events_handler/Stopwatch_events.h"
+
 struct geom_color_theme
 {
 	glm::vec3 background_color = glm::vec3(0);
@@ -27,17 +30,17 @@ struct material_data
 	std::string material_name = "";
 	double material_stiffness = 0.0;
 };
-
-class Stopwatch
-{
-public:
-	void reset_time();
-	double current_elapsed() const;
-
-private:
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_startTime = std::chrono::high_resolution_clock::time_point();
-	// std::chrono::time_point<std::chrono::high_resolution_clock> m_endTime;
-};
+//
+//class Stopwatch
+//{
+//public:
+//	void reset_time();
+//	double current_elapsed() const;
+//
+//private:
+//	std::chrono::time_point<std::chrono::high_resolution_clock> m_startTime = std::chrono::high_resolution_clock::time_point();
+//	// std::chrono::time_point<std::chrono::high_resolution_clock> m_endTime;
+//};
 
 
 class geom_parameters

@@ -10,7 +10,9 @@ geom_store::~geom_store()
 	// Empty Destructor
 }
 
-void geom_store::init(analysis_window* sol_window, options_window* op_window,
+void geom_store::init(modal_analysis_window* modal_solver_window,
+	pulse_analysis_window* pulse_solver_window,
+	forced_analysis_window* forced_solver_window, options_window* op_window,
 	node_constraint_window* nd_cnst_window, node_load_window* nd_load_window,
 	pointmass_window* nd_ptmass_window, inlcondition_window* nd_inlcond_window,
 	element_prop_window* elm_prop_window)
@@ -23,16 +25,23 @@ void geom_store::init(analysis_window* sol_window, options_window* op_window,
 	selection_rectangle.init(&geom_param);
 
 	is_geometry_set = false;
-	is_heat_analysis_complete = false;
+	is_modal_analysis_complete = false;
+	is_pulse_analysis_complete = false;
+	is_forced_analysis_complete = false;
+
 
 	// Add the window pointers
-	this->sol_window = sol_window; // Solver window
 	this->op_window = op_window; // Option window
 	this->nd_cnst_window = nd_cnst_window; // Node constraint window
 	this->nd_load_window = nd_load_window; // Node Load window
 	this->nd_ptmass_window = nd_ptmass_window; // Node Point mass window
 	this->nd_inlcond_window = nd_inlcond_window; // Node initial condition window
 	this->elm_prop_window = elm_prop_window; // Element property window
+
+	// Add the solver window pointers
+	this->modal_solver_window = modal_solver_window; // Modal Analysis Solver window
+	this->pulse_solver_window = pulse_solver_window; // Pulse Analysis Solver window
+	this->forced_solver_window = forced_solver_window; // Forced Response Analysis Solver window
 }
 
 void geom_store::fini()
@@ -193,6 +202,12 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 	this->node_loads.init(&geom_param);
 	this->node_inlcond.init(&geom_param);
 
+	// Initialize the result store
+	is_modal_analysis_complete = false;
+	is_pulse_analysis_complete = false;
+	is_forced_analysis_complete = false;
+
+
 	// Set the buffer
 	// Geometry is loaded
 	is_geometry_set = true;
@@ -335,6 +350,13 @@ void geom_store::read_dxfdata(std::ostringstream& input_data)
 	this->node_loads.init(&geom_param);
 	this->node_inlcond.init(&geom_param);
 
+	// Initialize the result store
+	is_modal_analysis_complete = false;
+	is_pulse_analysis_complete = false;
+	is_forced_analysis_complete = false;
+
+
+
 	// Set the buffer
 	// Geometry is loaded
 	is_geometry_set = true;
@@ -392,6 +414,11 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	std::unordered_map<int, material_data> mat_data;
 
 	// Initialize the result store
+	is_modal_analysis_complete = false;
+	is_pulse_analysis_complete = false;
+	is_forced_analysis_complete = false;
+
+
 
 	//Node Point list
 	std::vector<glm::vec2> node_pts_list;
@@ -907,10 +934,23 @@ void geom_store::paint_geometry()
 
 void geom_store::paint_model()
 {
-	if (sol_window->is_show_window == true && is_heat_analysis_complete == true && sol_window->show_model == false)
+	if (modal_solver_window->is_show_window == true ||
+		pulse_solver_window->is_show_window == true ||
+		forced_solver_window->is_show_window == true)
 	{
-		// Analysis complete and user turned off model view
-		return;
+		if (modal_solver_window->is_show_window == true && is_modal_analysis_complete == true &&
+			modal_solver_window->show_undeformed_model == false)
+		{
+			// Modal Analysis complete, window open and user turned off model view
+			return;
+		}
+		//________________________________________________________________________________________
+		if (pulse_solver_window->is_show_window == true && is_pulse_analysis_complete == true &&
+			pulse_solver_window->show_undeformed_model == false)
+		{
+			// Pulse analysis complete, window open and user turned off model view
+			return;
+		}
 	}
 
 	//______________________________________________
@@ -1023,6 +1063,14 @@ void geom_store::paint_model()
 void geom_store::paint_model_results()
 {
 	// Paint the results
+	// Modal Analysis 
+	paint_modal_analysis_results();
+
+	// Pulse Analysis
+	paint_pulse_analysis_results();
+
+	// Forced Response Analysis
+	paint_forced_resp_analysis_results();
 
 }
 
@@ -1341,5 +1389,52 @@ void geom_store::paint_element_prop_operation()
 
 	// Paint the material ID
 	model_lineelements.paint_lines_material_id();
+
+}
+
+
+void geom_store::paint_modal_analysis_results()
+{
+	// Paint the modal analysis results
+	// Closing sequency for the modal analysis window
+	if (modal_solver_window->execute_modal_close == true)
+	{
+		// Execute the close sequence
+		if (is_modal_analysis_complete == true)
+		{
+			// Modal analysis is complete (but clear the results anyway beacuse results will be loaded at open)
+			modal_solver_window->modal_analysis_complete = false;
+
+			// Pulse response analysis is complete
+			update_model_transperency(false);
+		}
+
+		modal_solver_window->execute_modal_close = false;
+	}
+
+	// Check whether the modal analysis solver window is open or not
+	if (modal_solver_window->is_show_window == false)
+	{
+		return;
+	}
+
+
+
+
+
+}
+
+
+void geom_store::paint_pulse_analysis_results()
+{
+	// Paint the pulse analysis results
+
+}
+
+
+void geom_store::paint_forced_resp_analysis_results()
+{
+	// Paint the forced response analysis results
+
 
 }

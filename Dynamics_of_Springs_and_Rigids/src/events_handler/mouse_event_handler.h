@@ -20,7 +20,7 @@ public:
 	mouse_event_handler();
 	~mouse_event_handler();
 
-	void init(geom_store* geom, analysis_window* sol_window, options_window* op_window,
+	void init(geom_store* geom, options_window* op_window,
 		node_constraint_window* nd_cnst_window, node_load_window* nd_load_window, 
 		pointmass_window* nd_ptmass_window, inlcondition_window* nd_inlcond_window,
 		element_prop_window* elm_prop_window);

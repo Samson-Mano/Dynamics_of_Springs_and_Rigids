@@ -40,5 +40,5 @@ double Stopwatch_events::elapsed()
 	}
 
 	// Returns the value in seconds
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - m_StartTime).count() / 1000000.0;
+	return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - m_StartTime).count() / 1000.0;
 }

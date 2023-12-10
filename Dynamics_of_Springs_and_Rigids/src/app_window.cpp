@@ -73,19 +73,23 @@ void app_window::init()
 	nd_ptmass_window.init(); // Node point mass window
 	nd_inlcond_window.init(); // Node initial condition window
 	op_window.init(); // Option window
-	sol_window.init(); // Analysis solver window
 	elm_prop_window.init(); // Element properties window
+
+	modal_solver_window.init(); // Modal analysis solver window
+	pulse_solver_window.init(); // Pulse analysis solver window
+	forced_solver_window.init(); // Forced response analysis solver window
 
 	geom.update_WindowDimension(window_width, window_height);
 	// Initialize the geometry (initialize only after model window is initialized)
-	geom.init(&sol_window, &op_window, &nd_cnst_window, &nd_load_window,
+	geom.init(&modal_solver_window, &pulse_solver_window, &forced_solver_window,
+		&op_window, &nd_cnst_window, &nd_load_window,
 		&nd_ptmass_window, &nd_inlcond_window, &elm_prop_window);
 
 	// Set the mouse button callback function with the user pointer pointing to the mouseHandler object
 	glfwSetWindowUserPointer(window, &mouse_Handler);
 
 	// Passing the address of geom and window dimensions to mouse handler
-	mouse_Handler.init(&geom, &sol_window, &op_window, &nd_cnst_window, &nd_load_window,
+	mouse_Handler.init(&geom, &op_window, &nd_cnst_window, &nd_load_window,
 		&nd_ptmass_window, &nd_inlcond_window, &elm_prop_window);
 
 	// Pass the address of options window, material window, solver window
@@ -283,19 +287,20 @@ void app_window::menu_events()
 			if (ImGui::MenuItem("Modal Analysis Solve"))
 			{
 				// Modal Analysis Solve
-				sol_window.execute_open = true;
-				sol_window.is_show_window = true;
+				modal_solver_window.execute_modal_open = true;
+				modal_solver_window.is_show_window = true;
 			}
 			if (ImGui::MenuItem("Pulse Analysis Solve"))
 			{
 				// Pulse Analysis Solve
-			
-
+				pulse_solver_window.execute_pulse_open = true;
+				pulse_solver_window.is_show_window = true;
 			}
 			if (ImGui::MenuItem("Forced Response Analysis Solve"))
 			{
 				// Forced Response Analysis Solve
-	 
+				forced_solver_window.execute_forced_analysis = true;
+				forced_solver_window.is_show_window = true;
 			}
 
 			ImGui::EndMenu();
@@ -312,7 +317,9 @@ void app_window::menu_events()
 	nd_inlcond_window.render_window(); // Node initial condition window
 	elm_prop_window.render_window(); // Element Properties window
 	op_window.render_window(); // Option window
-	sol_window.render_window(); // Solver window
+	modal_solver_window.render_window(); // Modal Analysis Solver window
+	pulse_solver_window.render_window(); // Pulse Analysis Solver window
+	forced_solver_window.render_window(); // Forced response analysis Solver window
 
 	// Pop the custom font after using it
 	ImGui::PopFont();

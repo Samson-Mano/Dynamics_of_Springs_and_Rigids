@@ -370,13 +370,13 @@ double geom_parameters::get_remap(const double& max_value, const double& min_val
 }
 
 
-// Stop watch
-void Stopwatch::reset_time()
-{
-	m_startTime = std::chrono::high_resolution_clock::now();
-}
-
-double Stopwatch::current_elapsed() const
-{
-	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - m_startTime).count() / 1000.0;
-}
+//// Stop watch
+//void Stopwatch::reset_time()
+//{
+//	m_startTime = std::chrono::high_resolution_clock::now();
+//}
+//
+//double Stopwatch::current_elapsed() const
+//{
+//	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - m_startTime).count() / 1000.0;
+//}
