@@ -25,7 +25,9 @@ void geom_store::init(modal_analysis_window* modal_solver_window,
 	selection_rectangle.init(&geom_param);
 
 	is_geometry_set = false;
-	is_modal_analysis_complete = false;
+
+	// Initialize the solvers
+	modal_solver.clear_results(); 
 	is_pulse_analysis_complete = false;
 	is_forced_analysis_complete = false;
 
@@ -202,8 +204,8 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 	this->node_loads.init(&geom_param);
 	this->node_inlcond.init(&geom_param);
 
-	// Initialize the result store
-	is_modal_analysis_complete = false;
+	// Re-Initialize the solver
+	modal_solver.clear_results();
 	is_pulse_analysis_complete = false;
 	is_forced_analysis_complete = false;
 
@@ -350,8 +352,8 @@ void geom_store::read_dxfdata(std::ostringstream& input_data)
 	this->node_loads.init(&geom_param);
 	this->node_inlcond.init(&geom_param);
 
-	// Initialize the result store
-	is_modal_analysis_complete = false;
+	// Re-Initialize the solver
+	modal_solver.clear_results();
 	is_pulse_analysis_complete = false;
 	is_forced_analysis_complete = false;
 
@@ -413,8 +415,8 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	// Material data list
 	std::unordered_map<int, material_data> mat_data;
 
-	// Initialize the result store
-	is_modal_analysis_complete = false;
+	// Re-Initialize the solver
+	modal_solver.clear_results();
 	is_pulse_analysis_complete = false;
 	is_forced_analysis_complete = false;
 
@@ -938,7 +940,8 @@ void geom_store::paint_model()
 		pulse_solver_window->is_show_window == true ||
 		forced_solver_window->is_show_window == true)
 	{
-		if (modal_solver_window->is_show_window == true && is_modal_analysis_complete == true &&
+		if (modal_solver_window->is_show_window == true && 
+			modal_solver.is_modal_analysis_complete == true &&
 			modal_solver_window->show_undeformed_model == false)
 		{
 			// Modal Analysis complete, window open and user turned off model view
@@ -1396,11 +1399,11 @@ void geom_store::paint_element_prop_operation()
 void geom_store::paint_modal_analysis_results()
 {
 	// Paint the modal analysis results
-	// Closing sequency for the modal analysis window
+	// Closing sequence for the modal analysis window
 	if (modal_solver_window->execute_modal_close == true)
 	{
 		// Execute the close sequence
-		if (is_modal_analysis_complete == true)
+		if (modal_solver.is_modal_analysis_complete == true)
 		{
 			// Modal analysis is complete (but clear the results anyway beacuse results will be loaded at open)
 			modal_solver_window->modal_analysis_complete = false;
@@ -1418,7 +1421,30 @@ void geom_store::paint_modal_analysis_results()
 		return;
 	}
 
+	// Paint the modal analysis results
+	if (modal_solver.is_modal_analysis_complete == true)
+	{
 
+
+
+	}
+
+	// Open sequence for the modal analysis window
+	if (modal_solver_window->execute_modal_open == true)
+	{
+
+
+		modal_solver_window->execute_modal_open = false;
+	}
+
+	// Modal Analysis 
+	if (modal_solver_window->execute_modal_analysis == true)
+	{
+
+
+
+		modal_solver_window->execute_modal_analysis = false;
+	}
 
 
 

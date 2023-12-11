@@ -90,9 +90,6 @@
     <ClCompile Include="src\geometry_store\fe_objects\nodes_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\analysis_result_objects\heatcontour_tri_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ImGui\imgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -163,6 +160,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\fe_solver\modal_analysis_solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\geometry_store\analysis_result_objects\result_elementline_list_store.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\geometry_store\analysis_result_objects\result_node_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -237,9 +240,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\fe_objects\nodes_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\analysis_result_objects\heatcontour_tri_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ImGui\imconfig.h">
@@ -324,6 +324,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\fe_solver\modal_analysis_solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\geometry_store\analysis_result_objects\result_node_list_store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\geometry_store\analysis_result_objects\result_elementline_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

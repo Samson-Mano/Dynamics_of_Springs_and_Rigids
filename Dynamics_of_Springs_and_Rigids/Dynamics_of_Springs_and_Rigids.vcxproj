@@ -149,7 +149,8 @@
     <ClCompile Include="src\events_handler\mouse_event_handler.cpp" />
     <ClCompile Include="src\events_handler\Stopwatch_events.cpp" />
     <ClCompile Include="src\fe_solver\modal_analysis_solver.cpp" />
-    <ClCompile Include="src\geometry_store\analysis_result_objects\heatcontour_tri_list_store.cpp" />
+    <ClCompile Include="src\geometry_store\analysis_result_objects\result_elementline_list_store.cpp" />
+    <ClCompile Include="src\geometry_store\analysis_result_objects\result_node_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\elementline_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\elementspring_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\nodeconstraint_list_store.cpp" />
@@ -200,7 +201,8 @@
     <ClInclude Include="src\events_handler\mouse_event_handler.h" />
     <ClInclude Include="src\events_handler\Stopwatch_events.h" />
     <ClInclude Include="src\fe_solver\modal_analysis_solver.h" />
-    <ClInclude Include="src\geometry_store\analysis_result_objects\heatcontour_tri_list_store.h" />
+    <ClInclude Include="src\geometry_store\analysis_result_objects\result_elementline_list_store.h" />
+    <ClInclude Include="src\geometry_store\analysis_result_objects\result_node_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\elementline_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\elementspring_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\nodeconstraint_list_store.h" />

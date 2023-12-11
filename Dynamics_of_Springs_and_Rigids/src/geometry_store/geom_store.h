@@ -32,7 +32,8 @@
 #include "geometry_objects/dynamic_selrectangle_store.h"
 
 // FE Result Objects Heat analysis
-#include "analysis_result_objects/heatcontour_tri_list_store.h";
+#include "analysis_result_objects/result_node_list_store.h";
+#include "analysis_result_objects/result_elementline_store.h"
 
 
 class geom_store
@@ -97,11 +98,11 @@ private:
 	// Forced response analysis result
 
 	// Analysis
-	bool is_modal_analysis_complete = false;
 	bool is_pulse_analysis_complete = false;
 	bool is_forced_analysis_complete = false;
 
 	// Solver object
+	modal_analysis_solver modal_solver;
 
 
 	// Window pointers
