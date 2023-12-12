@@ -18,8 +18,6 @@ public:
 	std::unordered_map<int, elementline_store> elementlineMap; // Create an unordered_map to store nodes with ID as key
 	double element_max_length = 0.0;
 	double element_min_length = DBL_MAX;
-	const double spring_turn_min = 10.0;
-	const double spring_turn_max = 20.0;
 
 	elementline_list_store();
 	~elementline_list_store();

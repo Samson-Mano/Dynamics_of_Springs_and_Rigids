@@ -33,7 +33,7 @@
 
 // FE Result Objects Heat analysis
 #include "analysis_result_objects/result_node_list_store.h";
-#include "analysis_result_objects/result_elementline_store.h"
+#include "analysis_result_objects/result_elementline_list_store.h"
 
 
 class geom_store

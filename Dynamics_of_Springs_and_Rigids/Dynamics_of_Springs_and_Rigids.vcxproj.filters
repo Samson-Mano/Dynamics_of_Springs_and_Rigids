@@ -141,9 +141,6 @@
     <ClCompile Include="src\geometry_store\fe_objects\nodepointmass_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\fe_objects\elementspring_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\tool_window\inlcondition_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -303,9 +300,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\fe_objects\nodepointmass_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\fe_objects\elementspring_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\tool_window\inlcondition_window.h">

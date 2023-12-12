@@ -55,8 +55,14 @@ public:
 	const float selected_point_size = 6.0f;
 	const float line_width = 1.6f;
 	const float selected_line_width = 4.2f;
+	
+	// element width
 	const float spring_element_width = 2.4f;
 	const float rigid_element_width = 0.6f;
+
+	// Spring turns
+	const double spring_turn_min = 10.0;
+	const double spring_turn_max = 20.0;
 
 	// Precision for various values
 	const int length_precision = 2;

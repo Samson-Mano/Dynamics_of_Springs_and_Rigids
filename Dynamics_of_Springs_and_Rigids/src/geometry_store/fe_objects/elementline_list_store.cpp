@@ -191,7 +191,7 @@ void elementline_list_store::add_selection_lines(const std::vector<int>& selecte
 		{
 		
 			int turn_count = static_cast<int>(geom_parameters::get_remap(element_max_length, element_min_length,
-				spring_turn_max, spring_turn_min, element_length)); // spring turn frequency
+				geom_param_ptr->spring_turn_max, geom_param_ptr->spring_turn_min, element_length)); // spring turn frequency
 
 			glm::vec2 prev_pt = origin_pt;
 			curr_pt = glm::vec2(0);
@@ -423,8 +423,8 @@ void elementline_list_store::recreate_element_lines()
 
 
 			// Spring portion
-					int turn_count = static_cast<int>(geom_parameters::get_remap(element_max_length, element_min_length,
-				spring_turn_max,spring_turn_min,element_length)); // spring turn frequency
+			int turn_count = static_cast<int>(geom_parameters::get_remap(element_max_length, element_min_length,
+				geom_param_ptr->spring_turn_max, geom_param_ptr->spring_turn_min,element_length)); // spring turn frequency
 
 			origin_pt = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.25f); // origin point
 			prev_pt = origin_pt;
