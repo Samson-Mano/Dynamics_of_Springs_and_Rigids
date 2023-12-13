@@ -91,11 +91,15 @@ private:
 	nodeinlcond_list_store node_inlcond;
 
 	// Modal analysis result 
-
+	result_node_list_store modal_result_nodes;
+	result_elementline_list_store modal_result_lineelements;
 
 	// Pulse analysis result
+	result_node_list_store pulse_result_nodes;
+	result_elementline_list_store pulse_result_lineelements;
 
 	// Forced response analysis result
+
 
 	// Analysis
 	bool is_pulse_analysis_complete = false;

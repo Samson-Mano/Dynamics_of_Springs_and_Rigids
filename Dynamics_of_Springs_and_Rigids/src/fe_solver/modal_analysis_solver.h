@@ -31,6 +31,8 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <Eigen/SparseLU>
+#include <Eigen/Eigenvalues>
 // Define the sparse matrix type for the reduced global stiffness matrix
 typedef Eigen::SparseMatrix<double> SparseMatrix;
 #pragma warning(pop)
@@ -66,11 +68,21 @@ private:
 
 	int numDOF = 0;
 	int reducedDOF = 0;
+	int agDOF = 0;
 	double w_penalty = 0.0; // penalty stiffness
-	std::unordered_map<int, int> nodeid_map;
 	Eigen::MatrixXd globalStiffnessMatrix; // global stiffness matrix
-	Eigen::MatrixXd globalMassMatrix; // global mass matrix
-	Eigen::MatrixXd globalDOFMatrix; // global DOF matrix
+	Eigen::MatrixXd globalPointMassMatrix; // global Point mass matrix
+	Eigen::VectorXd globalDOFMatrix; // global DOF matrix
+	Eigen::MatrixXd globalAGMatrix; // global Augementation matrix
+
+	// Augmented global matrices
+	Eigen::MatrixXd agglobalStiffnessMatrix; // Augmented global stiffness matrix
+	Eigen::MatrixXd agglobalPointMassMatrix; // Augmented global Point mass matrix
+	Eigen::VectorXd agglobalDOFMatrix; // Augmented global DOF matrix
+
+	// Reduced Augmented global matrices
+	Eigen::MatrixXd reduced_agglobalStiffnessMatrix; // reduced Augmented global stiffness matrix
+	Eigen::MatrixXd reduced_agglobalPointMassMatrix; // reduced Augmented global point mass matrix
 
 	void get_global_stiffness_matrix(Eigen::MatrixXd& globalStiffnessMatrix,
 		const elementline_list_store& model_lineelements,
@@ -88,11 +100,47 @@ private:
 		const nodepointmass_list_store& model_ptmass,
 		std::ofstream& output_file);
 
-	void get_global_dof_matrix(Eigen::MatrixXd& globalDOFMatrix,
+	void get_global_dof_matrix(Eigen::VectorXd& globalDOFMatrix,
 		const nodes_list_store& model_nodes,
 		const nodeconstraint_list_store& model_constarints,
 		int& reducedDOF,
 		std::ofstream& output_file);
+
+	void get_global_augmentation_matrix(Eigen::MatrixXd& globalAGMatrix,
+		const nodeconstraint_list_store& model_constarints,
+		const elementline_list_store& model_lineelements,
+		const std::unordered_map<int, material_data>& material_list,
+		int& agDOF,
+		std::ofstream& output_file);
+
+	void get_augmented_global_stiffness_matrix(Eigen::MatrixXd& agglobalStiffnessMatrix,
+		const Eigen::MatrixXd& globalStiffnessMatrix,
+		const Eigen::MatrixXd& globalAGMatrix,
+		std::ofstream& output_file);
+
+	void get_augmented_global_ptmass_matrix(Eigen::MatrixXd& agglobalPointMassMatrix,
+		Eigen::VectorXd& agglobalDOFMatrix,
+		const Eigen::MatrixXd& globalPointMassMatrix,
+		const Eigen::VectorXd& globalDOFMatrix,
+		std::ofstream& output_file);
+
+	void get_reduced_global_matrices(Eigen::MatrixXd& reduced_agglobalStiffnessMatrix,
+		Eigen::MatrixXd& reduced_agglobalPointMassMatrix,
+		const Eigen::MatrixXd& agglobalStiffnessMatrix,
+		const Eigen::MatrixXd& agglobalPointMassMatrix,
+		const Eigen::VectorXd& agglobalDOFMatrix,
+		const int& numDOF,
+		const int& reducedDOF,
+		const int& agDOF,
+		std::ofstream& output_file);
+
+	void sort_eigen_values_vectors(Eigen::VectorXd& eigenvalues,
+		Eigen::MatrixXd& eigenvectors,
+		const int& m_size);
+
+
+	void normalize_eigen_vectors(Eigen::MatrixXd& eigenvectors,
+		const int& m_size);
 
 
 
