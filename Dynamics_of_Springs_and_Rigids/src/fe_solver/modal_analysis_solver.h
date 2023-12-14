@@ -9,8 +9,8 @@
 #include "../geometry_store/fe_objects/nodepointmass_list_store.h"
 
 // FE Results Modal Analysis
-#include "../geometry_store/analysis_result_objects/result_node_list_store.h"
-#include "../geometry_store/analysis_result_objects/result_elementline_list_store.h"
+#include "../geometry_store/analysis_result_objects/modal_nodes_list_store.h"
+#include "../geometry_store/analysis_result_objects/modal_elementline_list_store.h"
 
 // Stop watch
 #include "../events_handler/Stopwatch_events.h"
@@ -43,10 +43,10 @@ class modal_analysis_solver
 public:
 	// Result store
 	int number_of_modes = 0;
-	std::unordered_map<int, int> nodeid_map;
-	std::unordered_map<int, double> eigen_values;
-	std::unordered_map<int, std::vector<double>> eigen_vectors;
-	std::unordered_map<int, std::vector<double>> eigen_vectors_reduced;
+	std::unordered_map<int, int> nodeid_map; // Node ID map
+	std::unordered_map<int, double> m_eigenvalues;
+	std::unordered_map<int, std::vector<double>> m_eigenvectors;
+	// std::unordered_map<int, std::vector<double>> eigen_vectors_reduced;
 	std::vector<std::string> mode_result_str;
 	bool is_modal_analysis_complete = false;
 
@@ -58,13 +58,14 @@ public:
 		const nodeconstraint_list_store& model_constarints,
 		const nodepointmass_list_store& model_ptmass,
 		const std::unordered_map<int, material_data>& material_list,
-		result_node_list_store& modal_result_nodes,
-		result_elementline_list_store& modal_result_lineelements,
+		modal_nodes_list_store& modal_result_nodes,
+		modal_elementline_list_store& modal_result_lineelements,
 		bool& is_modal_analysis_complete);
 private:
 	const double m_pi = 3.14159265358979323846;
-	bool print_matrix = false;
+	bool print_matrix = true;
 	Stopwatch_events stopwatch;
+	std::stringstream stopwatch_elapsed_str;
 
 	int numDOF = 0;
 	int reducedDOF = 0;
@@ -83,6 +84,7 @@ private:
 	// Reduced Augmented global matrices
 	Eigen::MatrixXd reduced_agglobalStiffnessMatrix; // reduced Augmented global stiffness matrix
 	Eigen::MatrixXd reduced_agglobalPointMassMatrix; // reduced Augmented global point mass matrix
+
 
 	void get_global_stiffness_matrix(Eigen::MatrixXd& globalStiffnessMatrix,
 		const elementline_list_store& model_lineelements,
@@ -138,10 +140,29 @@ private:
 		Eigen::MatrixXd& eigenvectors,
 		const int& m_size);
 
-
 	void normalize_eigen_vectors(Eigen::MatrixXd& eigenvectors,
 		const int& m_size);
 
+	void get_reduced_eigen_matrix(Eigen::VectorXd& reduced_eigenvalues,
+		Eigen::MatrixXd& reduced_eigenvectors,
+		bool& is_augmentation_removal_success,
+		const Eigen::VectorXd& eigenvalues,
+		const Eigen::MatrixXd& eigenvectors,
+		const int& reducedDOF,
+		const int& agDOF,
+		std::ofstream& output_file);
 
+	void get_globalized_eigen_vector_matrix(Eigen::MatrixXd& global_eigenvectors,
+		const Eigen::MatrixXd& reduced_eigenvectors,
+		const Eigen::MatrixXd& globalDOFMatrix,
+		const int& numDOF,
+		const int& reducedDOF,
+		std::ofstream& output_file);
+
+	void map_modal_analysis_results(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		modal_nodes_list_store& modal_result_nodes,
+		modal_elementline_list_store& modal_result_lineelements,
+		std::ofstream& output_file);
 
 };
