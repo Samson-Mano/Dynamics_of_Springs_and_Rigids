@@ -59,8 +59,7 @@ public:
 		const nodepointmass_list_store& model_ptmass,
 		const std::unordered_map<int, material_data>& material_list,
 		modal_nodes_list_store& modal_result_nodes,
-		modal_elementline_list_store& modal_result_lineelements,
-		bool& is_modal_analysis_complete);
+		modal_elementline_list_store& modal_result_lineelements);
 private:
 	const double m_pi = 3.14159265358979323846;
 	bool print_matrix = true;
@@ -70,6 +69,7 @@ private:
 	int numDOF = 0;
 	int reducedDOF = 0;
 	int agDOF = 0;
+	const double smallValue = 1.0E-12;
 	double w_penalty = 0.0; // penalty stiffness
 	Eigen::MatrixXd globalStiffnessMatrix; // global stiffness matrix
 	Eigen::MatrixXd globalPointMassMatrix; // global Point mass matrix
@@ -103,8 +103,10 @@ private:
 		std::ofstream& output_file);
 
 	void get_global_dof_matrix(Eigen::VectorXd& globalDOFMatrix,
+		const Eigen::MatrixXd& globalPointMassMatrix,
 		const nodes_list_store& model_nodes,
 		const nodeconstraint_list_store& model_constarints,
+		const int& numDOF,
 		int& reducedDOF,
 		std::ofstream& output_file);
 
@@ -154,7 +156,7 @@ private:
 
 	void get_globalized_eigen_vector_matrix(Eigen::MatrixXd& global_eigenvectors,
 		const Eigen::MatrixXd& reduced_eigenvectors,
-		const Eigen::MatrixXd& globalDOFMatrix,
+		const Eigen::VectorXd& globalDOFMatrix,
 		const int& numDOF,
 		const int& reducedDOF,
 		std::ofstream& output_file);

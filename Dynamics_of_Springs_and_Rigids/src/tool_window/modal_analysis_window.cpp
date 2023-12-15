@@ -109,9 +109,9 @@ void modal_analysis_window::render_window()
 	ImGui::SliderFloat(".", &deformation_scale_flt, 0.0f, 100.0f, "%.1f");
 	deformation_scale_max = deformation_scale_flt;
 
-	////Set the deformation scale
-	//normailzed_defomation_scale = 1.0f;
-	//deformation_scale = deformation_scale_max;
+	//Set the deformation scale
+	normailzed_defomation_scale = 1.0f;
+	deformation_scale = deformation_scale_max;
 
 	ImGui::Spacing();
 	//_________________________________________________________________________________________
@@ -154,6 +154,7 @@ void modal_analysis_window::render_window()
 			// Handle Stop button click
 			animate_play = false;
 			animate_pause = true;
+			time_val = 0.0f;
 		}
 
 		// Animation speed control
@@ -219,33 +220,26 @@ void modal_analysis_window::render_window()
 
 	// Set the animation data
 	// Cycle through the pulse response time step
-	if (modal_analysis_complete == true)
-	{
-		if (animate_play == true)
-		{
-			// Stop watch
-			if ((stopwatch.elapsed() * animation_speed) > time_interval_atrun)
-			{
-				stopwatch.stop(); // reset the time
-				time_step++; // increment the time step
 
-				// Adjust the time step such that it didnot exceed the time_step_total
-				if (time_step >= time_step_count)
-				{
-					time_step = 0;
-				}
-			}
-		}
-		else if (animate_pause == true)
+	// Set the animation data
+	if (animate_play == true)
+	{
+		if (time_val > 6.283185307f)
 		{
-			// Pause the animation
+			time_val = 0.0f;
 		}
-		else
-		{
-			// Stop the animation (show the end of animation)
-			time_step = time_step_count - 1;
-		}
+
+		// Animation is playing 
+		normailzed_defomation_scale = std::sin(time_val * animation_speed); // Varies between 0 and 1
+		deformation_scale = normailzed_defomation_scale * deformation_scale_max;
+		time_val = time_val + 0.0002f;
 	}
+	else if (animate_pause == true)
+	{
+		normailzed_defomation_scale = std::sin(time_val * animation_speed); // Varies between 0 and 1
+		deformation_scale = normailzed_defomation_scale * deformation_scale_max;
+	}
+
 
 
 }

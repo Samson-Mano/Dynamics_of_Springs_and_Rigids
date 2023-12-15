@@ -85,8 +85,8 @@ void modal_elementline_list_store::set_buffer(int selected_mode)
 	// Clear existing modal line
 	modal_element_lines.clear_lines();
 
-	double mode_max_displ = max_node_displ[selected_mode];
-	double mode_min_displ = min_node_displ[selected_mode];
+	//double mode_max_displ = max_node_displ[selected_mode];
+	//double mode_min_displ = min_node_displ[selected_mode];
 
 	// Add the lines
 	// Loop throug every line element

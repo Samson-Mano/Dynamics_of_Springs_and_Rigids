@@ -204,6 +204,10 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 	this->node_loads.init(&geom_param);
 	this->node_inlcond.init(&geom_param);
 
+	// Re-initialize the result elements
+	this->modal_result_nodes.init(&geom_param);
+	this->modal_result_lineelements.init(&geom_param);
+
 	// Re-Initialize the solver
 	modal_solver.clear_results();
 	is_pulse_analysis_complete = false;
@@ -352,11 +356,14 @@ void geom_store::read_dxfdata(std::ostringstream& input_data)
 	this->node_loads.init(&geom_param);
 	this->node_inlcond.init(&geom_param);
 
+	// Re-initialize the result elements
+	this->modal_result_nodes.init(&geom_param);
+	this->modal_result_lineelements.init(&geom_param);
+
 	// Re-Initialize the solver
 	modal_solver.clear_results();
 	is_pulse_analysis_complete = false;
 	is_forced_analysis_complete = false;
-
 
 
 	// Set the buffer
@@ -412,6 +419,10 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	this->node_ptmass.init(&geom_param);
 	this->node_inlcond.init(&geom_param);
 
+	// Re-initialize the result elements
+	this->modal_result_nodes.init(&geom_param);
+	this->modal_result_lineelements.init(&geom_param);
+
 	// Material data list
 	std::unordered_map<int, material_data> mat_data;
 
@@ -419,8 +430,6 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	modal_solver.clear_results();
 	is_pulse_analysis_complete = false;
 	is_forced_analysis_complete = false;
-
-
 
 	//Node Point list
 	std::vector<glm::vec2> node_pts_list;
@@ -770,7 +779,8 @@ void geom_store::update_model_matrix()
 	node_inlcond.update_geometry_matrices(true, false, false, false, false);
 
 	// Update the modal analysis result matrix
-
+	modal_result_nodes.update_geometry_matrices(true, false, false, false, false);
+	modal_result_lineelements.update_geometry_matrices(true, false, false, false, false);
 
 }
 
@@ -794,6 +804,8 @@ void geom_store::update_model_zoomfit()
 	node_inlcond.update_geometry_matrices(false, true, true, false, false);
 
 	// Update the modal analysis result matrix
+	modal_result_nodes.update_geometry_matrices(false, true, true, false, false);
+	modal_result_lineelements.update_geometry_matrices(false, true, true, false, false);
 
 }
 
@@ -817,6 +829,8 @@ void geom_store::update_model_pan(glm::vec2& transl)
 	node_inlcond.update_geometry_matrices(false, true, false, false, false);
 
 	// Update the modal analysis result matrix
+	modal_result_nodes.update_geometry_matrices(false, true, false, false, false);
+	modal_result_lineelements.update_geometry_matrices(false, true, false, false, false);
 
 }
 
@@ -837,6 +851,8 @@ void geom_store::update_model_zoom(double& z_scale)
 	node_inlcond.update_geometry_matrices(false, false, true, false, false);
 
 	// Update the modal analysis result matrix
+	modal_result_nodes.update_geometry_matrices(false, false, true, false, false);
+	modal_result_lineelements.update_geometry_matrices(false, false, true, false, false);
 
 }
 
@@ -863,6 +879,9 @@ void geom_store::update_model_transperency(bool is_transparent)
 	node_loads.update_geometry_matrices(false, false, false, true, false);
 	node_ptmass.update_geometry_matrices(false, false, false, true, false);
 	node_inlcond.update_geometry_matrices(false, false, false, true, false);
+
+	// Donot update result elements transparency
+
 }
 
 void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::vec2& c_pt,
@@ -1424,23 +1443,88 @@ void geom_store::paint_modal_analysis_results()
 	// Paint the modal analysis results
 	if (modal_solver.is_modal_analysis_complete == true)
 	{
+		// Change the buffer depending on the selected mode
+		if (modal_solver_window->is_mode_selection_changed == true)
+		{
+			// Update the buffers
+			// Modal Line buffer
+			modal_result_lineelements.set_buffer(modal_solver_window->selected_modal_option);
 
+			// Modal Node buffer
+			modal_result_nodes.set_buffer(modal_solver_window->selected_modal_option);
 
+			modal_solver_window->is_mode_selection_changed = false;
+		}
+
+		// Update the deflection scale
+		geom_param.normalized_defl_scale = std::abs(modal_solver_window->normailzed_defomation_scale);
+		geom_param.defl_scale = modal_solver_window->deformation_scale;
+
+		// Update the deflection scale
+		modal_result_lineelements.update_geometry_matrices(false, false, false, false, true);
+		modal_result_nodes.update_geometry_matrices(false, false, false, false, true);
+		// ______________________________________________________________________________________
+		// Paint the modal lines
+		modal_result_lineelements.paint_modal_elementlines();
+
+		// Paint the modal nodes
+		modal_result_nodes.paint_modal_nodes();
+
+		// Paint result text
+		if (modal_solver_window->show_result_text_values == true)
+		{
+			// Paint the modal result vector
+			modal_result_nodes.paint_label_mode_vectors();
+		}
 
 	}
 
 	// Open sequence for the modal analysis window
 	if (modal_solver_window->execute_modal_open == true)
 	{
+		// Execute the open sequence
+		if (modal_solver.is_modal_analysis_complete == true)
+		{
+			// update the modal window list box
+			modal_solver_window->mode_result_str = modal_solver.mode_result_str;
 
+			// Set the buffer
+			modal_solver_window->is_mode_selection_changed = true;
 
+			// Modal analysis is already complete so set the transparency for the model
+			update_model_transperency(true);
+		}
 		modal_solver_window->execute_modal_open = false;
 	}
 
 	// Modal Analysis 
 	if (modal_solver_window->execute_modal_analysis == true)
 	{
+		// Execute the Modal Analysis
+		modal_solver.modal_analysis_start(model_nodes,
+			model_lineelements,
+			node_constraints,
+			node_ptmass,
+			elm_prop_window->material_list,
+			modal_result_nodes,
+			modal_result_lineelements);
 
+		// reset the frequency response and pulse response solution
+		is_forced_analysis_complete = false;
+		is_pulse_analysis_complete = false;
+
+		// Check whether the modal analysis is complete or not
+		if (modal_solver.is_modal_analysis_complete == true)
+		{
+			// update the modal window list box
+			modal_solver_window->mode_result_str = modal_solver.mode_result_str;
+
+			// Set the buffer
+			modal_solver_window->is_mode_selection_changed = true;
+
+			// Modal analysis is already complete so set the transparency for the model
+			update_model_transperency(true);
+		}
 
 
 		modal_solver_window->execute_modal_analysis = false;

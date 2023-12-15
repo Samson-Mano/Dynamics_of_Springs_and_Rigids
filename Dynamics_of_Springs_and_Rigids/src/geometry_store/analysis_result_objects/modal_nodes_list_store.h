@@ -16,8 +16,8 @@ class modal_nodes_list_store
 public:
 	unsigned int node_count = 0;
 	std::unordered_map<int, modal_node_store> modal_nodeMap; // Create an unordered_map to store nodes with ID as key
-	std::unordered_map<int, double> max_node_displ; // Stores the maximum nodal displacement for the whole model
-	std::unordered_map<int, double> min_node_displ; // Stores the minimum nodal displacement for the whole model
+	//std::unordered_map<int, double> max_node_displ; // Stores the maximum nodal displacement for the whole model
+	//std::unordered_map<int, double> min_node_displ; // Stores the minimum nodal displacement for the whole model
 
 	modal_nodes_list_store();
 	~modal_nodes_list_store();

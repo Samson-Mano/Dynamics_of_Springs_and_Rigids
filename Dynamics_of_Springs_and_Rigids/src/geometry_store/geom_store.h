@@ -35,8 +35,6 @@
 #include "analysis_result_objects/modal_nodes_list_store.h";
 #include "analysis_result_objects/modal_elementline_list_store.h";
 
-#include "analysis_result_objects/result_node_list_store.h";
-#include "analysis_result_objects/result_elementline_list_store.h"
 
 
 class geom_store
@@ -97,9 +95,9 @@ private:
 	modal_nodes_list_store modal_result_nodes;
 	modal_elementline_list_store modal_result_lineelements;
 
-	// Pulse analysis result
-	result_node_list_store pulse_result_nodes;
-	result_elementline_list_store pulse_result_lineelements;
+	//// Pulse analysis result
+	//result_node_list_store pulse_result_nodes;
+	//result_elementline_list_store pulse_result_lineelements;
 
 	// Forced response analysis result
 

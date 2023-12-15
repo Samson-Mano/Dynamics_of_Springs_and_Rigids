@@ -22,7 +22,6 @@ void modal_nodes_list_store::init(geom_parameters* geom_param_ptr)
 	// Clear the results
 	node_count = 0;
 	modal_nodeMap.clear();
-	max_node_displ.clear();
 }
 
 void modal_nodes_list_store::clear_data()
@@ -33,7 +32,6 @@ void modal_nodes_list_store::clear_data()
 	// Clear the results
 	node_count = 0;
 	modal_nodeMap.clear();
-	max_node_displ.clear();
 }
 
 void modal_nodes_list_store::add_result_node(int& node_id, glm::vec2& node_pt, std::unordered_map<int, glm::vec2> node_modal_displ)
@@ -62,8 +60,8 @@ void modal_nodes_list_store::set_buffer(int selected_mode)
 	modal_node_points.clear_points();
 	modal_node_vector_labels.clear_labels();
 
-	double mode_max_displ = max_node_displ[selected_mode];
-	double mode_min_displ = min_node_displ[selected_mode];
+	//double mode_max_displ = max_node_displ[selected_mode];
+	//double mode_min_displ = min_node_displ[selected_mode];
 
 	// Add the lines
 	// Loop throug every line element
@@ -72,14 +70,15 @@ void modal_nodes_list_store::set_buffer(int selected_mode)
 	{
 		modal_node_store nd = nd_m.second;
 
-		glm::vec2 pt_displ = glm::vec2(nd.node_modal_displ[selected_mode].x / mode_max_displ, nd.node_modal_displ[selected_mode].y / mode_max_displ);
+		glm::vec2 pt_displ = glm::vec2(nd.node_modal_displ[selected_mode].x, nd.node_modal_displ[selected_mode].y);
 
 		// Find the displacment value
 		double pt_displ_value = std::sqrt(std::pow(nd.node_modal_displ[selected_mode].x, 2) +
 			std::pow(nd.node_modal_displ[selected_mode].y, 2));
 
 		// scale the value with mode max displacement
-		double pt_displ_scale = (pt_displ_value - mode_min_displ) / (mode_max_displ - mode_min_displ);
+		glm::vec2 origin = glm::vec2(0);
+		double pt_displ_scale = geom_parameters::get_line_length(origin, nd.node_modal_displ[selected_mode]);
 
 		glm::vec3 pt_contour_color =geom_parameters::getContourColor_d(static_cast<float>(1.0 - pt_displ_scale));
 

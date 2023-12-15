@@ -29,11 +29,10 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	const nodepointmass_list_store& model_ptmass,
 	const std::unordered_map<int, material_data>& material_list,
 	modal_nodes_list_store& modal_result_nodes,
-	modal_elementline_list_store& modal_result_lineelements,
-	bool& is_modal_analysis_complete)
+	modal_elementline_list_store& modal_result_lineelements)
 {
 	// Main solver call
-	is_modal_analysis_complete = false;
+	this->is_modal_analysis_complete = false;
 
 	// Check the model
 	// Number of nodes
@@ -139,8 +138,10 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	reducedDOF = 0;
 
 	get_global_dof_matrix(globalDOFMatrix,
+		globalPointMassMatrix,
 		model_nodes,
 		model_constarints,
+		numDOF,
 		reducedDOF,
 		output_file);
 
@@ -204,11 +205,11 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 	//____________________________________________________________________________________________________________________
 	// Create Reduced Global Mass and stiffness matrix
-	reduced_agglobalStiffnessMatrix(reducedDOF + agDOF, reducedDOF + agDOF);
+	reduced_agglobalStiffnessMatrix.resize(reducedDOF + agDOF, reducedDOF + agDOF);
 	reduced_agglobalStiffnessMatrix.setZero();
 
 	// Reduced Global Mass matrix
-	reduced_agglobalPointMassMatrix(reducedDOF + agDOF, reducedDOF + agDOF);
+	reduced_agglobalPointMassMatrix.resize(reducedDOF + agDOF, reducedDOF + agDOF);
 	reduced_agglobalPointMassMatrix.setZero();
 
 	get_reduced_global_matrices(reduced_agglobalStiffnessMatrix,
@@ -228,165 +229,213 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 	//____________________________________________________________________________________________________________________
 	// Modal Analysis - main solve
-	// Solve the generalized Eigenvalue problem k * phi = lamda * m * phi
-	// using GeneralizedSelfAdjointEigenSolver
-	
-	//// Convert dense matrices to sparse matrices
-	//Eigen::SparseMatrix<double> sparseStiffnessMatrix = reduced_agglobalStiffnessMatrix.sparseView();
-	//Eigen::SparseMatrix<double> sparsePointMassMatrix = reduced_agglobalPointMassMatrix.sparseView();
+	// Solve generalized Eigen value matrix using Cholesky decomposition
+	// Compute the Cholesky decomposition of Global Mass matrix
+	// Generalized Symmetric Definite Eigenproblems 
+
+	Eigen::LLT<Eigen::MatrixXd> llt;
+	llt.compute(reduced_agglobalPointMassMatrix);
+
+	if (llt.info() != Eigen::Success) {
+		// Cholesky decomposition failed
+		std::cout << "Cholesky decomposition failed !!!!" << std::endl;
+		output_file.close();
+		return;
+	}
+
+	// Get the lower triangular matrix L
+	Eigen::MatrixXd L_matrix = llt.matrixL();
+
+	if (print_matrix == true)
+	{
+		// Print the Cholesky Decomposition L - Matrix
+		output_file << "Cholesky Decomposition L - Matrix" << std::endl;
+		output_file << L_matrix << std::endl;
+		output_file << std::endl;
+	}
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Sprase matrix conversion completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Cholesky decomposition L-matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	// Get the L^-1 inverse of L-matrix Lower triangular matrix
+	Eigen::MatrixXd L_inv_matrix = L_matrix.inverse();
+
+	if (print_matrix == true)
+	{
+		// Print the Inverse L - Matrix
+		output_file << "L Inverse Matrix" << std::endl;
+		output_file << L_inv_matrix << std::endl;
+		output_file << std::endl;
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Inverse of lower triangle matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	//____________________________________________________________________________________________________________________
-	// Solve the generalized eigenvalue problem
-	// Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::SparseMatrix<double>> solver(sparseStiffnessMatrix, sparsePointMassMatrix);
-	Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXd> solver(reduced_agglobalStiffnessMatrix, reduced_agglobalPointMassMatrix);
+	//  Find the eigen value & eigen vector of eigen value problem Z_matrix
+	//  Z_matrix = L_inv_matrix * stiff_matrix * L_inv_matrix^T
 
+	Eigen::MatrixXd Z_matrix = L_inv_matrix * reduced_agglobalStiffnessMatrix * L_inv_matrix.transpose();
+
+	if (print_matrix == true)
+	{
+		// Print the Inverse L - Matrix
+		output_file << "Z Matrix" << std::endl;
+		output_file << Z_matrix << std::endl;
+		output_file << std::endl;
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Generalized Eigen value problem Z-matrix created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Size of the Z-matrix is " << reducedDOF << " x " << reducedDOF << std::endl;
+
+	// Compute the eigenvalues and eigenvectors
+	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(Z_matrix);
+
+	if (eigenSolver.info() != Eigen::Success)
+	{
+		// Eigenvalue problem failed to converge
+		std::cout << "Eigenvalue problem failed to converge !!!!! " << std::endl;
+		output_file.close();
+		return;
+	}
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Eigen value problem solved at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+
+	// Eigenvalues
+	Eigen::VectorXd eigenvalues = eigenSolver.eigenvalues();
+
+	// Eigenvectors
+	Eigen::MatrixXd  eigenvectors = L_inv_matrix.transpose() * eigenSolver.eigenvectors();
+
+	// Process eigenvalues and eigenvectors
+	// sort the eigen value and eigen vector (ascending)
+	sort_eigen_values_vectors(eigenvalues, eigenvectors, reducedDOF + agDOF);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen values and Eigen vectors are sorted at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	//____________________________________________________________________________________________________________________
-	if (solver.info() == Eigen::Success) 
-	{
-		// Eigenvalues
-		Eigen::VectorXd eigenvalues = solver.eigenvalues();
+	// Normailize eigen vectors
+	normalize_eigen_vectors(eigenvectors, reducedDOF + agDOF);
 
-		// Eigenvectors
-		Eigen::MatrixXd  eigenvectors = solver.eigenvectors();
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen vectors are normalized at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
-		// Process eigenvalues and eigenvectors
-		// sort the eigen value and eigen vector (ascending)
-		sort_eigen_values_vectors(eigenvalues, eigenvectors, reducedDOF + agDOF);
+	//____________________________________________________________________________________________________________________
+	// Remove the Augmentation in EigenValues and EigenVectors
+	// Augmentation removed global Eigenvalues
+	bool is_augmentation_removal_success = false;
+	Eigen::VectorXd reduced_eigenvalues(reducedDOF);
+	reduced_eigenvalues.setZero();
 
-		stopwatch_elapsed_str.str("");
-		stopwatch_elapsed_str << stopwatch.elapsed();
-		std::cout << "Eigen values and Eigen vectors are sorted at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	// Augmentation removed global Eigenvectors
+	Eigen::MatrixXd  reduced_eigenvectors(reducedDOF, reducedDOF);
+	reduced_eigenvectors.setZero();
 
-		//____________________________________________________________________________________________________________________
-		// Normailize eigen vectors
-		normalize_eigen_vectors(eigenvectors, reducedDOF + agDOF);
+	get_reduced_eigen_matrix(reduced_eigenvalues,
+		reduced_eigenvectors,
+		is_augmentation_removal_success,
+		eigenvalues,
+		eigenvectors,
+		reducedDOF,
+		agDOF,
+		output_file);
 
-		stopwatch_elapsed_str.str("");
-		stopwatch_elapsed_str << stopwatch.elapsed();
-		std::cout << "Eigen vectors are normalized at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-
-		//____________________________________________________________________________________________________________________
-		// Remove the Augmentation in EigenValues and EigenVectors
-		// Augmentation removed global Eigenvalues
-		bool is_augmentation_removal_success = false;
-		Eigen::VectorXd reduced_eigenvalues(reducedDOF);
-		reduced_eigenvalues.setZero();
-
-		// Augmentation removed global Eigenvectors
-		Eigen::MatrixXd  reduced_eigenvectors(reducedDOF,reducedDOF);
-		reduced_eigenvectors.setZero();
-
-		get_reduced_eigen_matrix(reduced_eigenvalues,
-			reduced_eigenvectors,
-			is_augmentation_removal_success,
-			eigenvalues,
-			eigenvectors,
-			reducedDOF,
-			agDOF,
-			output_file);
-
-		if (is_augmentation_removal_success == false)
-		{
-			// Handle the case where the solver failed
-			std::cerr << "Augmentation removal failed!" << std::endl;
-			output_file.close();
-			return;
-
-		}
-
-
-		if (print_matrix == true)
-		{
-			// Print the eigen values
-			output_file << "Eigen values :" << std::endl;
-			output_file << reduced_eigenvalues << std::endl;
-			output_file << std::endl;
-
-			// Eigen vectors are printed after globalized
-		}
-
-		stopwatch_elapsed_str.str("");
-		stopwatch_elapsed_str << stopwatch.elapsed();
-		std::cout << "Eigen values/ vectors augmentation removed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-
-		//____________________________________________________________________________________________________________________
-		// Globalize eigen vectors
-		// Convert the reduced eigenvectors to eigen vectors for the whole model (including the nodes with supports)
-		Eigen::MatrixXd global_eigenvectors(numDOF, reducedDOF);
-		global_eigenvectors.setZero();
-
-		get_globalized_eigen_vector_matrix(global_eigenvectors,
-			reduced_eigenvectors,
-			globalDOFMatrix,
-			numDOF,
-			reducedDOF,
-			output_file);
-
-		stopwatch_elapsed_str.str("");
-		stopwatch_elapsed_str << stopwatch.elapsed();
-		std::cout << "Eigen vectors globalized at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-
-		//____________________________________________________________________________________________________________________
-		// Store the results
-
-		// Clear the modal results
-		number_of_modes = 0; // Number of modes
-		mode_result_str.clear(); // Result string list
-		m_eigenvalues.clear(); // Eigen values
-		m_eigenvectors.clear(); // Eigen vectors
-
-		// Add the eigen values and eigen vectors
-		for (int i = 0; i < reducedDOF; i++)
-		{
-			std::vector<double> eigen_vec; // Eigen vectors of all nodes (including constrainded)
-			
-			for (int j = 0; j < numDOF; j++)
-			{
-				eigen_vec.push_back(global_eigenvectors.coeff(j, i));
-			}
-
-			// Add to the Eigen values storage
-			m_eigenvalues.insert({ i, reduced_eigenvalues.coeff(i) });
-
-			// Add to the Eigen vectors storage 
-			m_eigenvectors.insert({ i, eigen_vec });
-
-			// Frequency
-			double nat_freq = std::sqrt(reduced_eigenvalues.coeff(i) / (2.0 * m_pi));
-
-			// Modal results
-			std::stringstream ss;
-			ss << std::fixed << std::setprecision(2) << nat_freq;
-
-			// Add to the string list
-			mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz");
-		}
-
-		number_of_modes = reducedDOF; // total number of modes
-		
-
-		stopwatch_elapsed_str.str("");
-		stopwatch_elapsed_str << stopwatch.elapsed();
-		std::cout << "Eigen values/ vectors stored at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-
-		is_modal_analysis_complete = true;
-	}
-	else 
+	if (is_augmentation_removal_success == false)
 	{
 		// Handle the case where the solver failed
-		std::cerr << "Eigenvalue solver failed!" << std::endl;
+		std::cerr << "Augmentation removal failed!" << std::endl;
 		output_file.close();
 		return;
+
 	}
+
+
+	if (print_matrix == true)
+	{
+		// Print the eigen values
+		output_file << "Eigen values :" << std::endl;
+		output_file << reduced_eigenvalues << std::endl;
+		output_file << std::endl;
+
+		// Eigen vectors are printed after globalized
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen values/ vectors augmentation removed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Globalize eigen vectors
+	// Convert the reduced eigenvectors to eigen vectors for the whole model (including the nodes with supports)
+	Eigen::MatrixXd global_eigenvectors(numDOF, reducedDOF);
+	global_eigenvectors.setZero();
+
+	get_globalized_eigen_vector_matrix(global_eigenvectors,
+		reduced_eigenvectors,
+		globalDOFMatrix,
+		numDOF,
+		reducedDOF,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen vectors globalized at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Store the results
+
+	// Clear the modal results
+	number_of_modes = 0; // Number of modes
+	mode_result_str.clear(); // Result string list
+	m_eigenvalues.clear(); // Eigen values
+	m_eigenvectors.clear(); // Eigen vectors
+
+	// Add the eigen values and eigen vectors
+	for (int i = 0; i < reducedDOF; i++)
+	{
+		std::vector<double> eigen_vec; // Eigen vectors of all nodes (including constrainded)
+
+		for (int j = 0; j < numDOF; j++)
+		{
+			eigen_vec.push_back(global_eigenvectors.coeff(j, i));
+		}
+
+		// Add to the Eigen values storage
+		m_eigenvalues.insert({ i, reduced_eigenvalues.coeff(i) });
+
+		// Add to the Eigen vectors storage 
+		m_eigenvectors.insert({ i, eigen_vec });
+
+		// Frequency
+		double nat_freq = std::sqrt(reduced_eigenvalues.coeff(i) / (2.0 * m_pi));
+
+		// Modal results
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(2) << nat_freq;
+
+		// Add to the string list
+		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz");
+	}
+
+	number_of_modes = reducedDOF; // total number of modes
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen values/ vectors stored at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	this->is_modal_analysis_complete = true;
 
 	//_____________________________________________________________________________________________
 
@@ -531,8 +580,8 @@ void modal_analysis_solver::get_global_pointmass_matrix(Eigen::MatrixXd& globalP
 		else
 		{
 			// Nodes doesnt have point mass
-			globalPointMassMatrix((nd_map * 2) + 0, (nd_map * 2) + 0) = 0.0;
-			globalPointMassMatrix((nd_map * 2) + 1, (nd_map * 2) + 1) = 0.0;
+			globalPointMassMatrix((nd_map * 2) + 0, (nd_map * 2) + 0) = smallValue;
+			globalPointMassMatrix((nd_map * 2) + 1, (nd_map * 2) + 1) = smallValue;
 		}
 	}
 
@@ -547,8 +596,10 @@ void modal_analysis_solver::get_global_pointmass_matrix(Eigen::MatrixXd& globalP
 
 
 void modal_analysis_solver::get_global_dof_matrix(Eigen::VectorXd& globalDOFMatrix,
+	const Eigen::MatrixXd& globalPointMassMatrix,
 	const nodes_list_store& model_nodes,
 	const nodeconstraint_list_store& model_constarints,
+	const int& numDOF,
 	int& reducedDOF,
 	std::ofstream& output_file)
 {
@@ -590,6 +641,23 @@ void modal_analysis_solver::get_global_dof_matrix(Eigen::VectorXd& globalDOFMatr
 			reducedDOF = reducedDOF + 2;
 		}
 	}
+
+	//// Ignore nodes without point mass to avoid Eigen Solver error 
+	//// Note: Cholesky Decomposition fails for diagonal point mass zero matrix
+	//for (int i = 0; i < numDOF; i++)
+	//{
+	//	if (globalPointMassMatrix.coeff(i, i) < smallValue)
+	//	{
+	//		globalDOFMatrix.coeffRef(i) = 1.0;
+	//	}
+
+	//	// Find the size of reducedDOF
+	//	if (globalDOFMatrix.coeff(i) < smallValue)
+	//	{
+	//		reducedDOF = reducedDOF + 1;
+	//	}
+	//}
+
 
 	if (print_matrix == true)
 	{
@@ -714,7 +782,8 @@ void modal_analysis_solver::get_augmented_global_stiffness_matrix(Eigen::MatrixX
 	agglobalStiffnessMatrix.topRightCorner(numDOF, agDOF) = globalAGMatrix.transpose();
 
 	// Fill the bottom-right block of agglobalStiffnessMatrix with zeros
-	agglobalStiffnessMatrix.bottomRightCorner(agDOF, agDOF).setZero();
+	agglobalStiffnessMatrix.bottomRightCorner(agDOF, agDOF).setIdentity();
+	agglobalStiffnessMatrix.bottomRightCorner(agDOF, agDOF) *= smallValue;
 
 	if (print_matrix == true)
 	{
@@ -745,7 +814,8 @@ void modal_analysis_solver::get_augmented_global_ptmass_matrix(Eigen::MatrixXd& 
 	agglobalPointMassMatrix.topRightCorner(numDOF, agDOF).setZero();
 
 	// Fill the bottom-right block of agglobalPointMassMatrix with zeros
-	agglobalPointMassMatrix.bottomRightCorner(agDOF, agDOF).setZero();
+	agglobalPointMassMatrix.bottomRightCorner(agDOF, agDOF).setIdentity();
+	agglobalPointMassMatrix.bottomRightCorner(agDOF, agDOF) *= smallValue;
 
 	//_______________________________________________________________________________
 	// Augment the global DOF matrix
@@ -807,8 +877,8 @@ void modal_analysis_solver::get_reduced_global_matrices(Eigen::MatrixXd& reduced
 				else
 				{
 					// Get the reduced matrices
-					reduced_agglobalStiffnessMatrix.coeffRef(r, s) = agglobalPointMassMatrix.coeff(i, j);
-					reduced_agglobalPointMassMatrix.coeffRef(r, s) = agglobalStiffnessMatrix.coeff(i, j);
+					reduced_agglobalStiffnessMatrix.coeffRef(r, s) = agglobalStiffnessMatrix.coeff(i, j);
+					reduced_agglobalPointMassMatrix.coeffRef(r, s) = agglobalPointMassMatrix.coeff(i, j);
 					s++;
 				}
 			}
@@ -851,6 +921,7 @@ void modal_analysis_solver::sort_eigen_values_vectors(Eigen::VectorXd& eigenvalu
 				swap_temp = eigenvalues(p);
 				eigenvalues(p) = eigenvalues(q);
 				eigenvalues(q) = swap_temp;
+
 				for (i = 0; i < m_size; i++)
 				{
 					swap_temp = eigenvectors(i, p);
@@ -919,7 +990,7 @@ void modal_analysis_solver::get_reduced_eigen_matrix(Eigen::VectorXd& reduced_ei
 	{
 		// Check whether this eigenvalue/ eigen vectors are for augmented block 
 		// Loop through the augmented loop
-		for (q = (reducedDOF - 1); q < (reducedDOF + agDOF); q++)
+		for (q = reducedDOF; q < (reducedDOF + agDOF); q++)
 		{
 			if (eigenvectors.coeff(q, p) > 0.25)
 			{
@@ -943,7 +1014,6 @@ void modal_analysis_solver::get_reduced_eigen_matrix(Eigen::VectorXd& reduced_ei
 	{
 		// All the augmented ids are identified
 		int r = 0;
-		int s = 0;
 
 		// Loop through the columns of eigen vectors
 		for (p = 0; p < (reducedDOF + agDOF); p++)
@@ -960,9 +1030,7 @@ void modal_analysis_solver::get_reduced_eigen_matrix(Eigen::VectorXd& reduced_ei
 			// Loop through the row loop (except the augmented indices)
 			for (q = 0; q < (reducedDOF); q++)
 			{
-				reduced_eigenvectors.coeffRef(s, r) = eigenvectors.coeff(q, p);
-
-				s++;
+				reduced_eigenvectors.coeffRef(q, r) = eigenvectors.coeff(q, p);
 			}
 
 			r++;
@@ -977,7 +1045,7 @@ void modal_analysis_solver::get_reduced_eigen_matrix(Eigen::VectorXd& reduced_ei
 
 void modal_analysis_solver::get_globalized_eigen_vector_matrix(Eigen::MatrixXd& global_eigenvectors,
 	const Eigen::MatrixXd& reduced_eigenvectors,
-	const Eigen::MatrixXd& globalDOFMatrix,
+	const Eigen::VectorXd& globalDOFMatrix,
 	const int& numDOF,
 	const int& reducedDOF,
 	std::ofstream& output_file)
@@ -992,7 +1060,7 @@ void modal_analysis_solver::get_globalized_eigen_vector_matrix(Eigen::MatrixXd& 
 		// i loops through the number of nodes (along the row)
 		for (int i = 0; i < numDOF; i++)
 		{
-			if (globalDOFMatrix(i, 0) == 0)
+			if (globalDOFMatrix.coeff(i) == 1)
 			{
 				// constrained row index, so Displacement is Zero
 				global_eigenvectors.coeffRef(i, j) = 0;
@@ -1000,7 +1068,7 @@ void modal_analysis_solver::get_globalized_eigen_vector_matrix(Eigen::MatrixXd& 
 			else
 			{
 				// Un constrained row index, so Displacement is Zero
-				global_eigenvectors.coeffRef(i, j) = reduced_eigenvectors.coeffRef(s, j);
+				global_eigenvectors.coeffRef(i, j) = reduced_eigenvectors.coeff(s, j);
 				s++;
 			}
 		}
@@ -1047,13 +1115,37 @@ void modal_analysis_solver::map_modal_analysis_results(const nodes_list_store & 
 		}
 
 		// Create the modal analysis result node
-		glm::vec2 node_pt = model_nodes.nodeMap.at(node_id).node_pt;
+		glm::vec2 node_pt = nd_m.second.node_pt;
 		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ);
 	}
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Results mapped to model nodes at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+		// Add the modal line element result
+	for (auto& ln_m : model_lineelements.elementlineMap)
+	{
+		elementline_store ln = ln_m.second;
+		bool is_rigid = false;
+
+		if (ln.material_id == 0)
+		{
+			// Check whether the material is rigid
+			is_rigid = true;
+		}
+
+		modal_result_lineelements.add_modal_elementline(ln.line_id,
+			&modal_result_nodes.modal_nodeMap[ln.startNode->node_id],
+			&modal_result_nodes.modal_nodeMap[ln.endNode->node_id],is_rigid);
+	}
+
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	//____________________________________________________________________________________________________________________
 
 

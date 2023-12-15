@@ -24,8 +24,8 @@ public:
 	const int colormap_type = 1;
 	unsigned int modal_elementline_count = 0;
 	std::unordered_map<int, modal_elementline_store> modal_elementlineMap; // Create an unordered_map to store lines with ID as key
-	std::unordered_map<int, double> max_node_displ; // Stores the maximum nodal displacement for the whole model
-	std::unordered_map<int, double> min_node_displ; // Stores the minimum nodal displacement for the whole model
+	//std::unordered_map<int, double> max_node_displ; // Stores the maximum nodal displacement for the whole model
+	//std::unordered_map<int, double> min_node_displ; // Stores the minimum nodal displacement for the whole model
 	double element_max_length = 0.0;
 	double element_min_length = DBL_MAX;
 
