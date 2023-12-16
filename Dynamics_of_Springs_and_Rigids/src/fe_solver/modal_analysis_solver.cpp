@@ -315,6 +315,22 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	// Eigenvectors
 	Eigen::MatrixXd  eigenvectors = L_inv_matrix.transpose() * eigenSolver.eigenvectors();
 
+
+	if (print_matrix == true)
+	{
+		// Print the eigen values after solve
+		output_file << "Eigen values after solve:" << std::endl;
+		output_file << eigenvalues << std::endl;
+		output_file << std::endl;
+
+		// Eigen vectors
+		output_file << "Eigen vectors after solve:" << std::endl;
+		output_file << eigenvectors << std::endl;
+		output_file << std::endl;
+	}
+
+
+	//____________________________________________________________________________________________________________________
 	// Process eigenvalues and eigenvectors
 	// sort the eigen value and eigen vector (ascending)
 	sort_eigen_values_vectors(eigenvalues, eigenvectors, reducedDOF + agDOF);
@@ -322,14 +338,6 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Eigen values and Eigen vectors are sorted at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-
-	//____________________________________________________________________________________________________________________
-	// Normailize eigen vectors
-	normalize_eigen_vectors(eigenvectors, reducedDOF + agDOF);
-
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Eigen vectors are normalized at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	//____________________________________________________________________________________________________________________
 	// Remove the Augmentation in EigenValues and EigenVectors
@@ -359,6 +367,15 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 		return;
 
 	}
+
+
+	//____________________________________________________________________________________________________________________
+	// Normailize eigen vectors
+	normalize_eigen_vectors(reduced_eigenvectors, reducedDOF);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen vectors are normalized at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 
 	if (print_matrix == true)
@@ -544,7 +561,7 @@ void modal_analysis_solver::get_element_stiffness_matrix(Eigen::MatrixXd& elemen
 	{
 		k1 = elementline_material.material_stiffness;
 	}
-	
+
 	local_element_stiffness_matrix.row(0) = Eigen::RowVectorXd({ {		 k1, -1.0 * k1 } });
 	local_element_stiffness_matrix.row(1) = Eigen::RowVectorXd({ {-1.0 * k1,		k1 } });
 
@@ -642,23 +659,6 @@ void modal_analysis_solver::get_global_dof_matrix(Eigen::VectorXd& globalDOFMatr
 		}
 	}
 
-	//// Ignore nodes without point mass to avoid Eigen Solver error 
-	//// Note: Cholesky Decomposition fails for diagonal point mass zero matrix
-	//for (int i = 0; i < numDOF; i++)
-	//{
-	//	if (globalPointMassMatrix.coeff(i, i) < smallValue)
-	//	{
-	//		globalDOFMatrix.coeffRef(i) = 1.0;
-	//	}
-
-	//	// Find the size of reducedDOF
-	//	if (globalDOFMatrix.coeff(i) < smallValue)
-	//	{
-	//		reducedDOF = reducedDOF + 1;
-	//	}
-	//}
-
-
 	if (print_matrix == true)
 	{
 		// Print the Global Force matrix
@@ -680,7 +680,7 @@ void modal_analysis_solver::get_global_augmentation_matrix(Eigen::MatrixXd& glob
 	// Create global Augmentation matrix
 	// Contraint (Roller) Augmentation
 	Eigen::VectorXd row_augmentation_matrix(numDOF);
-	
+
 
 	for (const auto& cnst_m : model_constarints.constraintMap)
 	{
@@ -782,9 +782,9 @@ void modal_analysis_solver::get_augmented_global_stiffness_matrix(Eigen::MatrixX
 	agglobalStiffnessMatrix.topRightCorner(numDOF, agDOF) = globalAGMatrix.transpose();
 
 	// Fill the bottom-right block of agglobalStiffnessMatrix with zeros
-	agglobalStiffnessMatrix.bottomRightCorner(agDOF, agDOF).setIdentity();
-	agglobalStiffnessMatrix.bottomRightCorner(agDOF, agDOF) *= smallValue;
+	agglobalStiffnessMatrix.bottomRightCorner(agDOF, agDOF).setZero();
 
+	
 	if (print_matrix == true)
 	{
 		// Print the Augmented Global stiffness matrix
@@ -810,12 +810,14 @@ void modal_analysis_solver::get_augmented_global_ptmass_matrix(Eigen::MatrixXd& 
 	// Fill the bottom-left block of agglobalPointMassMatrix with zeros
 	agglobalPointMassMatrix.bottomLeftCorner(agDOF, numDOF).setZero();
 
+
 	// Fill the top-right block of agglobalPointMassMatrix with zeros
 	agglobalPointMassMatrix.topRightCorner(numDOF, agDOF).setZero();
 
-	// Fill the bottom-right block of agglobalPointMassMatrix with zeros
+
+	// Fill the bottom-right block Diagonal of agglobalPointMassMatrix with small value to avoid illCondition (Decomposition error)
 	agglobalPointMassMatrix.bottomRightCorner(agDOF, agDOF).setIdentity();
-	agglobalPointMassMatrix.bottomRightCorner(agDOF, agDOF) *= smallValue;
+	agglobalPointMassMatrix.bottomRightCorner(agDOF, agDOF) *= (smallValue); // Very low point mass
 
 	//_______________________________________________________________________________
 	// Augment the global DOF matrix
@@ -980,65 +982,29 @@ void modal_analysis_solver::get_reduced_eigen_matrix(Eigen::VectorXd& reduced_ei
 	std::ofstream& output_file)
 {
 	// Remove the augmentations from the eigenvalues and eigenvectors
-	int p = 0;
-	int q = 0;
-
-	std::vector<int> augmented_id;
-
-	// Loop through the columns of eigen vectors
-	for (p = 0; p < (reducedDOF + agDOF); p++)
-	{
-		// Check whether this eigenvalue/ eigen vectors are for augmented block 
-		// Loop through the augmented loop
-		for (q = reducedDOF; q < (reducedDOF + agDOF); q++)
-		{
-			if (eigenvectors.coeff(q, p) > 0.25)
-			{
-				// Check whether augmented eigen vector is not zero
-				augmented_id.push_back(p);
-
-				// exit the loop
-				break;
-			}
-		}
-	}
-
-	// The size of augmented id must be equal to augmented DOF
-	if (static_cast<int>(augmented_id.size()) != agDOF)
-	{
-		// Augmentation identification failed
-		is_augmentation_removal_success = false;
-		return;
-	}
-	else
-	{
-		// All the augmented ids are identified
-		int r = 0;
-
-		// Loop through the columns of eigen vectors
-		for (p = 0; p < (reducedDOF + agDOF); p++)
-		{
-			// Skip the eigen values/ eigen vectors of augmented block
-			if (std::find(augmented_id.begin(), augmented_id.end(), p) != augmented_id.end())
-			{
-				// Skip
-				continue;
-			}
-
-			reduced_eigenvalues.coeffRef(r) = eigenvalues.coeff(p);
 	
-			// Loop through the row loop (except the augmented indices)
-			for (q = 0; q < (reducedDOF); q++)
-			{
-				reduced_eigenvectors.coeffRef(q, r) = eigenvectors.coeff(q, p);
-			}
-
-			r++;
-		}
-
-		// Augmentation removed
-		is_augmentation_removal_success = true;
+	// Eigen values of the agDOF is negative
+	int r = 0;
+	for (int p = agDOF; p < (reducedDOF + agDOF); p++)
+	{
+		reduced_eigenvalues.coeffRef(r) = eigenvalues.coeff(p);
+		r++;
 	}
+
+	// Loop through the columns of eigen vectors (except the augmented indices)
+	r = 0;
+	for (int p = agDOF; p < (reducedDOF + agDOF); p++)
+	{
+		// Loop through the row loop (except the augmented indices)
+		for (int q = 0; q < (reducedDOF); q++)
+		{
+			reduced_eigenvectors.coeffRef(q, r) = eigenvectors.coeff(q, p);
+		}
+		r++;
+	}
+
+	// Augmentation removed
+	is_augmentation_removal_success = true;
 
 }
 
@@ -1085,7 +1051,7 @@ void modal_analysis_solver::get_globalized_eigen_vector_matrix(Eigen::MatrixXd& 
 }
 
 
-void modal_analysis_solver::map_modal_analysis_results(const nodes_list_store & model_nodes,
+void modal_analysis_solver::map_modal_analysis_results(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
 	modal_nodes_list_store& modal_result_nodes,
 	modal_elementline_list_store& modal_result_lineelements,
@@ -1108,7 +1074,7 @@ void modal_analysis_solver::map_modal_analysis_results(const nodes_list_store & 
 
 			// get the appropriate modal displacement of this particular node
 			glm::vec2 modal_displ = glm::vec2(globalEigenVector[(matrix_index * 2) + 0],
-				globalEigenVector[(matrix_index * 2) + 1]);
+				-1.0*globalEigenVector[(matrix_index * 2) + 1]);
 
 			// add to modal result of this node
 			node_modal_displ.insert({ i,modal_displ });
@@ -1138,7 +1104,7 @@ void modal_analysis_solver::map_modal_analysis_results(const nodes_list_store & 
 
 		modal_result_lineelements.add_modal_elementline(ln.line_id,
 			&modal_result_nodes.modal_nodeMap[ln.startNode->node_id],
-			&modal_result_nodes.modal_nodeMap[ln.endNode->node_id],is_rigid);
+			&modal_result_nodes.modal_nodeMap[ln.endNode->node_id], is_rigid);
 	}
 
 

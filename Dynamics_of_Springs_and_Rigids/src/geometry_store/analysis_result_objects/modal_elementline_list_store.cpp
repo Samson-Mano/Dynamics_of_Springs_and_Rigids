@@ -214,10 +214,8 @@ void modal_elementline_list_store::set_rigid_element_line(modal_elementline_stor
 		glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
 
 	// offset
-	temp_pt1_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.25f) +
-		glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
-	temp_pt2_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.75f) +
-		glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+	temp_pt1_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.25f);
+	temp_pt2_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.75f);
 
 	displ_ratio_1 = geom_parameters::get_line_length(origin, temp_pt1_offset);
 	displ_ratio_2 = geom_parameters::get_line_length(origin, temp_pt2_offset);
@@ -241,10 +239,8 @@ void modal_elementline_list_store::set_rigid_element_line(modal_elementline_stor
 		glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
 
 	// offset
-	temp_pt1_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.25f) +
-		glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
-	temp_pt2_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.75f) +
-		glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+	temp_pt1_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.25f);
+	temp_pt2_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.75f);
 
 	displ_ratio_1 = geom_parameters::get_line_length(origin, temp_pt1_offset);
 	displ_ratio_2 = geom_parameters::get_line_length(origin, temp_pt2_offset);
