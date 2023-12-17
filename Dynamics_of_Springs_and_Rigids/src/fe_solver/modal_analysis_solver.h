@@ -55,8 +55,8 @@ public:
 	void clear_results();
 	void modal_analysis_start(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
-		const nodeconstraint_list_store& model_constarints,
-		const nodepointmass_list_store& model_ptmass,
+		const nodeconstraint_list_store& node_constraints,
+		const nodepointmass_list_store& node_ptmass,
 		const std::unordered_map<int, material_data>& material_list,
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements);
@@ -66,74 +66,83 @@ private:
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
-	int numDOF = 0;
-	int reducedDOF = 0;
-	int agDOF = 0;
+	//int numDOF = 0;
+	//int reducedDOF = 0;
+	//int agDOF = 0;
 	const double smallValue = 1.0E-12;
 	double w_penalty = 0.0; // penalty stiffness
-	Eigen::MatrixXd globalStiffnessMatrix; // global stiffness matrix
-	Eigen::MatrixXd globalPointMassMatrix; // global Point mass matrix
-	Eigen::VectorXd globalDOFMatrix; // global DOF matrix
-	Eigen::MatrixXd globalAGMatrix; // global Augementation matrix
+	//Eigen::MatrixXd globalStiffnessMatrix; // global stiffness matrix
+	//Eigen::MatrixXd globalPointMassMatrix; // global Point mass matrix
+	//Eigen::VectorXi globalDOFMatrix; // global DOF matrix
+	//Eigen::MatrixXd globalAGMatrix; // global Augementation matrix
+	//Eigen::MatrixXd globalSupportInclinationMatrix; // global support inclination matrix
 
-	// Augmented global matrices
-	Eigen::MatrixXd agglobalStiffnessMatrix; // Augmented global stiffness matrix
-	Eigen::MatrixXd agglobalPointMassMatrix; // Augmented global Point mass matrix
-	Eigen::VectorXd agglobalDOFMatrix; // Augmented global DOF matrix
+	//// Augmented global matrices
+	//Eigen::MatrixXd agglobalStiffnessMatrix; // Augmented global stiffness matrix
+	//Eigen::MatrixXd agglobalPointMassMatrix; // Augmented global Point mass matrix
+	//Eigen::VectorXd agglobalDOFMatrix; // Augmented global DOF matrix
 
-	// Reduced Augmented global matrices
-	Eigen::MatrixXd reduced_agglobalStiffnessMatrix; // reduced Augmented global stiffness matrix
-	Eigen::MatrixXd reduced_agglobalPointMassMatrix; // reduced Augmented global point mass matrix
+	// Reduced global matrices (reduced by applying the essential boundary conditions)
+	//Eigen::MatrixXd reduced_globalStiffnessMatrix; // reduced Global stiffness matrix
+	//Eigen::MatrixXd reduced_globalPointMassMatrix; // reduced Global point mass matrix
+	//Eigen::MatrixXd reduced_globalAGMatrix; // reduced Global Augementation matrix
 
 
 	void get_global_stiffness_matrix(Eigen::MatrixXd& globalStiffnessMatrix,
 		const elementline_list_store& model_lineelements,
+		const nodeconstraint_list_store& node_constraints,
 		const std::unordered_map<int, material_data>& material_list,
 		std::ofstream& output_file);
 
 
 	void get_element_stiffness_matrix(Eigen::MatrixXd& elementStiffnessMatrix,
 		const elementline_store& ln,
+		const nodeconstraint_list_store& node_constraints,
 		const material_data& elementline_material,
 		std::ofstream& output_file);
 
-	void get_global_pointmass_matrix(Eigen::MatrixXd& globalPointMassMatrix,
-		const nodes_list_store& model_nodes,
-		const nodepointmass_list_store& model_ptmass,
+	void get_element_support_incl_matrix(Eigen::MatrixXd& s_transformation_matrix,
+		const elementline_store& ln,
+		const nodeconstraint_list_store& node_constraints, 
 		std::ofstream& output_file);
 
-	void get_global_dof_matrix(Eigen::VectorXd& globalDOFMatrix,
-		const Eigen::MatrixXd& globalPointMassMatrix,
+
+	void get_global_pointmass_matrix(Eigen::MatrixXd& globalPointMassMatrix,
 		const nodes_list_store& model_nodes,
-		const nodeconstraint_list_store& model_constarints,
+		const nodepointmass_list_store& node_ptmass,
+		std::ofstream& output_file);
+
+	void get_global_dof_matrix(Eigen::VectorXi& globalDOFMatrix,
+		const Eigen::MatrixXd& globalPointMassMatrix,
+		const nodes_list_store& node_ptmass,
+		const nodeconstraint_list_store& node_constraints,
 		const int& numDOF,
 		int& reducedDOF,
 		std::ofstream& output_file);
 
+	void get_reduced_global_matrices(Eigen::MatrixXd& reduced_globalStiffnessMatrix,
+		Eigen::MatrixXd& reduced_globalPointMassMatrix,
+		Eigen::MatrixXd& reduced_globalAGMatrix,
+		const Eigen::MatrixXd& globalStiffnessMatrix,
+		const Eigen::MatrixXd& globalPointMassMatrix,
+		const Eigen::MatrixXd& globalAGMatrix,
+		const Eigen::VectorXi& globalDOFMatrix,
+		const int& numDOF,
+		const int& reducedDOF,
+		const int& agDOF,
+		std::ofstream& output_file);
+
 	void get_global_augmentation_matrix(Eigen::MatrixXd& globalAGMatrix,
-		const nodeconstraint_list_store& model_constarints,
+		const nodeconstraint_list_store& node_constraints,
 		const elementline_list_store& model_lineelements,
 		const std::unordered_map<int, material_data>& material_list,
+		const int& numDOF,
 		int& agDOF,
 		std::ofstream& output_file);
 
-	void get_augmented_global_stiffness_matrix(Eigen::MatrixXd& agglobalStiffnessMatrix,
-		const Eigen::MatrixXd& globalStiffnessMatrix,
-		const Eigen::MatrixXd& globalAGMatrix,
-		std::ofstream& output_file);
-
-	void get_augmented_global_ptmass_matrix(Eigen::MatrixXd& agglobalPointMassMatrix,
-		Eigen::VectorXd& agglobalDOFMatrix,
-		const Eigen::MatrixXd& globalPointMassMatrix,
-		const Eigen::VectorXd& globalDOFMatrix,
-		std::ofstream& output_file);
-
-	void get_reduced_global_matrices(Eigen::MatrixXd& reduced_agglobalStiffnessMatrix,
-		Eigen::MatrixXd& reduced_agglobalPointMassMatrix,
-		const Eigen::MatrixXd& agglobalStiffnessMatrix,
-		const Eigen::MatrixXd& agglobalPointMassMatrix,
-		const Eigen::VectorXd& agglobalDOFMatrix,
-		const int& numDOF,
+	void get_augmented_Z_matrix(Eigen::MatrixXd& augmented_Z_Matrix,
+		const Eigen::MatrixXd& Z_Matrix,
+		const Eigen::MatrixXd& reduced_globalAGMatrix,
 		const int& reducedDOF,
 		const int& agDOF,
 		std::ofstream& output_file);
@@ -146,7 +155,7 @@ private:
 		const int& m_size);
 
 	void get_reduced_eigen_matrix(Eigen::VectorXd& reduced_eigenvalues,
-		Eigen::MatrixXd& reduced_eigenvectors,
+		Eigen::MatrixXd& reduced_generalized_eigenvectors,
 		bool& is_augmentation_removal_success,
 		const Eigen::VectorXd& eigenvalues,
 		const Eigen::MatrixXd& eigenvectors,
@@ -156,9 +165,15 @@ private:
 
 	void get_globalized_eigen_vector_matrix(Eigen::MatrixXd& global_eigenvectors,
 		const Eigen::MatrixXd& reduced_eigenvectors,
-		const Eigen::VectorXd& globalDOFMatrix,
+		const Eigen::VectorXi& globalDOFMatrix,
 		const int& numDOF,
 		const int& reducedDOF,
+		std::ofstream& output_file);
+
+	void get_globalSupportInclinationMatrix(Eigen::MatrixXd& globalSupportInclinationMatrix,
+		const nodes_list_store& model_nodes,
+		const nodeconstraint_list_store& node_constraints,
+		const int& numDOF,
 		std::ofstream& output_file);
 
 	void map_modal_analysis_results(const nodes_list_store& model_nodes,

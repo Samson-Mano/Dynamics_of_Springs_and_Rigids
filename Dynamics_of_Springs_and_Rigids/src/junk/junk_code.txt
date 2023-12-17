@@ -1,631 +1,1094 @@
+#include "modal_analysis_solver.h"
 
-
-
-/*
-//_________________________________________________________________
-//_________________________________________________________________
-//_________________________________________________________________
-//_________________________________________________________________
-//_________________________________________________________________
-
-#include "elementtri_list_store.h"
-
-elementtri_list_store::elementtri_list_store()
+modal_analysis_solver::modal_analysis_solver()
 {
 	// Empty constructor
 }
 
-elementtri_list_store::~elementtri_list_store()
+modal_analysis_solver::~modal_analysis_solver()
 {
 	// Empty destructor
 }
 
-void elementtri_list_store::init(geom_parameters* geom_param_ptr)
+
+void modal_analysis_solver::clear_results()
 {
-	// Set the geometry parameters
-	this->geom_param_ptr = geom_param_ptr;
-
-	// Set the geometry parameters for the labels (and clear the labels)
-		element_tris.init(geom_param_ptr);
-	element_tris_shrunk.init(geom_param_ptr);
-	element_materialid.init(geom_param_ptr);
-	selected_element_tris_shrunk.init(geom_param_ptr);
-	element_boundarylines.init(geom_param_ptr);
-	element_boundarypts.init(geom_param_ptr);
-
-	// Clear the triangles
-	elementtri_count = 0;
-	elementtriMap.clear();
+	// Clear the eigen values and eigen vectors
+	number_of_modes = 0;
+	nodeid_map.clear();
+	m_eigenvalues.clear();
+	m_eigenvectors.clear();
+	// eigen_vectors_reduced.clear();
+	mode_result_str.clear();
+	is_modal_analysis_complete = false;
 }
 
-void elementtri_list_store::add_elementtriangle(int& tri_id, node_store* nd1, node_store* nd2, node_store* nd3)
+void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_nodes,
+	const elementline_list_store& model_lineelements,
+	const nodeconstraint_list_store& model_constarints,
+	const nodepointmass_list_store& model_ptmass,
+	const std::unordered_map<int, material_data>& material_list,
+	modal_nodes_list_store& modal_result_nodes,
+	modal_elementline_list_store& modal_result_lineelements)
 {
-	// Add the line to the list
-	elementtri_store temp_tri;
-	temp_tri.tri_id = tri_id; // Triangle ID
-	temp_tri.nd1 = nd1;
-	temp_tri.nd2 = nd2;
-	temp_tri.nd3 = nd3;
+	// Main solver call
+	this->is_modal_analysis_complete = false;
 
-	// Check whether the node_id is already there
-	if (elementtriMap.find(tri_id) != elementtriMap.end())
+	// Check the model
+	// Number of nodes
+	if (model_nodes.node_count == 0)
 	{
-		// Element ID already exist (do not add)
 		return;
 	}
 
-	// Insert to the lines
-	elementtriMap.insert({ tri_id, temp_tri });
-	elementtri_count++;
-
-	//__________________________ Add the Triangle
-	glm::vec2 node_pt1 = (*nd1).node_pt;
-	glm::vec2 node_pt2 = (*nd2).node_pt;
-	glm::vec2 node_pt3 = (*nd3).node_pt;
-
-	glm::vec3 temp_tri_color = geom_param_ptr->geom_colors.triangle_color;
-	// Main triangle
-	element_tris.add_tri(tri_id, node_pt1, node_pt2, node_pt3,
-		glm::vec2(0), glm::vec2(0), glm::vec2(0),
-		temp_tri_color, temp_tri_color, temp_tri_color, false);
-
-	// Main triangle as shrunk
-	double midpt_x = (node_pt1.x + node_pt2.x + node_pt3.x) / 3.0f;
-	double midpt_y = (node_pt1.y + node_pt2.y + node_pt3.y) / 3.0f;
-	double shrink_factor = geom_param_ptr->traingle_shrunk_factor;
-
-	glm::vec2 shrunk_node_pt1 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt1.x * shrink_factor)),
-		(midpt_y * (1 - shrink_factor) + (node_pt1.y * shrink_factor)));
-	glm::vec2 shrunk_node_pt2 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt2.x * shrink_factor)),
-		(midpt_y * (1 - shrink_factor) + (node_pt2.y * shrink_factor)));
-	glm::vec2 shrunk_node_pt3 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt3.x * shrink_factor)),
-		(midpt_y * (1 - shrink_factor) + (node_pt3.y * shrink_factor)));
-
-	element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-		glm::vec2(0), glm::vec2(0), glm::vec2(0),
-		temp_tri_color, temp_tri_color, temp_tri_color, false);
-
-
-	//__________________________ Add the Triangle boundary points
-	addtriangle_boundarylines(node_pt1, node_pt2, node_pt3);
-
-	//__________________________ Add the Triangle boundary lines
-	addtriangle_boundarypts(node_pt1, node_pt2, node_pt3);
-
-}
-
-void elementtri_list_store::add_selection_triangles(const std::vector<int>& selected_element_ids)
-{
-	// Clear the existing selected triangles
-	selected_element_tris_shrunk.clear_triangles();
-
-	// Add to Selected Element triangles
-	glm::vec3 temp_color = geom_param_ptr->geom_colors.node_selected_color;
-
-	for (const auto& it : selected_element_ids)
+	// Number of elements
+	if (model_lineelements.elementline_count == 0)
 	{
-		int tri_id = elementtriMap[it].tri_id;
-		glm::vec2 node_pt1 = elementtriMap[it].nd1->node_pt; // Node pt 1
-		glm::vec2 node_pt2 = elementtriMap[it].nd2->node_pt; // Node pt 2
-		glm::vec2 node_pt3 = elementtriMap[it].nd3->node_pt; // Node pt 3
-
-
-		double midpt_x = (node_pt1.x + node_pt2.x + node_pt3.x) / 3.0f; // mid pt x
-		double midpt_y = (node_pt1.y + node_pt2.y + node_pt3.y) / 3.0f; // mid pt y
-		double shrink_factor = geom_param_ptr->traingle_shrunk_factor;
-
-		glm::vec2 shrunk_node_pt1 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt1.x * shrink_factor)),
-			(midpt_y * (1 - shrink_factor) + (node_pt1.y * shrink_factor)));
-		glm::vec2 shrunk_node_pt2 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt2.x * shrink_factor)),
-			(midpt_y * (1 - shrink_factor) + (node_pt2.y * shrink_factor)));
-		glm::vec2 shrunk_node_pt3 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt3.x * shrink_factor)),
-			(midpt_y * (1 - shrink_factor) + (node_pt3.y * shrink_factor)));
-
-		selected_element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-			glm::vec2(0), glm::vec2(0), glm::vec2(0),
-			temp_color, temp_color, temp_color, false);
+		return;
 	}
 
-	// Set the selected element triangles buffer
-	selected_element_tris_shrunk.set_buffer();
-
-}
-
-void elementtri_list_store::update_material(const std::vector<int> selected_element_tri,const int& material_id)
-{
-	// Update the material ID
-	for (const int& it : selected_element_tri)
+	// Number of point mass
+	if (model_ptmass.ptmass_count == 0)
 	{
-		elementtriMap[it].material_id = material_id;
+		return;
 	}
 
-	// Update the material ID label
-	update_material_id_labels();
-}
+	//____________________________________________
+	Eigen::initParallel();  // Initialize Eigen's thread pool
 
+	stopwatch.start();
 
-void elementtri_list_store::execute_delete_material(const int& del_material_id)
-{
-	// Update delete material
-	bool is_del_material_found = false; // Flag to check whether material id deleted
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << std::fixed << std::setprecision(6);
 
-	// Delete the material
-	for (const auto& tri : elementtriMap)
+	std::cout << "Modal analysis started" << std::endl;
+
+	// Create a node ID map (to create a nodes as ordered and numbered from 0,1,2...n)
+	int i = 0;
+	for (auto& nd : model_nodes.nodeMap)
 	{
-		int id = tri.first; // get the id
-		if (elementtriMap[id].material_id == del_material_id)
+		nodeid_map[nd.first] = i;
+		i++;
+	}
+
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Node maping completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// set the penalty stiffness for rigid element
+	double max_stiffness = 0.0;
+	for (const auto& mat_m : material_list)
+	{
+		if (mat_m.first == 0)
 		{
-			// Delete material is removed and the material ID of that element to 0
-			elementtriMap[id].material_id = 0;
-			is_del_material_found = true;
+			// First material is rigid with inf stiffness (so skip)
+			continue;
+		}
+
+		material_data mat = mat_m.second;
+
+		// Find the maximum material stiffness
+		if (max_stiffness < mat.material_stiffness)
+		{
+			max_stiffness = mat.material_stiffness;
+			w_penalty = 1000.0 * max_stiffness; // penalty stiffness = 1000 * max stiffness
 		}
 	}
 
-	// Update the material ID label
-	if (is_del_material_found == true)
+	// Create a file to keep track of matrices
+	std::ofstream output_file;
+	output_file.open("modal_analysis_results.txt");
+
+	//____________________________________________________________________________________________________________________
+	numDOF = model_nodes.node_count * 2; // Number of degrees of freedom (2 DOFs per node (2 translation))
+
+	// Global Stiffness Matrix
+	globalStiffnessMatrix.resize(numDOF, numDOF);
+	globalStiffnessMatrix.setZero();
+
+	get_global_stiffness_matrix(globalStiffnessMatrix,
+		model_lineelements,
+		material_list,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Global stiffness matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Global Point Mass Matrix
+	globalPointMassMatrix.resize(numDOF, numDOF);
+	globalPointMassMatrix.setZero();
+
+	get_global_pointmass_matrix(globalPointMassMatrix,
+		model_nodes,
+		model_ptmass,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Global point mass matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Global DOF Mass Matrix
+	globalDOFMatrix.resize(numDOF);
+	globalDOFMatrix.setZero();
+
+	// Determine the size of the reduced stiffness matrix based on the number of unconstrained degrees of freedom
+	reducedDOF = 0;
+
+	get_global_dof_matrix(globalDOFMatrix,
+		globalPointMassMatrix,
+		model_nodes,
+		model_constarints,
+		numDOF,
+		reducedDOF,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Global DOF matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Gloabl Augmentation matrix
+	agDOF = 0.0; // size of the augmentation matrix
+
+	globalAGMatrix.resize(0, numDOF);
+	globalAGMatrix.setZero();
+
+
+	get_global_augmentation_matrix(globalAGMatrix,
+		model_constarints,
+		model_lineelements,
+		material_list,
+		agDOF,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Augmentation matrix creation completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+	//____________________________________________________________________________________________________________________
+	// Create Reduced Global Mass and stiffness matrix
+	reduced_globalStiffnessMatrix.resize(reducedDOF, reducedDOF);
+	reduced_globalStiffnessMatrix.setZero();
+
+	// Reduced Global Mass matrix
+	reduced_globalPointMassMatrix.resize(reducedDOF, reducedDOF);
+	reduced_globalPointMassMatrix.setZero();
+
+	// Reduced Global Augmentation matrix
+	reduced_globalAGMatrix.resize(agDOF, reducedDOF);
+	reduced_globalAGMatrix.setZero();
+
+
+	get_reduced_global_matrices(reduced_globalStiffnessMatrix,
+		reduced_globalPointMassMatrix,
+		reduced_globalAGMatrix,
+		globalStiffnessMatrix,
+		globalPointMassMatrix,
+		globalAGMatrix,
+		globalDOFMatrix,
+		numDOF,
+		reducedDOF,
+		agDOF,
+		output_file);
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Global stiffness, point mass and augmentation matrices are reduced at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Solve generalized Eigen value matrix using Cholesky decomposition
+	// Compute the Cholesky decomposition of Global Mass matrix
+	// Generalized Symmetric Definite Eigenproblems 
+
+	Eigen::LLT<Eigen::MatrixXd> llt;
+	llt.compute(reduced_globalPointMassMatrix);
+
+	if (llt.info() != Eigen::Success) 
 	{
-		update_material_id_labels();
+		// Cholesky decomposition failed
+		std::cout << "Cholesky decomposition failed !!!!" << std::endl;
+		output_file.close();
+		return;
 	}
 
-}
+	// Get the lower triangular matrix L
+	Eigen::MatrixXd L_matrix = llt.matrixL();
 
-void elementtri_list_store::set_buffer()
-{
-	// Set the buffers for the Model
-	element_tris.set_buffer();
-	element_tris_shrunk.set_buffer();
-	element_boundarylines.set_buffer();
-	element_boundarypts.set_buffer();
-	update_material_id_labels();
-}
-
-void elementtri_list_store::update_material_id_labels()
-{
-	// Clear the labels
-	element_materialid.clear_labels();
-
-	// Update the material id labels
-	glm::vec3 temp_color;
-	std::string temp_str = "";
-
-	for (auto it = elementtriMap.begin(); it != elementtriMap.end(); ++it)
+	if (print_matrix == true)
 	{
-		elementtri_store elementtri = it->second;
-
-		// Get the triangle node points
-		glm::vec2 nd_pt1 = elementtri.nd1->node_pt;
-		glm::vec2 nd_pt2 = elementtri.nd2->node_pt;
-		glm::vec2 nd_pt3 = elementtri.nd3->node_pt;
-
-		// Calculate the midpoint of the triangle
-		glm::vec2 tri_mid_pt = glm::vec2((nd_pt1.x + nd_pt2.x + nd_pt3.x) * 0.33333f, 
-										  (nd_pt1.y + nd_pt2.y + nd_pt3.y) * 0.33333f);
-
-		// Add the material ID
-		temp_color = geom_parameters::get_standard_color(elementtri.material_id);
-		temp_str = " M = " + std::to_string(elementtri.material_id);
-		element_materialid.add_text(temp_str, tri_mid_pt, glm::vec2(0), temp_color, 0, true, false);
+		// Print the Cholesky Decomposition L - Matrix
+		output_file << "Cholesky Decomposition L - Matrix" << std::endl;
+		output_file << L_matrix << std::endl;
+		output_file << std::endl;
 	}
 
-	// Set the buffer for the labels
-	element_materialid.set_buffer();
-}
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Cholesky decomposition L-matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
-void elementtri_list_store::paint_elementtriangles()
-{
-	// Paint the triangles
-	element_tris.paint_triangles();
-}
+	// Get the L^-1 inverse of L-matrix Lower triangular matrix
+	Eigen::MatrixXd L_inv_matrix = L_matrix.inverse();
 
-void elementtri_list_store::paint_selected_elementtriangles()
-{
-	// Paint the selected triangles
-	selected_element_tris_shrunk.paint_triangles();
-}
-
-void elementtri_list_store::paint_elementtriangles_shrunk()
-{
-	// Paint the triangles shrunk
-	element_tris_shrunk.paint_triangles();
-}
-
-void elementtri_list_store::paint_tri_material_id()
-{
-	// Paint the element material ID
-	element_materialid.paint_text();
-}
-
-void elementtri_list_store::paint_elementtriangles_boundarylines()
-{
-	// Paint the element boundaries;
-	element_boundarylines.paint_lines();
-}
-
-void elementtri_list_store::paint_elementtriangles_boundarypts()
-{
-	// Paint the element boundary points
-	element_boundarypts.paint_points();
-}
-
-std::vector<int> elementtri_list_store::is_tri_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2)
-{
-	// Return the node id of node which is inside the rectangle
-	// Covert mouse location to screen location
-	int max_dim = geom_param_ptr->window_width > geom_param_ptr->window_height ? geom_param_ptr->window_width : geom_param_ptr->window_height;
-
-	// Selected node list index;
-	std::vector<int> selected_tri_index;
-
-	// Transform the mouse location to openGL screen coordinates
-	// Corner Point 1
-	glm::vec2 screen_cpt1 = glm::vec2(2.0f * ((corner_pt1.x - (geom_param_ptr->window_width * 0.5f)) / max_dim),
-		2.0f * (((geom_param_ptr->window_height * 0.5f) - corner_pt1.y) / max_dim));
-
-	// Corner Point 2
-	glm::vec2 screen_cpt2 = glm::vec2(2.0f * ((corner_pt2.x - (geom_param_ptr->window_width * 0.5f)) / max_dim),
-		2.0f * (((geom_param_ptr->window_height * 0.5f) - corner_pt2.y) / max_dim));
-
-	// Nodal location
-	glm::mat4 scaling_matrix = glm::mat4(1.0) * static_cast<float>(geom_param_ptr->zoom_scale);
-	scaling_matrix[3][3] = 1.0f;
-
-	glm::mat4 scaledModelMatrix = scaling_matrix * geom_param_ptr->modelMatrix;
-
-	// Loop through all edges in map
-	for (auto it = elementtriMap.begin(); it != elementtriMap.end(); ++it)
+	if (print_matrix == true)
 	{
-		const glm::vec2& node_pt1 = it->second.nd1->node_pt;
-		const glm::vec2& node_pt2 = it->second.nd2->node_pt;
-		const glm::vec2& node_pt3 = it->second.nd3->node_pt;
-		glm::vec2 md_pt_12 = geom_param_ptr->linear_interpolation(node_pt1, node_pt2, 0.50);
-		glm::vec2 md_pt_23 = geom_param_ptr->linear_interpolation(node_pt2, node_pt3, 0.50);
-		glm::vec2 md_pt_31 = geom_param_ptr->linear_interpolation(node_pt3, node_pt1, 0.50);
-		glm::vec2 tri_midpt = glm::vec2((node_pt1.x + node_pt2.x + node_pt3.x) * 0.33f, (node_pt1.y + node_pt2.y + node_pt3.y) * 0.33f);
+		// Print the Inverse L - Matrix
+		output_file << "L Inverse Matrix" << std::endl;
+		output_file << L_inv_matrix << std::endl;
+		output_file << std::endl;
+	}
 
-		//______________________________
-		glm::vec4 node_pt1_fp = scaledModelMatrix * glm::vec4(node_pt1.x, node_pt1.y, 0, 1.0f) * geom_param_ptr->panTranslation;
-		glm::vec4 node_pt2_fp = scaledModelMatrix * glm::vec4(node_pt2.x, node_pt2.y, 0, 1.0f) * geom_param_ptr->panTranslation;
-		glm::vec4 node_pt3_fp = scaledModelMatrix * glm::vec4(node_pt3.x, node_pt3.y, 0, 1.0f) * geom_param_ptr->panTranslation;
-		glm::vec4 md_pt_12_fp = scaledModelMatrix * glm::vec4(md_pt_12.x, md_pt_12.y, 0, 1.0f) * geom_param_ptr->panTranslation;
-		glm::vec4 md_pt_23_fp = scaledModelMatrix * glm::vec4(md_pt_23.x, md_pt_23.y, 0, 1.0f) * geom_param_ptr->panTranslation;
-		glm::vec4 md_pt_31_fp = scaledModelMatrix * glm::vec4(md_pt_31.x, md_pt_31.y, 0, 1.0f) * geom_param_ptr->panTranslation;
-		glm::vec2 tri_midpt_fp = scaledModelMatrix * glm::vec4(tri_midpt.x, tri_midpt.y, 0, 1.0f) * geom_param_ptr->panTranslation;
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Inverse of lower triangle matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
-		// Check whether the point inside a rectangle
-		if (geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, node_pt1_fp) == true ||
-			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, node_pt2_fp) == true ||
-			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, node_pt3_fp) == true ||
-			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, md_pt_12_fp) == true ||
-			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, md_pt_23_fp) == true ||
-			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, md_pt_31_fp) == true ||
-			geom_param_ptr->isPointInsideRectangle(screen_cpt1, screen_cpt2, tri_midpt_fp) == true)
+	//____________________________________________________________________________________________________________________
+	//  Find the eigen value & eigen vector of eigen value problem Z_matrix
+	//  Z_matrix = L_inv_matrix * stiff_matrix * L_inv_matrix^T
+
+	Eigen::MatrixXd Z_matrix = L_inv_matrix * reduced_globalStiffnessMatrix * L_inv_matrix.transpose();
+
+	if (print_matrix == true)
+	{
+		// Print the Inverse L - Matrix
+		output_file << "Z Matrix" << std::endl;
+		output_file << Z_matrix << std::endl;
+		output_file << std::endl;
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Generalized Eigen value problem Z-matrix created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Size of the Z-matrix is " << reducedDOF << " x " << reducedDOF << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Augmented Z - Matrix
+
+	Eigen::MatrixXd augmented_Z_matrix(reducedDOF + agDOF, reducedDOF + agDOF);
+	augmented_Z_matrix.setZero();
+
+
+	get_augmented_Z_matrix(augmented_Z_matrix,
+		Z_matrix,
+		reduced_globalAGMatrix,
+		reducedDOF,
+		agDOF,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Augmentation of Z-matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Size of the Augmented Z-matrix is " << (reducedDOF + agDOF) << " x " << (reducedDOF + agDOF) << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Compute the eigenvalues and eigenvectors
+	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(augmented_Z_matrix);
+
+	if (eigenSolver.info() != Eigen::Success)
+	{
+		// Eigenvalue problem failed to converge
+		std::cout << "Eigenvalue problem failed to converge !!!!! " << std::endl;
+		output_file.close();
+		return;
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen value problem solved at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+
+	// Eigenvalues
+	Eigen::VectorXd eigenvalues = eigenSolver.eigenvalues();
+
+	// Eigenvectors
+	Eigen::MatrixXd  eigenvectors = eigenSolver.eigenvectors();
+
+	// Eigen::MatrixXd  eigenvectors = L_inv_matrix.transpose() * eigenSolver.eigenvectors();
+
+
+	if (print_matrix == true)
+	{
+		// Print the eigen values after solve
+		output_file << "Eigen values of augmented Z-matrix:" << std::endl;
+		output_file << eigenvalues << std::endl;
+		output_file << std::endl;
+
+		// Eigen vectors
+		output_file << "Eigen vectors of augmented Z-matrix:" << std::endl;
+		output_file << eigenvectors << std::endl;
+		output_file << std::endl;
+	}
+
+
+	//____________________________________________________________________________________________________________________
+	// Process eigenvalues and eigenvectors
+	// sort the eigen value and eigen vector (ascending)
+	sort_eigen_values_vectors(eigenvalues, eigenvectors, reducedDOF + agDOF);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen values and Eigen vectors are sorted at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Remove the Augmentation in EigenValues and EigenVectors
+	// Augmentation removed global Eigenvalues
+	bool is_augmentation_removal_success = false;
+	Eigen::VectorXd reduced_eigenvalues(reducedDOF);
+	reduced_eigenvalues.setZero();
+
+	// Augmentation removed global Eigenvectors
+	Eigen::MatrixXd  reduced_generalized_eigenvectors(reducedDOF, reducedDOF);
+	reduced_generalized_eigenvectors.setZero();
+
+	get_reduced_eigen_matrix(reduced_eigenvalues,
+		reduced_generalized_eigenvectors,
+		is_augmentation_removal_success,
+		eigenvalues,
+		eigenvectors,
+		reducedDOF,
+		agDOF,
+		output_file);
+
+	if (is_augmentation_removal_success == false)
+	{
+		// Handle the case where the solver failed
+		std::cerr << "Augmentation removal failed!" << std::endl;
+		output_file.close();
+		return;
+
+	}
+
+	// Re-sacle generalized Eigen Vectors
+	Eigen::MatrixXd  reduced_eigenvectors = L_inv_matrix.transpose() * reduced_generalized_eigenvectors;
+
+
+	//____________________________________________________________________________________________________________________
+	// Normailize eigen vectors
+	normalize_eigen_vectors(reduced_eigenvectors, reducedDOF);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen vectors are normalized at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+	if (print_matrix == true)
+	{
+		// Print the eigen values
+		output_file << "Eigen values :" << std::endl;
+		output_file << reduced_eigenvalues << std::endl;
+		output_file << std::endl;
+
+		// Eigen vectors are printed after globalized
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen values/ vectors augmentation removed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Globalize eigen vectors
+	// Convert the reduced eigenvectors to eigen vectors for the whole model (including the nodes with supports)
+	Eigen::MatrixXd global_eigenvectors(numDOF, reducedDOF);
+	global_eigenvectors.setZero();
+
+	get_globalized_eigen_vector_matrix(global_eigenvectors,
+		reduced_eigenvectors,
+		globalDOFMatrix,
+		numDOF,
+		reducedDOF,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen vectors globalized at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Store the results
+
+	// Clear the modal results
+	number_of_modes = 0; // Number of modes
+	mode_result_str.clear(); // Result string list
+	m_eigenvalues.clear(); // Eigen values
+	m_eigenvectors.clear(); // Eigen vectors
+
+	// Add the eigen values and eigen vectors
+	for (int i = 0; i < reducedDOF; i++)
+	{
+		std::vector<double> eigen_vec; // Eigen vectors of all nodes (including constrainded)
+
+		for (int j = 0; j < numDOF; j++)
 		{
-			selected_tri_index.push_back(it->first);
-		}
-	}
-
-	// Return the tri index find
-	return selected_tri_index;
-
-}
-
-void elementtri_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
-{
-	// Update model openGL uniforms
-	element_tris.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	element_tris_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	element_materialid.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	selected_element_tris_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	element_boundarylines.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	element_boundarypts.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
-}
-
-void elementtri_list_store::addtriangle_boundarylines(const glm::vec2& nd_pt1, const glm::vec2& nd_pt2, const glm::vec2& nd_pt3)
-{
-	// Function to add 3 boundary lines of triangle mesh
-		// add the boundary line 1
-	line_store boundary_line1 = getLine(nd_pt1, nd_pt2);
-	bool lineExists = true;
-	int line_count = element_boundarylines.line_count;
-
-	lineExists = customLineStoreBinarySearch(element_boundarylines.lineMap, boundary_line1);
-
-	if (lineExists == false)
-	{
-		element_boundarylines.add_line(line_count,
-			boundary_line1.line_startpt_loc,
-			boundary_line1.line_endpt_loc,
-			boundary_line1.line_startpt_offset,
-			boundary_line1.line_endpt_offset,
-			boundary_line1.line_startpt_color,
-			boundary_line1.line_endpt_color,
-			boundary_line1.is_offset);
-
-		customLineStoreSort(element_boundarylines.lineMap);
-
-		line_count++;
-	}
-
-	// add the boundary line 2
-	line_store boundary_line2 = getLine(nd_pt2, nd_pt3);
-
-	lineExists = customLineStoreBinarySearch(element_boundarylines.lineMap, boundary_line2);
-
-	if (lineExists == false)
-	{
-		element_boundarylines.add_line(line_count,
-			boundary_line2.line_startpt_loc,
-			boundary_line2.line_endpt_loc,
-			boundary_line2.line_startpt_offset,
-			boundary_line2.line_endpt_offset,
-			boundary_line2.line_startpt_color,
-			boundary_line2.line_endpt_color,
-			boundary_line2.is_offset);
-
-		customLineStoreSort(element_boundarylines.lineMap);
-
-		line_count++;
-	}
-
-	// Add the boundary line 3
-	line_store boundary_line3 = getLine(nd_pt3, nd_pt1);
-
-	lineExists = customLineStoreBinarySearch(element_boundarylines.lineMap, boundary_line3);
-
-	if (lineExists == false)
-	{
-		element_boundarylines.add_line(line_count,
-			boundary_line3.line_startpt_loc,
-			boundary_line3.line_endpt_loc,
-			boundary_line3.line_startpt_offset,
-			boundary_line3.line_endpt_offset,
-			boundary_line3.line_startpt_color,
-			boundary_line3.line_endpt_color,
-			boundary_line3.is_offset);
-
-		// Sort the vector again
-		customLineStoreSort(element_boundarylines.lineMap);
-
-		line_count++;
-	}
-}
-
-bool elementtri_list_store::customLineStoreBinarySearch(const std::vector<line_store>& vec, const line_store& target)
-{
-	int left = 0;
-	int right = static_cast<int>(vec.size()) - 1;
-
-	while (left <= right)
-	{
-		int mid = left + (right - left) / 2;
-
-		if (compareLines(vec[mid], target))
-		{
-			left = mid + 1;
-		}
-		else if (compareLines(target, vec[mid]))
-		{
-			right = mid - 1;
-		}
-		else
-		{
-			// Element found
-			return true;
-		}
-	}
-
-	// Element not found
-	return false;
-}
-
-void elementtri_list_store::customLineStoreSort(std::vector<line_store>& vec)
-{
-	// custom sort the lines
-	for (int i = 1; i < static_cast<int>(vec.size()); ++i)
-	{
-		line_store key = vec[i];
-		int j = i - 1;
-
-		while (j >= 0 && compareLines(vec[j], key))
-		{
-			vec[j + 1] = vec[j];
-			--j;
+			eigen_vec.push_back(global_eigenvectors.coeff(j, i));
 		}
 
-		vec[j + 1] = key;
+		// Add to the Eigen values storage
+		m_eigenvalues.insert({ i, reduced_eigenvalues.coeff(i) });
+
+		// Add to the Eigen vectors storage 
+		m_eigenvectors.insert({ i, eigen_vec });
+
+		// Frequency
+		double nat_freq = std::sqrt(reduced_eigenvalues.coeff(i) / (2.0 * m_pi));
+
+		// Modal results
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(2) << nat_freq;
+
+		// Add to the string list
+		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz");
 	}
+
+	number_of_modes = reducedDOF; // total number of modes
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen values/ vectors stored at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	this->is_modal_analysis_complete = true;
+
+	//_____________________________________________________________________________________________
+
+	// Add the modal analysis results to node & element
+	// Clear the modal node and modal element results
+	modal_result_nodes.clear_data();
+	modal_result_lineelements.clear_data();
+
+	map_modal_analysis_results(model_nodes,
+		model_lineelements,
+		modal_result_nodes,
+		modal_result_lineelements,
+		output_file);
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Modal analysis results maped to nodes and elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+
+
+
+
+
+
 }
 
-line_store elementtri_list_store::getLine(const glm::vec2& line_startpt_loc, const glm::vec2& line_endpt_loc)
+
+void modal_analysis_solver::get_global_stiffness_matrix(Eigen::MatrixXd& globalStiffnessMatrix,
+	const elementline_list_store& model_lineelements,
+	const std::unordered_map<int, material_data>& material_list,
+	std::ofstream& output_file)
 {
-	// return the line as line_store
-	line_store temp_line;
+	// Create global stiffness matrix
+	for (auto& ln_m : model_lineelements.elementlineMap)
+	{
+		// Create the element stiffness matrix
+		elementline_store ln = ln_m.second;
+		material_data elementline_material = material_list.at(ln.material_id);
 
-	// Boundary line color
-	glm::vec3 temp_boundry_color = geom_param_ptr->geom_colors.triangle_boundary;
+		// Create a matrix for element stiffness matrix
+		Eigen::MatrixXd elementStiffnessMatrix(4, 4);
+		elementStiffnessMatrix.setZero();
 
-	// Line location
-	temp_line.line_startpt_loc = line_startpt_loc;
-	temp_line.line_endpt_loc = line_endpt_loc;
+		get_element_stiffness_matrix(elementStiffnessMatrix, ln, elementline_material, output_file);
 
-	// Line offset
-	temp_line.line_startpt_offset = glm::vec2(0);
-	temp_line.line_endpt_offset = glm::vec2(0);
+		// Get the Node ID
+		int sn_id = nodeid_map[ln.startNode->node_id]; // get the ordered map of the start node ID
+		int en_id = nodeid_map[ln.endNode->node_id]; // get the ordered map of the end node ID
 
-	// Line color
-	temp_line.line_startpt_color = temp_boundry_color;
-	temp_line.line_endpt_color = temp_boundry_color;
+		globalStiffnessMatrix.block<2, 2>(sn_id * 2, sn_id * 2) += elementStiffnessMatrix.block<2, 2>(0, 0);
+		globalStiffnessMatrix.block<2, 2>(sn_id * 2, en_id * 2) += elementStiffnessMatrix.block<2, 2>(0, 2);
+		globalStiffnessMatrix.block<2, 2>(en_id * 2, sn_id * 2) += elementStiffnessMatrix.block<2, 2>(2, 0);
+		globalStiffnessMatrix.block<2, 2>(en_id * 2, en_id * 2) += elementStiffnessMatrix.block<2, 2>(2, 2);
+	}
 
-	temp_line.is_offset = false;
+	if (print_matrix == true)
+	{
+		// Print the Global Stiffness matrix
+		output_file << "Global Stiffness Matrix" << std::endl;
+		output_file << globalStiffnessMatrix << std::endl;
+		output_file << std::endl;
+	}
 
-	return temp_line;
 }
 
-bool elementtri_list_store::compareLines(const line_store& a, const line_store& b)
+
+void modal_analysis_solver::get_element_stiffness_matrix(Eigen::MatrixXd& elementStiffnessMatrix,
+	const elementline_store& ln,
+	const material_data& elementline_material,
+	std::ofstream& output_file)
 {
-	// Custom comparison function for line_store
-	// Compare based on start point's x and y values, and then end point's x and y values
-	if (a.line_startpt_loc.x != b.line_startpt_loc.x)
+	// Get element stiffness matrix
+	// Compute the differences in x and y coordinates
+	double dx = ln.endNode->node_pt.x - ln.startNode->node_pt.x;
+	double dy = -1.0 * (ln.endNode->node_pt.y - ln.startNode->node_pt.y);
+
+	// Compute the length of the truss element
+	double eLength = std::sqrt((dx * dx) + (dy * dy));
+
+	// Compute the direction cosines
+	double Lcos = (dx / eLength);
+	double Msin = (dy / eLength);
+
+	//_________________________________________________________
+	// Local -> Global transformation matrix
+	Eigen::MatrixXd L_transformation_matrix(2, 4);
+	L_transformation_matrix.setZero();
+
+	L_transformation_matrix.row(0) = Eigen::RowVectorXd({ {Lcos, Msin, 0.0, 0.0 } });
+	L_transformation_matrix.row(1) = Eigen::RowVectorXd({ {0.0, 0.0,  Lcos, Msin} });
+
+	//_________________________________________________________
+	// Local element stiffness matrix
+	Eigen::MatrixXd local_element_stiffness_matrix(2, 2);
+	local_element_stiffness_matrix.setZero();
+
+	double k1 = 0.0;
+	if (elementline_material.material_id == 0)
 	{
-		return a.line_startpt_loc.x < b.line_startpt_loc.x;
-	}
-	else if (a.line_startpt_loc.y != b.line_startpt_loc.y)
-	{
-		return a.line_startpt_loc.y < b.line_startpt_loc.y;
-	}
-	else if (a.line_endpt_loc.x != b.line_endpt_loc.x)
-	{
-		return a.line_endpt_loc.x < b.line_endpt_loc.x;
+		// Line is rigid
+		k1 = w_penalty; // penalty 
 	}
 	else
 	{
-		return a.line_endpt_loc.y < b.line_endpt_loc.y;
+		k1 = elementline_material.material_stiffness;
 	}
+
+	local_element_stiffness_matrix.row(0) = Eigen::RowVectorXd({ {		 k1, -1.0 * k1 } });
+	local_element_stiffness_matrix.row(1) = Eigen::RowVectorXd({ {-1.0 * k1,		k1 } });
+
+	//_________________________________________________________
+	// Transformed element stiffness matrix
+	elementStiffnessMatrix.setZero();
+
+	elementStiffnessMatrix = L_transformation_matrix.transpose() * local_element_stiffness_matrix * L_transformation_matrix;
+
 }
 
-void elementtri_list_store::addtriangle_boundarypts(const glm::vec2& nd_pt1, const glm::vec2& nd_pt2, const glm::vec2& nd_pt3)
+
+void modal_analysis_solver::get_global_pointmass_matrix(Eigen::MatrixXd& globalPointMassMatrix,
+	const nodes_list_store& model_nodes,
+	const nodepointmass_list_store& model_ptmass,
+	std::ofstream& output_file)
 {
-	// Function to add 3 boundary points of triangle mesh
-	// add the boundary point 1
-	point_store boundary_point1 = getPoint(nd_pt1);
-	bool pointExists = true;
-	int point_count = element_boundarypts.point_count;
-
-	pointExists = customPointStoreBinarySearch(element_boundarypts.pointMap, boundary_point1);
-
-	if (pointExists == false)
+	// Create a global point mass matrix
+	for (auto& nd_m : model_nodes.nodeMap)
 	{
-		// Add to point store 
-		element_boundarypts.add_point(point_count,
-			boundary_point1.point_loc,
-			boundary_point1.point_offset,
-			boundary_point1.point_color,
-			boundary_point1.is_offset);
+		// Get the node data
+		node_store nd = nd_m.second;
+		int nd_map = nodeid_map[nd.node_id]; // get the ordered map of the node ID
 
-		customPointStoreSort(element_boundarypts.pointMap);
-
-		point_count++;
-	}
-
-	// add the boundary point 2
-	point_store boundary_point2 = getPoint(nd_pt2);
-
-	pointExists = customPointStoreBinarySearch(element_boundarypts.pointMap, boundary_point2);
-
-	if (pointExists == false)
-	{
-		// Add to point store 
-		element_boundarypts.add_point(point_count,
-			boundary_point2.point_loc,
-			boundary_point2.point_offset,
-			boundary_point2.point_color,
-			boundary_point2.is_offset);
-
-		customPointStoreSort(element_boundarypts.pointMap);
-
-		point_count++;
-	}
-
-	// add the boundary point 3
-	point_store boundary_point3 = getPoint(nd_pt3);
-
-	pointExists = customPointStoreBinarySearch(element_boundarypts.pointMap, boundary_point3);
-
-	if (pointExists == false)
-	{
-		// Add to point store 
-		element_boundarypts.add_point(point_count,
-			boundary_point3.point_loc,
-			boundary_point3.point_offset,
-			boundary_point3.point_color,
-			boundary_point3.is_offset);
-
-		customPointStoreSort(element_boundarypts.pointMap);
-
-		point_count++;
-	}
-}
-
-bool elementtri_list_store::customPointStoreBinarySearch(const std::vector<point_store>& vec, const point_store& target)
-{
-	int left = 0;
-	int right = static_cast<int>(vec.size()) - 1;
-
-	while (left <= right)
-	{
-		int mid = left + (right - left) / 2;
-
-		if (comparePoints(vec[mid], target))
+		if (model_ptmass.ptmassMap.find(nd.node_id) != model_ptmass.ptmassMap.end())
 		{
-			left = mid + 1;
-		}
-		else if (comparePoints(target, vec[mid]))
-		{
-			right = mid - 1;
+			// Nodes have point mass
+			nodepointmass_data ptm = model_ptmass.ptmassMap.at(nd.node_id);
+
+			globalPointMassMatrix((nd_map * 2) + 0, (nd_map * 2) + 0) = ptm.ptmass_x;
+			globalPointMassMatrix((nd_map * 2) + 1, (nd_map * 2) + 1) = ptm.ptmass_y;
 		}
 		else
 		{
-			// Element found
-			return true;
+			// Nodes doesnt have point mass
+			globalPointMassMatrix((nd_map * 2) + 0, (nd_map * 2) + 0) = smallValue;
+			globalPointMassMatrix((nd_map * 2) + 1, (nd_map * 2) + 1) = smallValue;
 		}
 	}
 
-	// Element not found
-	return false;
+	if (print_matrix == true)
+	{
+		// Print the Global Force matrix
+		output_file << "Global Point Mass Matrix" << std::endl;
+		output_file << globalPointMassMatrix << std::endl;
+		output_file << std::endl;
+	}
 }
 
-void elementtri_list_store::customPointStoreSort(std::vector<point_store>& vec)
-{
-	// custom sort the points
-	for (int i = 1; i < static_cast<int>(vec.size()); ++i)
-	{
-		point_store key = vec[i];
-		int j = i - 1;
 
-		while (j >= 0 && comparePoints(vec[j], key))
+void modal_analysis_solver::get_global_dof_matrix(Eigen::VectorXd& globalDOFMatrix,
+	const Eigen::MatrixXd& globalPointMassMatrix,
+	const nodes_list_store& model_nodes,
+	const nodeconstraint_list_store& model_constarints,
+	const int& numDOF,
+	int& reducedDOF,
+	std::ofstream& output_file)
+{
+	// Create global DOF Matrix
+	for (auto& nd_m : model_nodes.nodeMap)
+	{
+		// Get the node data
+		node_store nd = nd_m.second;
+		int nd_map = nodeid_map[nd.node_id]; // get the ordered map of the node ID
+
+		if (model_constarints.constraintMap.find(nd.node_id) != model_constarints.constraintMap.end())
 		{
-			vec[j + 1] = vec[j];
-			--j;
+			// Nodes have point mass
+			constraint_data cd = model_constarints.constraintMap.at(nd.node_id);
+
+			if (cd.constraint_type == 0)
+			{
+				// Pin End (1.0 = Fixed)
+
+				globalDOFMatrix.coeffRef((nd_map * 2) + 0) = 1.0;
+				globalDOFMatrix.coeffRef((nd_map * 2) + 1) = 1.0;
+			}
+			else if (cd.constraint_type == 1)
+			{
+				// Pin Roller end
+				// Added as augmentation matrix
+				//globalDOFMatrix.coeffRef((nd_map * 2) + 0) = 0.0; // X is free to move
+				//globalDOFMatrix.coeffRef((nd_map * 2) + 1) = 1.0;
+
+				//reducedDOF = reducedDOF + 1;
+			}
+		}
+		else
+		{
+			// Nodes doesnt have Constraint (0.0 = Free)
+			globalDOFMatrix.coeffRef((nd_map * 2) + 0) = 0.0;
+			globalDOFMatrix.coeffRef((nd_map * 2) + 1) = 0.0;
+
+			reducedDOF = reducedDOF + 2;
+		}
+	}
+
+	if (print_matrix == true)
+	{
+		// Print the Global Force matrix
+		output_file << "Global DOF Matrix" << std::endl;
+		output_file << globalDOFMatrix << std::endl;
+		output_file << std::endl;
+	}
+
+}
+
+
+void modal_analysis_solver::get_reduced_global_matrices(Eigen::MatrixXd& reduced_globalStiffnessMatrix,
+	Eigen::MatrixXd& reduced_globalPointMassMatrix,
+	Eigen::MatrixXd& reduced_globalAGMatrix,
+	const Eigen::MatrixXd& globalStiffnessMatrix,
+	const Eigen::MatrixXd& globalPointMassMatrix,
+	const Eigen::MatrixXd& globalAGMatrix,
+	const Eigen::VectorXd& globalDOFMatrix,
+	const int& numDOF,
+	const int& reducedDOF,
+	const int& agDOF,
+	std::ofstream& output_file)
+{
+	// Curtailment of Global stiffness and Global force matrix based on DOF
+	// Get the reduced global stiffness matrix
+	int r = 0;
+	int s = 0;
+
+	// Loop throug the Degree of freedom of indices
+	for (int i = 0; i < numDOF; i++)
+	{
+		if (globalDOFMatrix.coeff(i) == 1)
+		{
+			// constrained row index, so skip
+			continue;
+		}
+		else
+		{
+			s = 0;
+			for (int j = 0; j < numDOF; j++)
+			{
+				if (globalDOFMatrix.coeff(j) == 1)
+				{
+					// constrained column index, so skip
+					continue;
+				}
+				else
+				{
+					// Get the reduced matrices
+					reduced_globalStiffnessMatrix.coeffRef(r, s) = globalStiffnessMatrix.coeff(i, j);
+					reduced_globalPointMassMatrix.coeffRef(r, s) = globalPointMassMatrix.coeff(i, j);
+					s++;
+				}
+			}
+			r++;
+		}
+	}
+
+
+	// Reduce the augmentation matrix
+	r = 0;
+	for (int i = 0; i < numDOF; i++)
+	{
+		if (globalDOFMatrix.coeff(i) == 0)
+		{
+			for (int j = 0; j < agDOF; j++)
+			{
+				reduced_globalAGMatrix.coeffRef(j, r) = globalAGMatrix.coeff(j, i);
+			}
+			r++;
+		}
+	}
+
+
+	if (print_matrix == true)
+	{
+		// Print the Reduced Global Stiffness and Reduced Global Mass matrix
+		output_file << "Reduced Global Stiffness Matrix" << std::endl;
+		output_file << reduced_globalStiffnessMatrix << std::endl;
+		output_file << std::endl;
+
+		output_file << "Reduced Global Mass Matrix" << std::endl;
+		output_file << reduced_globalPointMassMatrix << std::endl;
+		output_file << std::endl;
+
+		output_file << "Reduced Global Augmentation Matrix" << std::endl;
+		output_file << reduced_globalAGMatrix << std::endl;
+		output_file << std::endl;
+	}
+
+}
+
+
+void modal_analysis_solver::get_global_augmentation_matrix(Eigen::MatrixXd& globalAGMatrix,
+	const nodeconstraint_list_store& model_constarints,
+	const elementline_list_store& model_lineelements,
+	const std::unordered_map<int, material_data>& material_list,
+	int& agDOF,
+	std::ofstream& output_file)
+{
+	// Create global Augmentation matrix
+	// Contraint (Roller) Augmentation
+	Eigen::VectorXd row_augmentation_matrix(numDOF);
+
+
+	for (const auto& cnst_m : model_constarints.constraintMap)
+	{
+		constraint_data cnst = cnst_m.second;
+
+		if (cnst.constraint_type == 1)
+		{
+			int nd_map = nodeid_map[cnst.node_id]; // get the ordered map of the node ID
+
+			// Roller support
+			row_augmentation_matrix.setZero(); //set zero
+
+			double constraint_angle_rad = (180.0f - cnst.constraint_angle) * (m_pi / 180.0f); // constarint angle radian
+
+			row_augmentation_matrix.coeffRef((nd_map * 2) + 0) = std::cos(constraint_angle_rad);
+			row_augmentation_matrix.coeffRef((nd_map * 2) + 1) = std::sin(constraint_angle_rad);
+
+			// Append to the global matrix
+			globalAGMatrix.conservativeResize(globalAGMatrix.rows() + 1, Eigen::NoChange);
+			globalAGMatrix.row(globalAGMatrix.rows() - 1) = row_augmentation_matrix;
+
+			// Add to the AG DOF
+			agDOF = agDOF + 1;
 		}
 
-		vec[j + 1] = key;
 	}
-}
 
-point_store elementtri_list_store::getPoint(const glm::vec2& pt_loc)
-{
-	// Return the point as point_store
-	point_store temp_point;
 
-	// Boundary color
-	glm::vec3 temp_boundarypt_color = geom_param_ptr->geom_colors.triangle_node;
-
-	temp_point.point_id = 0;
-	temp_point.point_loc = pt_loc;
-	temp_point.point_offset = glm::vec2(0);
-	temp_point.point_color = temp_boundarypt_color;
-	temp_point.is_offset = false;
-
-	return temp_point;
-}
-
-bool elementtri_list_store::comparePoints(const point_store& a, const point_store& b)
-{
-	// Define a custom comparison function for point_store
-	// Compare based on point location's x and y values
-	if (a.point_loc.x != b.point_loc.x)
+	// Rigid element Augmentation
+	for (auto& ln_m : model_lineelements.elementlineMap)
 	{
-		return a.point_loc.x < b.point_loc.x;
+		// Create the element stiffness matrix
+		elementline_store ln = ln_m.second;
+		material_data elementline_material = material_list.at(ln.material_id);
+
+		if (elementline_material.material_id == 0)
+		{
+			// Rigid element
+			row_augmentation_matrix.setZero(); //set zero
+
+			// Compute the differences in x and y coordinates
+			double dx = ln.endNode->node_pt.x - ln.startNode->node_pt.x;
+			double dy = -1.0 * (ln.endNode->node_pt.y - ln.startNode->node_pt.y);
+
+			// Compute the length of the truss element
+			double eLength = std::sqrt((dx * dx) + (dy * dy));
+
+			// Compute the direction cosines
+			double Lcos = (dx / eLength);
+			double Msin = (dy / eLength);
+
+			// Get the Node ID's of the Rigid element
+			int sn_id = nodeid_map[ln.startNode->node_id]; // get the ordered map of the start node ID
+			int en_id = nodeid_map[ln.endNode->node_id]; // get the ordered map of the end node ID
+
+			// Rigid element's (First node)
+			row_augmentation_matrix.coeffRef((sn_id * 2) + 0) = Lcos;
+			row_augmentation_matrix.coeffRef((sn_id * 2) + 1) = Msin;
+
+			// Rigid element's (Second node)
+			row_augmentation_matrix.coeffRef((en_id * 2) + 0) = -1.0 * Lcos;
+			row_augmentation_matrix.coeffRef((en_id * 2) + 1) = -1.0 * Msin;
+
+			// Append to the global matrix
+			globalAGMatrix.conservativeResize(globalAGMatrix.rows() + 1, Eigen::NoChange);
+			globalAGMatrix.row(globalAGMatrix.rows() - 1) = row_augmentation_matrix;
+
+			// Add to the AG DOF
+			agDOF = agDOF + 1;
+		}
 	}
-	else
+
+
+	if (print_matrix == true)
 	{
-		return a.point_loc.y < b.point_loc.y;
+		// Print the Global Augmentation matrix
+		output_file << "Global Augmentation Matrix" << std::endl;
+		output_file << globalAGMatrix << std::endl;
+		output_file << std::endl;
+	}
+
+}
+
+
+void modal_analysis_solver::get_augmented_Z_matrix(Eigen::MatrixXd& augmented_Z_Matrix,
+	const Eigen::MatrixXd& Z_Matrix,
+	const Eigen::MatrixXd& reduced_globalAGMatrix,
+	const int& reducedDOF,
+	const int& agDOF,
+	std::ofstream& output_file)
+{
+	// Augment the global Z - Matrix
+	
+	// Copy globalStiffnessMatrix to the top-left block of augmented Z-matrix
+	augmented_Z_Matrix.topLeftCorner(reducedDOF, reducedDOF) = Z_Matrix;
+
+	// Copy globalAGMatrix to the bottom-left block of augmented Z-matrix
+	augmented_Z_Matrix.bottomLeftCorner(agDOF, reducedDOF) = reduced_globalAGMatrix;
+
+	// Copy the transpose of globalAGMatrix to the top-right block of augmented Z-matrix
+	augmented_Z_Matrix.topRightCorner(reducedDOF, agDOF) = reduced_globalAGMatrix.transpose();
+
+	// Fill the bottom-right block of augmented Z-matrix with zeros
+	augmented_Z_Matrix.bottomRightCorner(agDOF, agDOF).setZero();
+
+	
+	if (print_matrix == true)
+	{
+		// Print the Augmented Global Z-matrix
+		output_file << "Augmented Global Z Matrix" << std::endl;
+		output_file << augmented_Z_Matrix << std::endl;
+		output_file << std::endl;
+	}
+
+}
+
+
+void modal_analysis_solver::sort_eigen_values_vectors(Eigen::VectorXd& eigenvalues,
+	Eigen::MatrixXd& eigenvectors,
+	const int& m_size)
+{
+	int p = 0;
+	int q = 0;
+	int i = 0;
+
+	double swap_temp = 0.0;
+
+	// sort the eigen value and eigen vector (ascending)
+	for (p = 0; p < m_size; p++)
+	{
+		for (q = p + 1; q < m_size; q++)
+		{
+			if (eigenvalues(p) > eigenvalues(q))
+			{
+				swap_temp = eigenvalues(p);
+				eigenvalues(p) = eigenvalues(q);
+				eigenvalues(q) = swap_temp;
+
+				for (i = 0; i < m_size; i++)
+				{
+					swap_temp = eigenvectors(i, p);
+					eigenvectors(i, p) = eigenvectors(i, q);
+					eigenvectors(i, q) = swap_temp;
+				}
+			}
+		}
 	}
 }
 
 
+void modal_analysis_solver::normalize_eigen_vectors(Eigen::MatrixXd& eigenvectors,
+	const int& m_size)
+{
+	// Normalize eigen vectors
+	int p = 0;
+	int q = 0;
 
-//_________________________________________________________________
-//_________________________________________________________________
-//_________________________________________________________________
-*/
+	// loop throught each column
+	for (p = 0; p < m_size; p++)
+	{
+		double max_modal_vector = 0.0;
+
+		// Loop through each row
+		for (q = 0; q < m_size; q++)
+		{
+			if (std::abs(eigenvectors(q, p)) > max_modal_vector)
+			{
+				// Max modal vector in the column (for particular mode)
+				max_modal_vector = std::abs(eigenvectors(q, p));
+			}
+		}
+
+		// Normalize the column using maximum modal vector
+		for (q = 0; q < m_size; q++)
+		{
+			eigenvectors(q, p) = eigenvectors(q, p) / max_modal_vector;
+
+			// Round the eigen vectors to 6 digit precision after normalizing
+			eigenvectors(q, p) = std::round(eigenvectors(q, p) * 1000000) / 1000000;
+		}
+	}
+
+
+}
+
+
+void modal_analysis_solver::get_reduced_eigen_matrix(Eigen::VectorXd& reduced_eigenvalues,
+	Eigen::MatrixXd& reduced_generalized_eigenvectors,
+	bool& is_augmentation_removal_success,
+	const Eigen::VectorXd& eigenvalues,
+	const Eigen::MatrixXd& eigenvectors,
+	const int& reducedDOF,
+	const int& agDOF,
+	std::ofstream& output_file)
+{
+	// Remove the augmentations from the eigenvalues and eigenvectors
+	
+	// Eigen values of the agDOF is negative
+	int r = 0;
+	for (int p = agDOF; p < (reducedDOF + agDOF); p++)
+	{
+		reduced_eigenvalues.coeffRef(r) = eigenvalues.coeff(p);
+		r++;
+	}
+
+	// Loop through the columns of eigen vectors (except the augmented indices)
+	r = 0;
+	for (int p = agDOF; p < (reducedDOF + agDOF); p++)
+	{
+		// Loop through the row loop (except the augmented indices)
+		for (int q = 0; q < (reducedDOF); q++)
+		{
+			reduced_generalized_eigenvectors.coeffRef(q, r) = eigenvectors.coeff(q, p);
+		}
+		r++;
+	}
+
+	// Augmentation removed
+	is_augmentation_removal_success = true;
+
+}
+
+
+void modal_analysis_solver::get_globalized_eigen_vector_matrix(Eigen::MatrixXd& global_eigenvectors,
+	const Eigen::MatrixXd& reduced_eigenvectors,
+	const Eigen::VectorXd& globalDOFMatrix,
+	const int& numDOF,
+	const int& reducedDOF,
+	std::ofstream& output_file)
+{
+	// Global eigen vector Matrix
+	// Loop throug the Degree of freedom of indices
+
+	// J loops through number of modes (along the column)
+	for (int j = 0; j < reducedDOF; j++)
+	{
+		int s = 0;
+		// i loops through the number of nodes (along the row)
+		for (int i = 0; i < numDOF; i++)
+		{
+			if (globalDOFMatrix.coeff(i) == 1)
+			{
+				// constrained row index, so Displacement is Zero
+				global_eigenvectors.coeffRef(i, j) = 0;
+			}
+			else
+			{
+				// Un constrained row index, so Displacement is Zero
+				global_eigenvectors.coeffRef(i, j) = reduced_eigenvectors.coeff(s, j);
+				s++;
+			}
+		}
+	}
+
+	if (print_matrix == true)
+	{
+		// Print the Global Displacement matrix
+		output_file << "Global Eigen Vector Matrix" << std::endl;
+		output_file << global_eigenvectors << std::endl;
+		output_file << std::endl;
+	}
+
+}
+
+
+void modal_analysis_solver::map_modal_analysis_results(const nodes_list_store& model_nodes,
+	const elementline_list_store& model_lineelements,
+	modal_nodes_list_store& modal_result_nodes,
+	modal_elementline_list_store& modal_result_lineelements,
+	std::ofstream& output_file)
+{
+	// Map the results to modal_result_nodes and modal_result_lineelements
+
+	for (auto& nd_m : model_nodes.nodeMap)
+	{
+		int node_id = nd_m.first;
+		int matrix_index = nodeid_map[node_id];
+
+		// Modal analysis results
+		std::unordered_map<int, glm::vec2> node_modal_displ;
+
+		for (int i = 0; i < number_of_modes; i++)
+		{
+			// Get the mode result list
+			std::vector<double> globalEigenVector = m_eigenvectors[i];
+
+			// get the appropriate modal displacement of this particular node
+			glm::vec2 modal_displ = glm::vec2(globalEigenVector[(matrix_index * 2) + 0],
+				-1.0 * globalEigenVector[(matrix_index * 2) + 1]);
+
+			// add to modal result of this node
+			node_modal_displ.insert({ i,modal_displ });
+		}
+
+		// Create the modal analysis result node
+		glm::vec2 node_pt = nd_m.second.node_pt;
+		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ);
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model nodes at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+		// Add the modal line element result
+	for (auto& ln_m : model_lineelements.elementlineMap)
+	{
+		elementline_store ln = ln_m.second;
+		bool is_rigid = false;
+
+		if (ln.material_id == 0)
+		{
+			// Check whether the material is rigid
+			is_rigid = true;
+		}
+
+		modal_result_lineelements.add_modal_elementline(ln.line_id,
+			&modal_result_nodes.modal_nodeMap[ln.startNode->node_id],
+			&modal_result_nodes.modal_nodeMap[ln.endNode->node_id], is_rigid);
+	}
+
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+
+
+}
