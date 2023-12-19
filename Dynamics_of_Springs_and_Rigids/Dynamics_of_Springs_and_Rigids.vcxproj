@@ -254,6 +254,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\junk\junk_code.txt" />
+    <Text Include="src\junk\lagrange_MPC_solver.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\dlls\freetype.dll" />
