@@ -52,7 +52,16 @@ public:
 	modal_analysis_solver();
 	~modal_analysis_solver();
 	void clear_results();
-	void modal_analysis_start(const nodes_list_store& model_nodes,
+
+	void modal_analysis_penaltymethod_start(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		const nodeconstraint_list_store& node_constraints,
+		const nodepointmass_list_store& node_ptmass,
+		const std::unordered_map<int, material_data>& material_list,
+		modal_nodes_list_store& modal_result_nodes,
+		modal_elementline_list_store& modal_result_lineelements);
+
+	void modal_analysis_lagrange_start(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const nodeconstraint_list_store& node_constraints,
 		const nodepointmass_list_store& node_ptmass,
@@ -65,9 +74,16 @@ private:
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
+	// Penalty stiffness and mass
+	const double penalty_scale_factor = 10000.0;
+	double rigid_stiffness = 0.0;
+	double zero_ptmass = 0.0;
+
 	const double smallValue = 1.0E-12;
 	const double largeValue = 1.0E+12;
-	double w_penalty = 0.0; // penalty stiffness
+	// double w_penalty = 0.0; // penalty stiffness
+
+
 	
 	void get_global_stiffness_matrix(Eigen::MatrixXd& globalStiffnessMatrix,
 		const elementline_list_store& model_lineelements,
@@ -82,16 +98,12 @@ private:
 		const material_data& elementline_material,
 		std::ofstream& output_file);
 
-	void get_element_support_incl_matrix(Eigen::MatrixXd& s_transformation_matrix,
-		const elementline_store& ln,
-		const nodeconstraint_list_store& node_constraints, 
-		std::ofstream& output_file);
-
 
 	void get_global_pointmass_matrix(Eigen::MatrixXd& globalPointMassMatrix,
 		const nodes_list_store& model_nodes,
 		const nodepointmass_list_store& node_ptmass,
 		std::ofstream& output_file);
+
 
 	void get_global_dof_matrix(Eigen::VectorXi& globalDOFMatrix,
 		const Eigen::MatrixXd& globalPointMassMatrix,
@@ -101,7 +113,18 @@ private:
 		int& reducedDOF,
 		std::ofstream& output_file);
 
-	void get_reduced_global_matrices(Eigen::MatrixXd& reduced_globalStiffnessMatrix,
+
+	void get_reduced_global_penalty_matrices(Eigen::MatrixXd& reduced_globalStiffnessMatrix,
+		Eigen::MatrixXd& reduced_globalPointMassMatrix,
+		const Eigen::MatrixXd& globalStiffnessMatrix,
+		const Eigen::MatrixXd& globalPointMassMatrix,
+		const Eigen::VectorXi& globalDOFMatrix,
+		const int& numDOF,
+		const int& reducedDOF,
+		std::ofstream& output_file);
+
+
+	void get_reduced_global_lagrange_matrices(Eigen::MatrixXd& reduced_globalStiffnessMatrix,
 		Eigen::MatrixXd& reduced_globalPointMassMatrix,
 		Eigen::MatrixXd& reduced_globalAGMatrix,
 		const Eigen::MatrixXd& globalStiffnessMatrix,
@@ -112,6 +135,7 @@ private:
 		const int& reducedDOF,
 		const int& agDOF,
 		std::ofstream& output_file);
+
 
 	void get_global_augmentation_matrix(Eigen::MatrixXd& globalAGMatrix,
 		const Eigen::MatrixXd& globalSupportInclinationMatrix,

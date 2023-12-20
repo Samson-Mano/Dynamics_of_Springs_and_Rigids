@@ -1501,7 +1501,7 @@ void geom_store::paint_modal_analysis_results()
 	if (modal_solver_window->execute_modal_analysis == true)
 	{
 		// Execute the Modal Analysis
-		modal_solver.modal_analysis_start(model_nodes,
+		modal_solver.modal_analysis_penaltymethod_start(model_nodes,
 			model_lineelements,
 			node_constraints,
 			node_ptmass,
