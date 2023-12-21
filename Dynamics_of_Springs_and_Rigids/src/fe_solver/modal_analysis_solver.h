@@ -199,6 +199,15 @@ private:
 		const int& numDOF,
 		std::ofstream& output_file);
 
+
+	void get_modal_participation_factor(Eigen::VectorXd& participation_factor,
+		const Eigen::MatrixXd& globalPointMassMatrix,
+		const Eigen::MatrixXd& global_eigenvectors_transformed,
+		const int& numDOF,
+		const int& reducedDOF,
+		std::ofstream& output_file);
+
+
 	void map_modal_analysis_results(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		modal_nodes_list_store& modal_result_nodes,

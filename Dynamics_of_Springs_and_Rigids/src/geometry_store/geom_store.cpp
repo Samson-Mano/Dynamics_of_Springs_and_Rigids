@@ -409,6 +409,22 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 
 	std::cout << "Reading of raw data input started" << std::endl;
 
+	// Read the Raw Text Input
+	// Read the entire file into a string
+	std::string file_contents((std::istreambuf_iterator<char>(input_file)),
+		std::istreambuf_iterator<char>());
+
+	// Split the string into lines
+	std::istringstream iss(file_contents);
+	std::string line;
+	std::vector<std::string> lines;
+	while (std::getline(iss, line))
+	{
+		lines.push_back(line);
+	}
+
+	int j = 0, i = 0;
+
 	// Initialize the model items
 	this->model_nodes.init(&geom_param);
 	this->model_lineelements.init(&geom_param);
@@ -434,133 +450,106 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	//Node Point list
 	std::vector<glm::vec2> node_pts_list;
 
-	// Read all the nodes
-	while (!input_file.eof())
+	// Process the lines
+	while (j < lines.size())
 	{
-		char type[5];
-		input_file.read(type, sizeof(type));
+		std::string line = lines[j];
+		std::string type = line.substr(0, 4);  // Extract the first 4 characters of the line
 
-		if (std::strcmp(type, "node") == 0)
+		// Split the line into comma-separated fields
+		std::istringstream iss(line);
+		std::string field;
+		std::vector<std::string> fields;
+		while (std::getline(iss, field, ','))
 		{
-			int nd_id; // node id
-			glm::vec2 nd_pt; // node pt
-
-			input_file.read(reinterpret_cast<char*>(&nd_id), sizeof(nd_id));
-			input_file.read(reinterpret_cast<char*>(&nd_pt), sizeof(nd_pt));
-
-			node_pts_list.push_back(nd_pt); // node points
-
-			// Add to the nodes
-			this->model_nodes.add_node(nd_id, nd_pt);
+			fields.push_back(field);
 		}
-		else if (std::strcmp(type, "line") == 0)
+
+		if (type == "node")
 		{
-			int line_id, start_node_id, end_node_id, material_id; // line id, start node id, end node id, material id
+			// Read the nodes
+			int node_id = std::stoi(fields[1]); // node ID
+			double x = std::stod(fields[2]); // Node coordinate x
+			double y = std::stod(fields[3]); // Node coordinate y
 
-			input_file.read(reinterpret_cast<char*>(&line_id), sizeof(line_id));
-			input_file.read(reinterpret_cast<char*>(&start_node_id), sizeof(start_node_id));
-			input_file.read(reinterpret_cast<char*>(&end_node_id), sizeof(end_node_id));
-			input_file.read(reinterpret_cast<char*>(&material_id), sizeof(material_id));
+			// Add to node Map
+			glm::vec2 node_pt = glm::vec2(x, y);
+			this->model_nodes.add_node(node_id, node_pt);
 
-			// Add to the lines
-			this->model_lineelements.add_elementline(line_id, &this->model_nodes.nodeMap[start_node_id],
-				&this->model_nodes.nodeMap[end_node_id], material_id);
+			//Add to the node list
+			node_pts_list.push_back(node_pt);
+
 		}
-		else if (std::strcmp(type, "cnst") == 0)
+		else if (type == "line")
 		{
-			int node_id, constraint_type; // constraint node id, constraint type
-			glm::vec2 constraint_loc; // constraint location
-			double constraint_angle; // constraint angle
+			int line_id = std::stoi(fields[1]); // line ID
+			int start_node_id = std::stoi(fields[2]); // line id start node
+			int end_node_id = std::stoi(fields[3]); // line id end node
+			int material_id = std::stoi(fields[4]); // materail ID of the line
 
-			input_file.read(reinterpret_cast<char*>(&node_id), sizeof(node_id)); // node id
-			input_file.read(reinterpret_cast<char*>(&constraint_loc), sizeof(constraint_loc)); // constraint location
-			input_file.read(reinterpret_cast<char*>(&constraint_type), sizeof(constraint_type)); // constraint type
-			input_file.read(reinterpret_cast<char*>(&constraint_angle), sizeof(constraint_angle)); // constraint angle
-
-			// Add to the constraints
-			this->node_constraints.add_constraint(node_id, constraint_loc, constraint_type, constraint_angle);
+			// Add to line Map (Note that Nodes needed to be added before the start of line addition !!!!)
+			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[start_node_id], &model_nodes.nodeMap[end_node_id], material_id);
 		}
-		else if (std::strcmp(type, "load") == 0)
+		else if (type == "cnst")
 		{
-			int load_id, node_id; // Load id, id of the node its applied to
-			glm::vec2 load_loc = glm::vec2(0); // Load location
-			// Load start time, Load end time, Load value, Load angle, Load phase angle
-			double load_start_time, load_end_time, load_value, load_angle, load_phase; 
+			int cnst_nd_id = std::stoi(fields[1]); // constraint node ID
+			int cnst_type = std::stoi(fields[2]); // constraint type 
+			double cnst_angle = std::stod(fields[3]); // constraint angle
 
-			input_file.read(reinterpret_cast<char*>(&load_id), sizeof(load_id)); // Load id
-			input_file.read(reinterpret_cast<char*>(&node_id), sizeof(node_id)); // Node id
-			input_file.read(reinterpret_cast<char*>(&load_loc), sizeof(load_loc)); // Load location
-			input_file.read(reinterpret_cast<char*>(&load_start_time), sizeof(load_start_time)); // Load start time
-			input_file.read(reinterpret_cast<char*>(&load_end_time), sizeof(load_end_time)); // Load end time
-			input_file.read(reinterpret_cast<char*>(&load_value), sizeof(load_value)); // Load value
-			input_file.read(reinterpret_cast<char*>(&load_angle), sizeof(load_angle)); // Load angle
-			input_file.read(reinterpret_cast<char*>(&load_phase), sizeof(load_phase)); // Load phase angle
-
-			// Add to the loads
-			this->node_loads.add_load(load_id, load_loc, load_start_time, load_end_time, 
-				load_value, load_angle, load_phase);
+			// Add to constraint map
+			this->node_constraints.add_constraint(cnst_nd_id, model_nodes.nodeMap[cnst_nd_id].node_pt, cnst_type, cnst_angle);
 		}
-		else if (std::strcmp(type, "mass") == 0)
+		else if (type == "load")
 		{
-			int node_id; // node id
-			glm::vec2 ptmass_loc, ptmass_defl; // pt mass location
-			double ptmass_x, ptmass_y; // value of ptmass x and ptmass y
-			bool is_offset; // offset
+			int load_id = std::stoi(fields[1]); // load ID
+			int load_nd_id = std::stoi(fields[2]); // load node ID
+			double load_val = std::stod(fields[3]); // load value
+			double load_angle = std::stod(fields[4]); // load angle
+			double load_phase_angle = std::stod(fields[5]); // load phase angle
+			double load_start_time = std::stod(fields[6]); // load start time
+			double load_end_time = std::stod(fields[7]); // load end time
+			double load_loc_x = std::stod(fields[8]); // load loc x
+			double load_loc_y = std::stod(fields[9]); // load loc y
 
-			input_file.read(reinterpret_cast<char*>(&node_id), sizeof(node_id)); // Node id
-			input_file.read(reinterpret_cast<char*>(&ptmass_loc), sizeof(ptmass_loc)); // ptmass location
-			input_file.read(reinterpret_cast<char*>(&ptmass_defl), sizeof(ptmass_defl)); // ptmass deflection
-			input_file.read(reinterpret_cast<char*>(&ptmass_x), sizeof(ptmass_x)); // ptmass x value
-			input_file.read(reinterpret_cast<char*>(&ptmass_y), sizeof(ptmass_y)); // ptmass y value
-			input_file.read(reinterpret_cast<char*>(&is_offset), sizeof(is_offset)); // is offset
+			glm::vec2 load_loc = glm::vec2(load_loc_x, load_loc_y);
 
-			// Add to the point mass
-			this->node_ptmass.add_pointmass(node_id, ptmass_loc, ptmass_defl, ptmass_x, ptmass_y, is_offset);
+			// Add to load map
+			this->node_loads.add_load(load_nd_id, load_loc, load_start_time, load_end_time, load_val, load_angle,load_phase_angle);
 		}
-		else if (std::strcmp(type, "ilcd") == 0)
+		else if (type == "ptms")
 		{
-			int node_id; // node id
-			glm::vec2 inlcond_loc; // initial condition location
-			// initial displacement x, initial displacement y, initial velocity x, initial velocity y
-			double inl_displacement_x,  inl_displacement_y,inl_velocity_x, inl_velocity_y;
+			int ptm_nd_id = std::stoi(fields[1]); // load node ID
+			double ptm_x = std::stod(fields[2]); // point mass x
+			double ptm_y = std::stod(fields[3]); // point mass y
 
-			input_file.read(reinterpret_cast<char*>(&node_id), sizeof(node_id)); // Node id
-			input_file.read(reinterpret_cast<char*>(&inlcond_loc), sizeof(inlcond_loc)); // Initial condition location
-			input_file.read(reinterpret_cast<char*>(&inl_displacement_x), sizeof(inl_displacement_x)); // Initial displacement x
-			input_file.read(reinterpret_cast<char*>(&inl_displacement_y), sizeof(inl_displacement_y)); // Initial displacement y
-			input_file.read(reinterpret_cast<char*>(&inl_velocity_x), sizeof(inl_velocity_x)); // Initial velocity x
-			input_file.read(reinterpret_cast<char*>(&inl_velocity_y), sizeof(inl_velocity_y)); // Initial velocity y
-
-			// Add to the initial condition
-			this->node_inlcond.add_inlcondition(node_id, inlcond_loc,
-				inl_displacement_x, inl_displacement_y, inl_velocity_x, inl_velocity_y);
+			// Add to point mass map
+			this->node_ptmass.add_pointmass(ptm_nd_id, model_nodes.nodeMap[ptm_nd_id].node_pt, glm::vec2(0), ptm_x, ptm_y, false);
 		}
-		else if (std::strcmp(type, "matr") == 0)
+		else if (type == "ilcd")
 		{
-			unsigned int material_id;
-			size_t material_name_length;
-			double material_stiffness;
+			int ilcd_nd_id = std::stoi(fields[1]); // initial condition node ID
+			double ilcd_displ_x = std::stod(fields[2]); // initial displacement x
+			double ilcd_displ_y = std::stod(fields[3]); // initial displacement y
+			double ilcd_velo_x = std::stod(fields[4]); // initial velocity x
+			double ilcd_velo_y = std::stod(fields[5]); // initial velocity y
 
-			input_file.read(reinterpret_cast<char*>(&material_id), sizeof(material_id)); // Material id
-			input_file.read(reinterpret_cast<char*>(&material_name_length), sizeof(material_name_length)); // Material name length
-
-			// Allocate a buffer to hold the material name
-			char buffer[256]; // Assuming a reasonable maximum length for the material name
-			input_file.read(buffer, material_name_length);
-			buffer[material_name_length] = '\0'; // Null-terminate the string
-
-			std::string material_name(buffer);
-			input_file.read(reinterpret_cast<char*>(&material_stiffness), sizeof(material_stiffness)); // Material stiffness
-
-			// Create the temporary material
+			// Add to the initial condition map
+			this->node_inlcond.add_inlcondition(ilcd_nd_id, model_nodes.nodeMap[ilcd_nd_id].node_pt, ilcd_displ_x, ilcd_displ_y, ilcd_velo_x, ilcd_velo_y);
+		}
+		else if (type == "mtrl")
+		{
+			// Material data
 			material_data inpt_material;
-			inpt_material.material_id = material_id; // Get the material id
-			inpt_material.material_name = material_name; //Default material name
-			inpt_material.material_stiffness = material_stiffness; // N/m
-
-			 // Add to material list
-			 mat_data[material_id] = inpt_material;
+			inpt_material.material_id = std::stoi(fields[1]); // Get the material id
+			inpt_material.material_name = fields[2]; // Get the material name
+			inpt_material.material_stiffness = std::stod(fields[3]); // Get the material stiffness
+	
+			// Add to materail list
+			mat_data[inpt_material.material_id] = inpt_material;
 		}
+
+		// Iterate line
+		j++;
 	}
 
 	// Clear the material list
@@ -616,117 +605,101 @@ void geom_store::write_rawdata(std::ofstream& output_file)
 	// Write all the nodes
 	for (auto& nd_m : model_nodes.nodeMap)
 	{
-		char type[5] = { 'n','o','d','e' }; // Identifier for node
-		output_file.write(type, sizeof(type));
-
+		// Print the node details
 		const node_store& node = nd_m.second;
 
-		// Write node data to the binary file
-		output_file.write(reinterpret_cast<const char*>(&node.node_id), sizeof(node.node_id)); // node id
-		output_file.write(reinterpret_cast<const char*>(&node.node_pt), sizeof(node.node_pt)); // node pt
+		// Write node data to the text file
+		output_file << "node, "
+			<< node.node_id << ", "
+			<< node.node_pt.x << ", "
+			<< node.node_pt.y << std::endl;
 	}
 
 	// Write all the lines
 	for (auto& ln_m : model_lineelements.elementlineMap)
 	{
-		char type[5] = { 'l','i','n','e' };  // Identifier for line
-		output_file.write(type, sizeof(type));
-
+		// Print the line details
 		const elementline_store& line = ln_m.second;
 
-		// Write line data to the binary file
-		output_file.write(reinterpret_cast<const char*>(&line.line_id), sizeof(line.line_id)); // line id
-		output_file.write(reinterpret_cast<const char*>(&line.startNode->node_id), sizeof(line.startNode->node_id)); // line start node id
-		output_file.write(reinterpret_cast<const char*>(&line.endNode->node_id), sizeof(line.endNode->node_id)); // line end node id
-		output_file.write(reinterpret_cast<const char*>(&line.material_id), sizeof(line.material_id)); // line end node id
+		// Write line data to the text file
+		output_file << "line, "
+			<< line.line_id << ", "
+			<< line.startNode->node_id << ", "
+			<< line.endNode->node_id << ", "
+			<< line.material_id << std::endl;
 	}
 
 	// Write all the constraints
 	for (auto& cnst_m : node_constraints.constraintMap)
 	{
-		char type[5] = { 'c','n','s','t' };  // Identifier for constraint
-		output_file.write(type, sizeof(type));
-
+		// Print the constraint
 		const constraint_data& cnst = cnst_m.second;
 
-		// Write constraint data to the binary file
-		output_file.write(reinterpret_cast<const char*>(&cnst.node_id), sizeof(cnst.node_id)); // node id
-		output_file.write(reinterpret_cast<const char*>(&cnst.constraint_loc), sizeof(cnst.constraint_loc)); // constraint location
-		output_file.write(reinterpret_cast<const char*>(&cnst.constraint_type), sizeof(cnst.constraint_type)); // constraint type
-		output_file.write(reinterpret_cast<const char*>(&cnst.constraint_angle), sizeof(cnst.constraint_angle)); // constraint angle
+		// Write constraint data to the text file
+		output_file << "cnst, "
+			<< cnst.node_id << ", "
+			<< cnst.constraint_type << ", "
+			<< cnst.constraint_angle << std::endl;
 	}
 
 	// Write all the loads
 	for (auto& ld_m : node_loads.loadMap)
 	{
-		char type[5] = { 'l','o','a','d' };  // Identifier for load
-		output_file.write(type, sizeof(type));
-
+		// Print the load details
 		const load_data ld = ld_m.second;
 
-		// Write load data to the binary file
-		output_file.write(reinterpret_cast<const char*>(&ld.load_id), sizeof(ld.load_id)); // Load id
-		output_file.write(reinterpret_cast<const char*>(&ld.node_id), sizeof(ld.node_id)); // Node id
-		output_file.write(reinterpret_cast<const char*>(&ld.load_loc), sizeof(ld.load_loc)); // Load location
-		output_file.write(reinterpret_cast<const char*>(&ld.load_start_time), sizeof(ld.load_start_time)); // Load start time
-		output_file.write(reinterpret_cast<const char*>(&ld.load_end_time), sizeof(ld.load_end_time)); // Load end time
-		output_file.write(reinterpret_cast<const char*>(&ld.load_value), sizeof(ld.load_value)); // Load value
-		output_file.write(reinterpret_cast<const char*>(&ld.load_angle), sizeof(ld.load_angle)); // Load angle
-		output_file.write(reinterpret_cast<const char*>(&ld.load_phase), sizeof(ld.load_phase)); // Load phase angle
+		// Write load data to the text file
+		output_file << "load, "
+			<< ld.load_id << ", " // load ID
+			<< ld.node_id << ", "  // load node ID
+			<< ld.load_value << ", " // load value
+			<< ld.load_angle << ", " // load angle
+			<< ld.load_phase << ", " // load phase angle
+			<< ld.load_start_time << ", " // load start time
+			<< ld.load_end_time << ", " // load end time
+			<< ld.load_loc.x << ", " // load loc x
+			<< ld.load_loc.y << std::endl; // load loc y
+
 	}
 
 	// Write all the point mass
 	for (auto& ptm_m : node_ptmass.ptmassMap)
 	{
-		char type[5] = { 'm','a','s','s' };  // Identifier for point mass
-		output_file.write(type, sizeof(type));
-
+		// Print the point mass details
 		const nodepointmass_data ptm = ptm_m.second;
 
-		// Write point mass data to the binary file
-		output_file.write(reinterpret_cast<const char*>(&ptm.node_id), sizeof(ptm.node_id)); // Node id
-		output_file.write(reinterpret_cast<const char*>(&ptm.ptmass_loc), sizeof(ptm.ptmass_loc)); // ptmass location
-		output_file.write(reinterpret_cast<const char*>(&ptm.ptmass_defl), sizeof(ptm.ptmass_defl)); // ptmass deflection
-		output_file.write(reinterpret_cast<const char*>(&ptm.ptmass_x), sizeof(ptm.ptmass_x)); // ptmass x value
-		output_file.write(reinterpret_cast<const char*>(&ptm.ptmass_y), sizeof(ptm.ptmass_y)); // ptmass y value
-		output_file.write(reinterpret_cast<const char*>(&ptm.is_offset), sizeof(ptm.is_offset)); // is offset
+		// Write point mass data to the text file
+		output_file << "ptms, "
+			<< ptm.node_id << ", "
+			<< ptm.ptmass_x << ", "
+			<< ptm.ptmass_y << std::endl;
 		
 	}
 
 	// Write all the initial condition data
 	for (auto& inl_m : node_inlcond.inlcondMap)
 	{
-		char type[5] = { 'i','l','c','d' };  // Identifier for initial condition
-		output_file.write(type, sizeof(type));
-
 		const nodeinl_condition_data inl = inl_m.second;
 
-		// Write initial condition data to the binary file
-		output_file.write(reinterpret_cast<const char*>(&inl.node_id), sizeof(inl.node_id)); // Node id
-		output_file.write(reinterpret_cast<const char*>(&inl.inlcond_loc), sizeof(inl.inlcond_loc)); // Initial condition location
-		output_file.write(reinterpret_cast<const char*>(&inl.inl_displacement_x), sizeof(inl.inl_displacement_x)); // Initial displacement x
-		output_file.write(reinterpret_cast<const char*>(&inl.inl_displacement_y), sizeof(inl.inl_displacement_y)); // Initial displacement y
-		output_file.write(reinterpret_cast<const char*>(&inl.inl_velocity_x), sizeof(inl.inl_velocity_x)); // Initial velocity x
-		output_file.write(reinterpret_cast<const char*>(&inl.inl_velocity_y), sizeof(inl.inl_velocity_y)); // Initial velocity y
-
+		// Write initial condition data to the text file
+		output_file << "ilcd, "
+			<< inl.node_id << ", "
+			<< inl.inl_displacement_x << ", "
+			<< inl.inl_displacement_y << ", "
+			<< inl.inl_velocity_x << ", "
+			<< inl.inl_velocity_y << std::endl;
 	}
 
 	// Write all the material property
 	for (auto& mat_d : elm_prop_window->material_list)
 	{
-		char type[5] = { 'm','a','t','r' };  // Identifier for material properties
-		output_file.write(type, sizeof(type));
-
 		material_data mat = mat_d.second;
 
-		// Write material property data to the binary file
-		output_file.write(reinterpret_cast<const char*>(&mat.material_id), sizeof(mat.material_id)); // Material id
-
-		// Write the length of the material_name and then write the characters
-		size_t material_name_length = mat.material_name.size(); //size of the material name
-		output_file.write(reinterpret_cast<const char*>(&material_name_length), sizeof(material_name_length));
-		output_file.write(mat.material_name.c_str(), material_name_length);
-		output_file.write(reinterpret_cast<const char*>(&mat.material_stiffness), sizeof(mat.material_stiffness)); // Material stiffness
+		// Write material property data to the text file
+		output_file << "mtrl, "
+			<< mat.material_id << ", "
+			<< mat.material_name << ", "
+			<< mat.material_stiffness << std::endl;
 
 	}
 
@@ -771,12 +744,12 @@ void geom_store::update_model_matrix()
 	geom_param.modelMatrix = g_transl * glm::scale(glm::mat4(1.0f), glm::vec3(static_cast<float>(geom_param.geom_scale)));
 
 	// Update the model matrix
-	model_nodes.update_geometry_matrices(true, false, false, false, false);
-	model_lineelements.update_geometry_matrices(true, false, false, false, false);
-	node_constraints.update_geometry_matrices(true, false, false, false, false);
-	node_loads.update_geometry_matrices(true, false, false, false, false);
-	node_ptmass.update_geometry_matrices(true, false, false, false, false);
-	node_inlcond.update_geometry_matrices(true, false, false, false, false);
+	model_nodes.update_geometry_matrices(true, false, false, true, false);
+	model_lineelements.update_geometry_matrices(true, false, false, true, false);
+	node_constraints.update_geometry_matrices(true, false, false, true, false);
+	node_loads.update_geometry_matrices(true, false, false, true, false);
+	node_ptmass.update_geometry_matrices(true, false, false, true, false);
+	node_inlcond.update_geometry_matrices(true, false, false, true, false);
 
 	// Update the modal analysis result matrix
 	modal_result_nodes.update_geometry_matrices(true, false, false, false, false);

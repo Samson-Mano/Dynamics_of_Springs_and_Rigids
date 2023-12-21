@@ -338,6 +338,25 @@ void modal_analysis_solver::modal_analysis_penaltymethod_start(const nodes_list_
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Eigen vectors transformed with global support inclination matrix " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
+	//_____________________________________________________________________________________________
+	// Calculate the effective mass participation factor & Cummulative effective mass participation factor
+	// effective mass participation factor = = percentage of the system mass that participates in a particular mode
+	// Remove modes which contributes to less than 2% of the total effective mass
+
+	Eigen::VectorXd participation_factor(reducedDOF);
+	participation_factor.setZero();
+
+	get_modal_participation_factor(participation_factor,
+		globalPointMassMatrix,
+		global_eigenvectors_transformed,
+		numDOF,
+		reducedDOF,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Modal Mass of Participation Factor completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
 	//____________________________________________________________________________________________________________________
 	// Store the results
 
@@ -367,11 +386,12 @@ void modal_analysis_solver::modal_analysis_penaltymethod_start(const nodes_list_
 		double nat_freq = std::sqrt(eigenvalues.coeff(i) / (2.0 * m_pi));
 
 		// Modal results
-		std::stringstream ss;
-		ss << std::fixed << std::setprecision(2) << nat_freq;
+		std::stringstream ss ,mf;
+		ss << std::fixed << std::setprecision(3) << nat_freq;
+		mf << std::fixed << std::setprecision(3) << participation_factor.coeff(i);
 
 		// Add to the string list
-		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz");
+		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz , Modal mass = " + mf.str());
 	}
 
 	number_of_modes = reducedDOF; // total number of modes
@@ -799,7 +819,7 @@ void modal_analysis_solver::modal_analysis_lagrange_start(const nodes_list_store
 
 		// Modal results
 		std::stringstream ss;
-		ss << std::fixed << std::setprecision(2) << nat_freq;
+		ss << std::fixed << std::setprecision(3) << nat_freq;
 
 		// Add to the string list
 		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz");
@@ -1576,6 +1596,71 @@ void modal_analysis_solver::get_globalized_eigen_vector_matrix(Eigen::MatrixXd& 
 
 }
 
+void modal_analysis_solver::get_modal_participation_factor(Eigen::VectorXd& participation_factor,
+	const Eigen::MatrixXd& globalPointMassMatrix,
+	const Eigen::MatrixXd& global_eigenvectors_transformed,
+	const int& numDOF,
+	const int& reducedDOF,
+	std::ofstream& output_file)
+{
+	// Global Participation Factor
+	
+	// Influence vector
+	Eigen::VectorXd influence_vector(numDOF);
+	influence_vector.setZero();
+
+
+	// Set the influence vector
+	for (int i = 0; i < numDOF; i++)
+	{
+		if (globalPointMassMatrix.coeff(i, i) > 1.5 * zero_ptmass)
+		{
+			influence_vector.coeffRef(i) = 1.0;
+		}
+	}
+
+
+	double temp_modal_mass = 0.0;
+	double temp_distribution_factor = 0.0;
+	double temp_participation_factor = 0.0;
+	double total_participation_factor = 0.0;
+
+	double total_mass = influence_vector.transpose() * globalPointMassMatrix * influence_vector;
+
+	for (int i = 0; i < reducedDOF; i++)
+	{
+		// Get the nth Mode (Column)
+		Eigen::VectorXd eigen_vector_i = global_eigenvectors_transformed.col(i);
+
+		// Modal Mass
+		temp_modal_mass = eigen_vector_i.transpose() * globalPointMassMatrix * eigen_vector_i;
+
+		// Force distribution factor
+		temp_distribution_factor = eigen_vector_i.transpose() * globalPointMassMatrix * influence_vector;
+
+		// Add to the Participation factor
+		temp_participation_factor = temp_modal_mass / temp_distribution_factor;
+
+		participation_factor.coeffRef(i) = temp_participation_factor;
+
+		// Cummulative participation factor
+		total_participation_factor += temp_participation_factor;
+
+	}
+
+	if (print_matrix == true)
+	{
+		// Print the Global ParticipationFactors
+		output_file << "Global Participation Factors" << std::endl;
+		output_file << participation_factor << std::endl;
+		output_file << std::endl;
+
+		output_file << "Cumulative Participation Factors" << std::endl;
+		output_file << total_participation_factor << std::endl;
+		output_file << std::endl;
+	}
+
+}
 
 void modal_analysis_solver::map_modal_analysis_results(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
