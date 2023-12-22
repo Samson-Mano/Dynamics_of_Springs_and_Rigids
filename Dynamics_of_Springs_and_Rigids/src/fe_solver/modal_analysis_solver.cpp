@@ -1607,17 +1607,17 @@ void modal_analysis_solver::get_modal_participation_factor(Eigen::VectorXd& part
 	
 	// Influence vector
 	Eigen::VectorXd influence_vector(numDOF);
-	influence_vector.setZero();
+	influence_vector.setOnes();
 
 
-	// Set the influence vector
-	for (int i = 0; i < numDOF; i++)
-	{
-		if (globalPointMassMatrix.coeff(i, i) > 1.5 * zero_ptmass)
-		{
-			influence_vector.coeffRef(i) = 1.0;
-		}
-	}
+	//// Set the influence vector
+	//for (int i = 0; i < numDOF; i++)
+	//{
+	//	if (globalPointMassMatrix.coeff(i, i) > 1.5 * zero_ptmass)
+	//	{
+	//		influence_vector.coeffRef(i) = 1.0;
+	//	}
+	//}
 
 
 	double temp_modal_mass = 0.0;
@@ -1639,7 +1639,7 @@ void modal_analysis_solver::get_modal_participation_factor(Eigen::VectorXd& part
 		temp_distribution_factor = eigen_vector_i.transpose() * globalPointMassMatrix * influence_vector;
 
 		// Add to the Participation factor
-		temp_participation_factor = temp_modal_mass / temp_distribution_factor;
+		temp_participation_factor = std::pow(temp_distribution_factor,2) / temp_modal_mass;
 
 		participation_factor.coeffRef(i) = temp_participation_factor;
 
