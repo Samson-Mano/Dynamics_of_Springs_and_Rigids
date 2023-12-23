@@ -16,7 +16,19 @@ public:
 	bool execute_pulse_open = false; // Solver window execute opening event flag
 	bool execute_pulse_close = false; // Closing of solution window event flag
 
+	std::vector<std::string> mode_result_str;
+	int selected_modal_option1 = 0;
+	int selected_modal_option2 = 0;
 
+	// Inputs for response calculation
+	double total_simulation_time = 10.0;
+	double time_interval = 0.1;
+	double damping_ratio = 0.01;
+
+	// Modal analysis Results
+	double modal_first_frequency = 0.0;
+	double modal_end_frequency = 0.0;
+	int number_of_modes = 0;
 
 	// analysis results
 	bool pulse_analysis_complete = false;
@@ -29,5 +41,17 @@ public:
 	void render_window();
 private:
 	Stopwatch_events stopwatch;
+
+	// Animation control
+	bool animate_play = true;
+	bool animate_pause = false;
+	double deformation_scale_max = 10.0;
+	double animation_speed = 1.0;
+
+
+	// Time step control
+	double time_interval_atrun = 0.0; // Value of time interval used in the pulse response 
+	int time_step_count = 0;
+	int time_step = 0;
 
 };

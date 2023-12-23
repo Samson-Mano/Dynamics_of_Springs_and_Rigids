@@ -208,6 +208,9 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 	this->modal_result_nodes.init(&geom_param);
 	this->modal_result_lineelements.init(&geom_param);
 
+	// Re-initialized the analysis window
+	this->modal_solver_window->init();
+
 	// Re-Initialize the solver
 	modal_solver.clear_results();
 	is_pulse_analysis_complete = false;
@@ -360,6 +363,10 @@ void geom_store::read_dxfdata(std::ostringstream& input_data)
 	this->modal_result_nodes.init(&geom_param);
 	this->modal_result_lineelements.init(&geom_param);
 
+	// Re-initialized the analysis window
+	this->modal_solver_window->init();
+
+
 	// Re-Initialize the solver
 	modal_solver.clear_results();
 	is_pulse_analysis_complete = false;
@@ -438,6 +445,10 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	// Re-initialize the result elements
 	this->modal_result_nodes.init(&geom_param);
 	this->modal_result_lineelements.init(&geom_param);
+
+	// Re-initialized the analysis window
+	this->modal_solver_window->init();
+
 
 	// Material data list
 	std::unordered_map<int, material_data> mat_data;
