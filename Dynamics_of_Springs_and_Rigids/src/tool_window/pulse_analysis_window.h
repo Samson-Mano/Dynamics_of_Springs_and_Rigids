@@ -31,9 +31,14 @@ public:
 	int number_of_modes = 0;
 
 	// analysis results
-	bool pulse_analysis_complete = false;
 	bool show_undeformed_model = true; // show undeformed model 
 
+	double deformation_scale_max = 10.0;
+
+	// Time step control
+	double time_interval_atrun = 0.0; // Value of time interval used in the pulse response 
+	int time_step_count = 0;
+	int time_step = 0;
 
 	pulse_analysis_window();
 	~pulse_analysis_window();
@@ -45,13 +50,6 @@ private:
 	// Animation control
 	bool animate_play = true;
 	bool animate_pause = false;
-	double deformation_scale_max = 10.0;
 	double animation_speed = 1.0;
-
-
-	// Time step control
-	double time_interval_atrun = 0.0; // Value of time interval used in the pulse response 
-	int time_step_count = 0;
-	int time_step = 0;
 
 };

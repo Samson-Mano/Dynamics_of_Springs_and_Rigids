@@ -14,7 +14,6 @@ void modal_analysis_window::init()
 {
 	// Initialize
 	is_show_window = false;
-	modal_analysis_complete = false;
 	execute_modal_analysis = false; // Main modal analysis run event flag
 	execute_modal_open = false; // Solver window execute open event flag
 	execute_modal_close = false; // Solver window execute close event flag
@@ -42,7 +41,32 @@ void modal_analysis_window::render_window()
 		items_cstr.push_back(item.c_str());
 	}
 
-	ImGui::ListBox("Natural Frequency", &selected_modal_option, items_cstr.data(), static_cast<int>(items_cstr.size()));
+
+	// Add the modal analysis result dropdown list
+	const char* current_item = (selected_modal_option >= 0 && selected_modal_option < items_cstr.size()) ? items_cstr[selected_modal_option] : "";
+
+	if (ImGui::BeginCombo("Natural Frequency", current_item))
+	{
+		for (int i = 0; i < items_cstr.size(); i++)
+		{
+			const bool is_selected = (selected_modal_option == i);
+			if (ImGui::Selectable(items_cstr[i], is_selected))
+			{
+				selected_modal_option = i;
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if (is_selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+
+		ImGui::EndCombo();
+	}
+
+	// List box
+	// ImGui::ListBox("Natural Frequency", &selected_modal_option, items_cstr.data(), static_cast<int>(items_cstr.size()));
 
 	// Capture if selection changed or not
 	if (selected_modal_option != selection_change_flag)

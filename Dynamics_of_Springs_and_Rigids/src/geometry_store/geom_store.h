@@ -19,6 +19,7 @@
 
 // Solver
 #include "../fe_solver/modal_analysis_solver.h"
+#include "../fe_solver/pulse_analysis_solver.h"
 
 // FE Objects
 #include "fe_objects/nodes_list_store.h"
@@ -35,6 +36,9 @@
 #include "analysis_result_objects/modal_nodes_list_store.h";
 #include "analysis_result_objects/modal_elementline_list_store.h";
 
+// FE Result Objects Pulse analysis
+#include "analysis_result_objects/pulse_node_list_store.h"
+#include "analysis_result_objects/pulse_elementline_list_store.h"
 
 
 class geom_store
@@ -95,19 +99,20 @@ private:
 	modal_nodes_list_store modal_result_nodes;
 	modal_elementline_list_store modal_result_lineelements;
 
-	//// Pulse analysis result
-	//result_node_list_store pulse_result_nodes;
-	//result_elementline_list_store pulse_result_lineelements;
+	// Pulse analysis result
+	pulse_node_list_store pulse_result_nodes;
+	pulse_elementline_list_store pulse_result_lineelements;
 
 	// Forced response analysis result
 
 
 	// Analysis
-	bool is_pulse_analysis_complete = false;
+	//bool is_pulse_analysis_complete = false;
 	bool is_forced_analysis_complete = false;
 
 	// Solver object
 	modal_analysis_solver modal_solver;
+	pulse_analysis_solver pulse_solver;
 
 
 	// Window pointers

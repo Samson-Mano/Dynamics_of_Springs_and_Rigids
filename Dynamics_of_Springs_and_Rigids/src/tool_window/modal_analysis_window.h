@@ -23,7 +23,6 @@ public:
 	bool is_mode_selection_changed = false;
 
 	// analysis results
-	bool modal_analysis_complete = false;
 	bool show_undeformed_model = true; // show undeformed model 
 	bool show_result_text_values = true; // show the result text values
 

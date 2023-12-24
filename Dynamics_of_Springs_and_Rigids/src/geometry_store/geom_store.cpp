@@ -28,7 +28,7 @@ void geom_store::init(modal_analysis_window* modal_solver_window,
 
 	// Initialize the solvers
 	modal_solver.clear_results(); 
-	is_pulse_analysis_complete = false;
+	pulse_solver.clear_results();
 	is_forced_analysis_complete = false;
 
 
@@ -210,10 +210,11 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 
 	// Re-initialized the analysis window
 	this->modal_solver_window->init();
+	this->pulse_solver_window->init();
 
 	// Re-Initialize the solver
 	modal_solver.clear_results();
-	is_pulse_analysis_complete = false;
+	pulse_solver.clear_results();
 	is_forced_analysis_complete = false;
 
 
@@ -365,11 +366,11 @@ void geom_store::read_dxfdata(std::ostringstream& input_data)
 
 	// Re-initialized the analysis window
 	this->modal_solver_window->init();
-
+	this->pulse_solver_window->init();
 
 	// Re-Initialize the solver
 	modal_solver.clear_results();
-	is_pulse_analysis_complete = false;
+	pulse_solver.clear_results();
 	is_forced_analysis_complete = false;
 
 
@@ -448,14 +449,14 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 
 	// Re-initialized the analysis window
 	this->modal_solver_window->init();
-
+	this->pulse_solver_window->init();
 
 	// Material data list
 	std::unordered_map<int, material_data> mat_data;
 
 	// Re-Initialize the solver
 	modal_solver.clear_results();
-	is_pulse_analysis_complete = false;
+	pulse_solver.clear_results();
 	is_forced_analysis_complete = false;
 
 	//Node Point list
@@ -951,7 +952,7 @@ void geom_store::paint_model()
 			return;
 		}
 		//________________________________________________________________________________________
-		if (pulse_solver_window->is_show_window == true && is_pulse_analysis_complete == true &&
+		if (pulse_solver_window->is_show_window == true && pulse_solver.is_pulse_analysis_complete == true &&
 			pulse_solver_window->show_undeformed_model == false)
 		{
 			// Pulse analysis complete, window open and user turned off model view
@@ -1408,9 +1409,6 @@ void geom_store::paint_modal_analysis_results()
 		// Execute the close sequence
 		if (modal_solver.is_modal_analysis_complete == true)
 		{
-			// Modal analysis is complete (but clear the results anyway beacuse results will be loaded at open)
-			modal_solver_window->modal_analysis_complete = false;
-
 			// Pulse response analysis is complete
 			update_model_transperency(false);
 		}
@@ -1494,8 +1492,8 @@ void geom_store::paint_modal_analysis_results()
 			modal_result_lineelements);
 
 		// reset the frequency response and pulse response solution
+		pulse_solver.clear_results();
 		is_forced_analysis_complete = false;
-		is_pulse_analysis_complete = false;
 
 		// Check whether the modal analysis is complete or not
 		if (modal_solver.is_modal_analysis_complete == true)
@@ -1522,6 +1520,115 @@ void geom_store::paint_modal_analysis_results()
 void geom_store::paint_pulse_analysis_results()
 {
 	// Paint the pulse analysis results
+	// Check closing sequence for Pulse response analysis window
+	if (pulse_solver_window->execute_pulse_close == true)
+	{
+		// Execute the close sequence
+		if (pulse_solver.is_pulse_analysis_complete == true)
+		{
+			// Pulse response analysis is complete
+			update_model_transperency(false);
+		}
+
+		pulse_solver_window->execute_pulse_close = false;
+	}
+
+	// Check whether the modal analysis solver window is open or not
+	if (pulse_solver_window->is_show_window == false)
+	{
+		return;
+	}
+
+	// Paint the pulse analysis result
+	if (pulse_solver.is_pulse_analysis_complete == true)
+	{
+		// Update the deflection scale
+		geom_param.normalized_defl_scale = 1.0f;
+		geom_param.defl_scale = pulse_solver_window->deformation_scale_max;
+
+		// Update the deflection scale
+		pulse_result_lineelements.update_geometry_matrices(false, false, false, false, true);
+		pulse_result_nodes.update_geometry_matrices(false, false, false, false, true);
+		// ______________________________________________________________________________________
+
+		// Paint the pulse lines
+		pulse_result_lineelements.paint_pulse_elementlines(pulse_solver_window->time_step);
+
+		// Paint the pulse nodes
+		pulse_result_nodes.paint_pulse_nodes(pulse_solver_window->time_step);
+	}
+
+
+	if (pulse_solver_window->execute_pulse_open == true)
+	{
+		// Execute the open sequence
+		if (modal_solver.is_modal_analysis_complete == false)
+		{
+			// Exit the window (when modal analysis is not complete)
+			pulse_solver_window->is_show_window = false;
+		}
+		else
+		{
+			// Modal analysis Results
+			pulse_solver_window->number_of_modes = static_cast<int>(modal_solver.m_eigenvalues.size());
+			pulse_solver_window->modal_first_frequency = std::sqrt(modal_solver.m_eigenvalues.at(0)) / (2.0 * m_pi); // std::sqrt(modal_results.eigen_values[i]) / (2.0 * m_pi);
+			pulse_solver_window->modal_end_frequency = std::sqrt(modal_solver.m_eigenvalues.at(pulse_solver_window->number_of_modes - 1)) / (2.0 * m_pi);
+			pulse_solver_window->mode_result_str = modal_solver.mode_result_str;
+
+			// Modal analysis is complete (check whether frequency response analysis is complete or not)
+			if (pulse_solver.is_pulse_analysis_complete == true)
+			{
+				// Set the pulse response analysis result
+				pulse_solver_window->time_interval_atrun = pulse_solver.time_interval;
+				pulse_solver_window->time_step_count = pulse_solver.time_step_count;
+
+				// Reset the buffers for pulse result nodes and lines
+				pulse_result_lineelements.set_buffer();
+				pulse_result_nodes.set_buffer();
+
+				// Pulse response analysis is complete
+				update_model_transperency(true);
+			}
+
+		}
+		pulse_solver_window->execute_pulse_open = false;
+	}
+
+	if (pulse_solver_window->execute_pulse_analysis == true)
+	{
+		// Execute the Pulse response Analysis
+		pulse_solver.pulse_analysis_start(model_nodes,
+			model_lineelements,
+			node_constraints,
+			node_loads,
+			node_ptmass,
+			node_inlcond,
+			elm_prop_window->material_list,
+			modal_solver,
+			pulse_solver_window->total_simulation_time,
+			pulse_solver_window->time_interval,
+			pulse_solver_window->damping_ratio,
+			pulse_solver_window->selected_modal_option1,
+			pulse_solver_window->selected_modal_option2,
+			pulse_result_nodes,
+			pulse_result_lineelements);
+
+		// Check whether the modal analysis is complete or not
+		if (pulse_solver.is_pulse_analysis_complete == true)
+		{
+			// Set the pulse response analysis result
+			pulse_solver_window->time_interval_atrun = pulse_solver.time_interval;
+			pulse_solver_window->time_step_count = pulse_solver.time_step_count;
+
+			// Reset the buffers for pulse result nodes and lines
+			pulse_result_lineelements.set_buffer();
+			pulse_result_nodes.set_buffer();
+
+			// Pulse response analysis is complete
+			update_model_transperency(true);
+		}
+		pulse_solver_window->execute_pulse_analysis = false;
+	}
 
 }
 

@@ -1,56 +1,57 @@
-#include "result_elementline_list_store.h"
+#include "pulse_elementline_list_store.h"
 
-result_elementline_list_store::result_elementline_list_store()
+pulse_elementline_list_store::pulse_elementline_list_store()
 {
 	// Empty constructor
 }
 
-result_elementline_list_store::~result_elementline_list_store()
+pulse_elementline_list_store::~pulse_elementline_list_store()
 {
 	// Empty destructor
 }
 
-void result_elementline_list_store::init(geom_parameters* geom_param_ptr)
+void pulse_elementline_list_store::init(geom_parameters* geom_param_ptr)
 {
 	// Set the geometry parameters
 	this->geom_param_ptr = geom_param_ptr;
 
 	// Set the geometry parameters for the line
-	result_element_lines.init(geom_param_ptr);
+	pulse_element_lines.init(geom_param_ptr);
 
 	max_line_displ = 0.0;
 	element_max_length = 0.0;
 	element_min_length = DBL_MAX;
 
 	// Clear the element lines
-	result_elementline_count = 0;
-	result_elementlineMap.clear();
+	pulse_elementline_count = 0;
+	pulse_elementlineMap.clear();
 }
 
-void result_elementline_list_store::clear_data()
+void pulse_elementline_list_store::clear_data()
 {
 	// Dynamic lines
-	result_element_lines.clear_lines();
+	pulse_element_lines.clear_lines();
 
 	max_line_displ = 0.0;
 	element_max_length = 0.0;
 	element_min_length = DBL_MAX;
 
 	// Clear the element lines
-	result_elementline_count = 0;
-	result_elementlineMap.clear();
+	pulse_elementline_count = 0;
+	pulse_elementlineMap.clear();
 }
 
-void result_elementline_list_store::add_result_elementline(int& line_id, result_node_store* startNode, result_node_store* endNode, bool& is_rigid)
+void pulse_elementline_list_store::add_pulse_elementline(int& line_id, pulse_node_store* startNode, pulse_node_store* endNode, bool& is_rigid)
 {
 	// Add result line element
-	result_elementline_store temp_line;
-	temp_line.line_id = line_id;
-	temp_line.startNode = startNode;
-	temp_line.endNode = endNode;
+	pulse_elementline_store temp_pulse_line;
+	temp_pulse_line.line_id = line_id;
+	temp_pulse_line.startNode = startNode;
+	temp_pulse_line.endNode = endNode;
+	temp_pulse_line.is_rigid = is_rigid; // set whether the line is rigid or not
 
 	// Check whether the node_id is already there
-	if (result_elementlineMap.find(line_id) != result_elementlineMap.end())
+	if (pulse_elementlineMap.find(line_id) != pulse_elementlineMap.end())
 	{
 		// Element ID already exist (do not add)
 		return;
@@ -73,71 +74,64 @@ void result_elementline_list_store::add_result_elementline(int& line_id, result_
 	{
 		element_min_length = element_length;
 	}
-	
-	temp_line.is_rigid = is_rigid; // set whether the line is rigid or not
 
 	//__________________________ Add result lines Displacement results
 	// Displacement magnitude list
-	temp_line.startpt_displ_magnitude = startNode->node_result_val.displ_magnitude;
-	temp_line.endpt_displ_magnitude = endNode->node_result_val.displ_magnitude;
+	temp_pulse_line.startpt_displ_magnitude = startNode->node_pulse_result.displ_magnitude;
+	temp_pulse_line.endpt_displ_magnitude = endNode->node_pulse_result.displ_magnitude;
 
 	// Displacement vector list
-	temp_line.startpt_normalized_displ = startNode->node_result_val.normalized_displ;
-	temp_line.endpt_normalized_displ = endNode->node_result_val.normalized_displ;
+	temp_pulse_line.startpt_normalized_displ = startNode->node_pulse_result.normalized_displ;
+	temp_pulse_line.endpt_normalized_displ = endNode->node_pulse_result.normalized_displ;
 
 
 	// Insert to the lines
-	result_elementlineMap.insert({ line_id, temp_line });
-	result_elementline_count++;
+	pulse_elementlineMap.insert({ line_id, temp_pulse_line });
+	pulse_elementline_count++;
 }
 
-
-void result_elementline_list_store::set_buffer()
+void pulse_elementline_list_store::set_buffer()
 {
 	// Clear the lines
-	result_element_lines.clear_lines();
+	pulse_element_lines.clear_lines();
 
 	//__________________________ Add the Dynamic lines
-	for (auto& line_m : result_elementlineMap)
+	for (auto& line_m : pulse_elementlineMap)
 	{
-		result_elementline_store  rline = line_m.second;
+		pulse_elementline_store  rline = line_m.second;
 
 		if (rline.is_rigid == true)
 		{
 			// Line is rigid (so no deformation along the length)
-			set_rigid_element_line(rline, result_element_lines);
+			set_rigid_element_line(rline, pulse_element_lines);
 
 		}
 		else
 		{
 			// Line is spring
-			set_spring_element_line(rline, result_element_lines);
+			set_spring_element_line(rline, pulse_element_lines);
 
 		}
 	}
 
 	// Set the buffer (Only the index buffer is set because its a dynamic paint)
-	result_element_lines.set_buffer();
+	pulse_element_lines.set_buffer();
 }
 
-void result_elementline_list_store::paint_result_elementlines(const int& dyn_index)
+void pulse_elementline_list_store::paint_pulse_elementlines(const int& dyn_index)
 {
 	// Paint the lines
-	result_element_lines.paint_lines(dyn_index);
+	pulse_element_lines.paint_lines(dyn_index);
 }
 
-void result_elementline_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, 
-	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void pulse_elementline_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Result line update geometry 
-	result_element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation, 
+	pulse_element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation,
 		set_zoomtranslation, set_transparency, set_deflscale);
-
 }
 
-
-void result_elementline_list_store::set_rigid_element_line(const result_elementline_store& rline,
-	dynamic_line_list_store& result_element_lines)
+void pulse_elementline_list_store::set_rigid_element_line(const pulse_elementline_store& rline, dynamic_line_list_store& pulse_element_lines)
 {
 	// Set the rigid element displacement lines
 		// Get the Start node pt and End node pt
@@ -198,14 +192,14 @@ void result_elementline_list_store::set_rigid_element_line(const result_elementl
 		temp_offset_pt = geom_parameters::linear_interpolation(displ_ratio_1 * startpt_normalized_displ[i],
 			displ_ratio_2 * endpt_normalized_displ[i], 0.25f);
 		temp_pt2_offset.push_back(temp_offset_pt);
-		temp_pt2_color.push_back(geom_parameters::getContourColor_d(1.0f - 
+		temp_pt2_color.push_back(geom_parameters::getContourColor_d(1.0f -
 			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f)));
 
 	}
 
-	temp_line_id = result_element_lines.dyn_line_count;
+	temp_line_id = pulse_element_lines.dyn_line_count;
 
-	result_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
+	pulse_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
 		temp_pt1_offset, temp_pt2_offset, temp_pt1_color, temp_pt2_color);
 
 	//_________________________________________________________________________________________________
@@ -229,7 +223,7 @@ void result_elementline_list_store::set_rigid_element_line(const result_elementl
 		temp_offset_pt = geom_parameters::linear_interpolation(displ_ratio_1 * startpt_normalized_displ[i],
 			displ_ratio_2 * endpt_normalized_displ[i], 0.75f);
 		temp_pt1_offset.push_back(temp_offset_pt);
-		temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f - 
+		temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f -
 			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f)));
 
 		// Add the end point offset and end point color
@@ -239,9 +233,9 @@ void result_elementline_list_store::set_rigid_element_line(const result_elementl
 
 	}
 
-	temp_line_id = result_element_lines.dyn_line_count;
+	temp_line_id = pulse_element_lines.dyn_line_count;
 
-	result_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
+	pulse_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
 		temp_pt1_offset, temp_pt2_offset, temp_pt1_color, temp_pt2_color);
 
 	//_________________________________________________________________________________________________
@@ -260,7 +254,7 @@ void result_elementline_list_store::set_rigid_element_line(const result_elementl
 
 	temp_pt1 = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.25f) +
 		glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
-	temp_pt2 = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.75f)+
+	temp_pt2 = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.75f) +
 		glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
 
 	for (i = 0; i < time_step_count; i++)
@@ -272,7 +266,7 @@ void result_elementline_list_store::set_rigid_element_line(const result_elementl
 		temp_offset_pt = geom_parameters::linear_interpolation(displ_ratio_1 * startpt_normalized_displ[i],
 			displ_ratio_2 * endpt_normalized_displ[i], 0.25f);
 		temp_pt1_offset.push_back(temp_offset_pt);
-		temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f - 
+		temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f -
 			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f)));
 
 		// Add the end point offset and end point color
@@ -284,9 +278,9 @@ void result_elementline_list_store::set_rigid_element_line(const result_elementl
 
 	}
 
-	temp_line_id = result_element_lines.dyn_line_count;
+	temp_line_id = pulse_element_lines.dyn_line_count;
 
-	result_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
+	pulse_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
 		temp_pt1_offset, temp_pt2_offset, temp_pt1_color, temp_pt2_color);
 
 	//_________________________________________________________________________________________________
@@ -328,15 +322,13 @@ void result_elementline_list_store::set_rigid_element_line(const result_elementl
 
 	}
 
-	temp_line_id = result_element_lines.dyn_line_count;
+	temp_line_id = pulse_element_lines.dyn_line_count;
 
-	result_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
+	pulse_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
 		temp_pt1_offset, temp_pt2_offset, temp_pt1_color, temp_pt2_color);
 }
 
-
-void result_elementline_list_store::set_spring_element_line(const result_elementline_store& rline,
-	dynamic_line_list_store& result_element_lines)
+void pulse_elementline_list_store::set_spring_element_line(const pulse_elementline_store& rline, dynamic_line_list_store& pulse_element_lines)
 {
 	// Set the spring element displacement lines
 		// Get the Start node pt and End node pt
@@ -402,9 +394,9 @@ void result_elementline_list_store::set_spring_element_line(const result_element
 
 	}
 
-	temp_line_id = result_element_lines.dyn_line_count;
+	temp_line_id = pulse_element_lines.dyn_line_count;
 
-	result_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
+	pulse_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
 		temp_pt1_offset, temp_pt2_offset, temp_pt1_color, temp_pt2_color);
 
 	//_________________________________________________________________________________________________
@@ -438,9 +430,9 @@ void result_elementline_list_store::set_spring_element_line(const result_element
 
 	}
 
-	temp_line_id = result_element_lines.dyn_line_count;
+	temp_line_id = pulse_element_lines.dyn_line_count;
 
-	result_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
+	pulse_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
 		temp_pt1_offset, temp_pt2_offset, temp_pt1_color, temp_pt2_color);
 
 	//_________________________________________________________________________________________________
@@ -469,7 +461,7 @@ void result_elementline_list_store::set_spring_element_line(const result_element
 		pt_x = (param_t * element_length * 0.5f);
 		pt_y = spring_width_amplitude * ((i % 2 == 0) ? 1 : -1);
 
-		temp_pt2 = origin_pt +  glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
+		temp_pt2 = origin_pt + glm::vec2(((l_cos * pt_x) + (m_sin * pt_y)), ((-1.0 * m_sin * pt_x) + (l_cos * pt_y)));
 
 		temp_pt1_color.clear(); // clear start point color
 		temp_pt2_color.clear(); // clear end point color
@@ -498,9 +490,9 @@ void result_elementline_list_store::set_spring_element_line(const result_element
 
 		}
 
-		temp_line_id = result_element_lines.dyn_line_count;
+		temp_line_id = pulse_element_lines.dyn_line_count;
 
-		result_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
+		pulse_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
 			temp_pt1_offset, temp_pt2_offset, temp_pt1_color, temp_pt2_color);
 
 		// set the previous pt
@@ -537,10 +529,8 @@ void result_elementline_list_store::set_spring_element_line(const result_element
 
 	}
 
-	temp_line_id = result_element_lines.dyn_line_count;
+	temp_line_id = pulse_element_lines.dyn_line_count;
 
-	result_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
+	pulse_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
 		temp_pt1_offset, temp_pt2_offset, temp_pt1_color, temp_pt2_color);
-
-
 }
