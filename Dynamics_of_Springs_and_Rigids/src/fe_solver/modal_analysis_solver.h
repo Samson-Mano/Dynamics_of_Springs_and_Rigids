@@ -48,6 +48,15 @@ public:
 	std::unordered_map<int, std::vector<double>> m_eigenvectors;
 	std::vector<std::string> mode_result_str;
 	bool is_modal_analysis_complete = false;
+	int numDOF = 0;
+	int reducedDOF = 0;
+
+	// Matrix stored
+	Eigen::VectorXd reduced_modalMass;
+	Eigen::VectorXd reduced_modalStiff;
+	Eigen::VectorXi globalDOFMatrix;
+	Eigen::MatrixXd globalSupportInclinationMatrix;
+	Eigen::MatrixXd global_eigenvectors_transformed;
 
 	modal_analysis_solver();
 	~modal_analysis_solver();
@@ -70,7 +79,7 @@ public:
 		modal_elementline_list_store& modal_result_lineelements);
 private:
 	const double m_pi = 3.14159265358979323846;
-	bool print_matrix = true;
+	bool print_matrix = false;
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
@@ -81,9 +90,6 @@ private:
 
 	const double smallValue = 1.0E-12;
 	const double largeValue = 1.0E+12;
-	// double w_penalty = 0.0; // penalty stiffness
-
-
 	
 	void get_global_stiffness_matrix(Eigen::MatrixXd& globalStiffnessMatrix,
 		const elementline_list_store& model_lineelements,
@@ -152,6 +158,7 @@ private:
 		const int& reducedDOF,
 		std::ofstream& output_file);
 
+
 	void get_standardEigenValueProblem(Eigen::MatrixXd& Z_matrix,
 		Eigen::MatrixXd& conversion_PointMassMatrix,
 		const Eigen::MatrixXd& reduced_globalStiffnessMatrix,
@@ -161,12 +168,14 @@ private:
 		const int& agDOF,
 		std::ofstream& output_file);
 
+
 	void get_augmented_Z_matrix(Eigen::MatrixXd& augmented_Z_Matrix,
 		const Eigen::MatrixXd& Z_Matrix,
 		const Eigen::MatrixXd& reduced_globalAGMatrix,
 		const int& reducedDOF,
 		const int& agDOF,
 		std::ofstream& output_file);
+
 
 	void remove_augmentation(Eigen::VectorXd& eigenvalues,
 		Eigen::MatrixXd& eigenvectors,
@@ -182,6 +191,7 @@ private:
 		Eigen::MatrixXd& eigenvectors,
 		const int& m_size);
 
+
 	void normalize_eigen_vectors(Eigen::MatrixXd& eigenvectors,
 		const int& m_size);
 
@@ -192,6 +202,7 @@ private:
 		const int& numDOF,
 		const int& reducedDOF,
 		std::ofstream& output_file);
+
 
 	void get_globalSupportInclinationMatrix(Eigen::MatrixXd& globalSupportInclinationMatrix,
 		const nodes_list_store& model_nodes,
@@ -213,5 +224,25 @@ private:
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements,
 		std::ofstream& output_file);
+
+
+	void get_reduced_modal_matrices(Eigen::MatrixXd& reduced_eigenvectors_transformed,
+		const Eigen::MatrixXd& global_eigenvectors_transformed,
+		const Eigen::VectorXi& globalDOFMatrix,
+		const int& numDOF,
+		const int& reducedDOF);
+
+
+
+	void get_modal_matrices(Eigen::VectorXd& reduced_modalMass,
+		Eigen::VectorXd& reduced_modalStiff,
+		const Eigen::MatrixXd& reduced_eigenvectors_transformed,
+		const Eigen::MatrixXd& reduced_globalPointMassMatrix,
+		const Eigen::MatrixXd& reduced_globalStiffnessMatrix,
+		const int& reducedDOF,
+		std::ofstream& output_file);
+
+
+
 
 };

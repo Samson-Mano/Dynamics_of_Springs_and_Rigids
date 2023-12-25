@@ -153,9 +153,6 @@
     <ClCompile Include="src\tool_window\pulse_analysis_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\tool_window\forced_analysis_window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\fe_solver\modal_analysis_solver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -172,6 +169,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\geometry_store\analysis_result_objects\pulse_elementline_list_store.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tool_window\forcedresp_analysis_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -323,9 +323,6 @@
     <ClInclude Include="src\tool_window\pulse_analysis_window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\tool_window\forced_analysis_window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\fe_solver\modal_analysis_solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -342,6 +339,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\analysis_result_objects\pulse_elementline_list_store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tool_window\forcedresp_analysis_window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

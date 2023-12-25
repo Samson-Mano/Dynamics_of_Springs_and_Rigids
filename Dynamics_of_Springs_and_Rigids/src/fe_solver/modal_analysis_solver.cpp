@@ -18,7 +18,8 @@ void modal_analysis_solver::clear_results()
 	nodeid_map.clear();
 	m_eigenvalues.clear();
 	m_eigenvectors.clear();
-	// eigen_vectors_reduced.clear();
+	numDOF = 0;
+	reducedDOF = 0;
 	mode_result_str.clear();
 	is_modal_analysis_complete = false;
 }
@@ -125,7 +126,7 @@ void modal_analysis_solver::modal_analysis_penaltymethod_start(const nodes_list_
 	output_file.open("modal_analysis_results.txt");
 
 	//____________________________________________________________________________________________________________________
-	int numDOF = model_nodes.node_count * 2; // Number of degrees of freedom (2 DOFs per node (2 translation))
+	numDOF = model_nodes.node_count * 2; // Number of degrees of freedom (2 DOFs per node (2 translation))
 
 	// Global Stiffness Matrix
 	Eigen::MatrixXd	globalStiffnessMatrix_R(numDOF, numDOF);
@@ -144,7 +145,7 @@ void modal_analysis_solver::modal_analysis_penaltymethod_start(const nodes_list_
 	//_____________________________________________________________________________________________
 	// Create global support inclination matrix
 
-	Eigen::MatrixXd globalSupportInclinationMatrix(numDOF, numDOF);
+	globalSupportInclinationMatrix.resize(numDOF, numDOF);
 	globalSupportInclinationMatrix.setZero();
 
 	get_globalSupportInclinationMatrix(globalSupportInclinationMatrix,
@@ -187,7 +188,7 @@ void modal_analysis_solver::modal_analysis_penaltymethod_start(const nodes_list_
 	globalDOFMatrix.setZero();
 
 	// Determine the size of the reduced stiffness matrix based on the number of unconstrained degrees of freedom
-	int reducedDOF = 0;
+	reducedDOF = 0;
 
 	get_global_dof_matrix(globalDOFMatrix,
 		globalPointMassMatrix,
@@ -421,11 +422,44 @@ void modal_analysis_solver::modal_analysis_penaltymethod_start(const nodes_list_
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Modal analysis results maped to nodes and elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
+
 	//____________________________________________________________________________________________________________________
+	// Modal Decomposition
+
+	// Reduced Eigen Vectors matrix
+	Eigen::MatrixXd reduced_eigenvectors_transformed(reducedDOF, reducedDOF);
+	reduced_eigenvectors_transformed.setZero();
+
+	get_reduced_modal_matrices(reduced_eigenvectors_transformed,
+		global_eigenvectors_transformed,
+		globalDOFMatrix,
+		numDOF,
+		reducedDOF);
+
+	//____________________________________________________________________________________________________________________
+	// Create modal matrices
+	reduced_modalMass.resize(reducedDOF);
+	reduced_modalStiff.resize(reducedDOF);
+
+	get_modal_matrices(reduced_modalMass,
+		reduced_modalStiff,
+		reduced_eigenvectors_transformed,
+		reduced_globalPointMassMatrix,
+		reduced_globalStiffnessMatrix,
+		reducedDOF,
+		output_file);
 
 
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str.clear();
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Modal mass and stiffness storage completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Modal analysis complete " << std::endl;
 
+	//____________________________________________________________________________________________________________________
+	stopwatch.stop();
 
+	output_file.close();
 
 }
 
@@ -566,7 +600,7 @@ void modal_analysis_solver::modal_analysis_lagrange_start(const nodes_list_store
 
 	//____________________________________________________________________________________________________________________
 	// Global DOF Mass Matrix
-	Eigen::VectorXi	globalDOFMatrix(numDOF);
+	globalDOFMatrix.resize(numDOF);
 	globalDOFMatrix.setZero();
 
 	// Determine the size of the reduced stiffness matrix based on the number of unconstrained degrees of freedom
@@ -779,7 +813,7 @@ void modal_analysis_solver::modal_analysis_lagrange_start(const nodes_list_store
 
 	//_____________________________________________________________________________________________
 	// Eigen vectors transformed with support inclination matrix
-	Eigen::MatrixXd global_eigenvectors_transformed(numDOF, reducedDOF);
+	global_eigenvectors_transformed.resize(numDOF, reducedDOF);
 	global_eigenvectors_transformed.setZero();
 
 	global_eigenvectors_transformed = globalSupportInclinationMatrix * global_eigenvectors;
@@ -853,8 +887,42 @@ void modal_analysis_solver::modal_analysis_lagrange_start(const nodes_list_store
 	std::cout << "Modal analysis results maped to nodes and elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	//____________________________________________________________________________________________________________________
+	// Modal Decomposition
+
+	// Reduced Eigen Vectors matrix
+	Eigen::MatrixXd reduced_eigenvectors_transformed(reducedDOF, reducedDOF);
+	reduced_eigenvectors_transformed.setZero();
+
+	get_reduced_modal_matrices(reduced_eigenvectors_transformed,
+		global_eigenvectors_transformed,
+		globalDOFMatrix,
+		numDOF,
+		reducedDOF);
+
+	//____________________________________________________________________________________________________________________
+	// Create modal matrices
+	reduced_modalMass.resize(reducedDOF);
+	reduced_modalStiff.resize(reducedDOF);
+
+	get_modal_matrices(reduced_modalMass,
+		reduced_modalStiff,
+		reduced_eigenvectors_transformed,
+		reduced_globalPointMassMatrix,
+		reduced_globalStiffnessMatrix,
+		reducedDOF,
+		output_file);
 
 
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str.clear();
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Modal mass and stiffness storage completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Modal analysis complete " << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	stopwatch.stop();
+
+	output_file.close();
 
 
 
@@ -1727,4 +1795,71 @@ void modal_analysis_solver::map_modal_analysis_results(const nodes_list_store& m
 
 
 
+}
+
+
+void modal_analysis_solver::get_reduced_modal_matrices(Eigen::MatrixXd& reduced_eigenvectors_transformed,
+	const Eigen::MatrixXd& global_eigenvectors_transformed,
+	const Eigen::VectorXi& globalDOFMatrix,
+	const int& numDOF,
+	const int& reducedDOF)
+{
+	// Curtailment of Global stiffness and Global Point mass matrix based on DOF
+	// Get the reduced global stiffness matrix
+	int r = 0;
+
+	// Loop throug the Degree of freedom of indices
+	for (int i = 0; i < numDOF; i++)
+	{
+		if (globalDOFMatrix.coeff(i) == 0)
+		{
+			// constrained row index, so skip
+			continue;
+		}
+		else
+		{
+			for (int j = 0; j < reducedDOF; j++)
+			{
+					// Get the reduced matrices
+					reduced_eigenvectors_transformed.coeffRef(r, j) = global_eigenvectors_transformed.coeff(i, j);
+			}
+			r++;
+		}
+	}
+
+}
+
+
+void modal_analysis_solver::get_modal_matrices(Eigen::VectorXd& reduced_modalMass,
+	Eigen::VectorXd& reduced_modalStiff,
+	const Eigen::MatrixXd& reduced_eigenvectors_transformed,
+	const Eigen::MatrixXd& reduced_globalPointMassMatrix,
+	const Eigen::MatrixXd& reduced_globalStiffnessMatrix,
+	const int& reducedDOF,
+	std::ofstream& output_file)
+{
+	// Get the modal matrices
+	Eigen::MatrixXd modalMassMatrix(reducedDOF, reducedDOF);
+	modalMassMatrix = reduced_eigenvectors_transformed.transpose() * reduced_globalPointMassMatrix * reduced_eigenvectors_transformed;
+
+	// Create modal stiffness matrix
+	Eigen::MatrixXd modalStiffMatrix(reducedDOF, reducedDOF);
+	modalStiffMatrix = reduced_eigenvectors_transformed.transpose() * reduced_globalStiffnessMatrix * reduced_eigenvectors_transformed;
+
+	// Create the modal vectors
+	reduced_modalMass = modalMassMatrix.diagonal();
+	reduced_modalStiff = modalStiffMatrix.diagonal();
+
+	if (print_matrix == true)
+	{
+		// Print the Modal Mass Matrix
+		output_file << "Reduced Modal Mass Matrix" << std::endl;
+		output_file << reduced_modalMass << std::endl;
+		output_file << std::endl;
+
+		// Print the Modal Stiffness matrix
+		output_file << "Reduced Modal Stiffness Matrix" << std::endl;
+		output_file << reduced_modalStiff << std::endl;
+		output_file << std::endl;
+	}
 }

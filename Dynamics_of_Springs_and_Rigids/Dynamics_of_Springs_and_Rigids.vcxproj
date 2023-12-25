@@ -187,7 +187,7 @@
     <ClCompile Include="src\ImGui\implot_items.cpp" />
     <ClCompile Include="src\ImGui\stb_implement.cpp" />
     <ClCompile Include="src\tool_window\element_prop_window.cpp" />
-    <ClCompile Include="src\tool_window\forced_analysis_window.cpp" />
+    <ClCompile Include="src\tool_window\forcedresp_analysis_window.cpp" />
     <ClCompile Include="src\tool_window\inlcondition_window.cpp" />
     <ClCompile Include="src\tool_window\modal_analysis_window.cpp" />
     <ClCompile Include="src\tool_window\node_constraint_window.cpp" />
@@ -245,7 +245,7 @@
     <ClInclude Include="src\ImGui\stb_image.h" />
     <ClInclude Include="src\ImGui\stb_implement.h" />
     <ClInclude Include="src\tool_window\element_prop_window.h" />
-    <ClInclude Include="src\tool_window\forced_analysis_window.h" />
+    <ClInclude Include="src\tool_window\forcedresp_analysis_window.h" />
     <ClInclude Include="src\tool_window\inlcondition_window.h" />
     <ClInclude Include="src\tool_window\modal_analysis_window.h" />
     <ClInclude Include="src\tool_window\node_constraint_window.h" />

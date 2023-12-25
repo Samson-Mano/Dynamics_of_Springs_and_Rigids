@@ -12,7 +12,7 @@ geom_store::~geom_store()
 
 void geom_store::init(modal_analysis_window* modal_solver_window,
 	pulse_analysis_window* pulse_solver_window,
-	forced_analysis_window* forced_solver_window, options_window* op_window,
+	forcedresp_analysis_window* forcedresp_solver_window, options_window* op_window,
 	node_constraint_window* nd_cnst_window, node_load_window* nd_load_window,
 	pointmass_window* nd_ptmass_window, inlcondition_window* nd_inlcond_window,
 	element_prop_window* elm_prop_window)
@@ -43,7 +43,7 @@ void geom_store::init(modal_analysis_window* modal_solver_window,
 	// Add the solver window pointers
 	this->modal_solver_window = modal_solver_window; // Modal Analysis Solver window
 	this->pulse_solver_window = pulse_solver_window; // Pulse Analysis Solver window
-	this->forced_solver_window = forced_solver_window; // Forced Response Analysis Solver window
+	this->forcedresp_solver_window = forcedresp_solver_window; // Forced Response Analysis Solver window
 }
 
 void geom_store::fini()
@@ -942,7 +942,7 @@ void geom_store::paint_model()
 {
 	if (modal_solver_window->is_show_window == true ||
 		pulse_solver_window->is_show_window == true ||
-		forced_solver_window->is_show_window == true)
+		forcedresp_solver_window->is_show_window == true)
 	{
 		if (modal_solver_window->is_show_window == true && 
 			modal_solver.is_modal_analysis_complete == true &&

@@ -24,7 +24,7 @@
 #include "tool_window/element_prop_window.h"
 #include "tool_window/modal_analysis_window.h"
 #include "tool_window/pulse_analysis_window.h"
-#include "tool_window/forced_analysis_window.h"
+#include "tool_window/forcedresp_analysis_window.h"
 
 
 class app_window
@@ -57,7 +57,7 @@ public:
 	// Analysis window
 	modal_analysis_window modal_solver_window;
 	pulse_analysis_window pulse_solver_window;
-	forced_analysis_window forced_solver_window;
+	forcedresp_analysis_window forcedresp_solver_window;
 
 
 	app_window();

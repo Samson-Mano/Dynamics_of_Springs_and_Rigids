@@ -15,7 +15,7 @@
 #include "../tool_window/element_prop_window.h"
 #include "../tool_window/modal_analysis_window.h"
 #include "../tool_window/pulse_analysis_window.h"
-#include "../tool_window/forced_analysis_window.h"
+#include "../tool_window/forcedresp_analysis_window.h"
 
 // Solver
 #include "../fe_solver/modal_analysis_solver.h"
@@ -55,7 +55,7 @@ public:
 
 	void init(modal_analysis_window* modal_solver_window,
 		pulse_analysis_window* pulse_solver_window,
-		forced_analysis_window* forced_solver_window,
+		forcedresp_analysis_window* forcedresp_solver_window,
 		options_window* op_window,
 		node_constraint_window* nd_cnst_window, node_load_window* nd_load_window, 
 		pointmass_window* nd_ptmass_window,	inlcondition_window* nd_inlcond_window,
@@ -107,7 +107,6 @@ private:
 
 
 	// Analysis
-	//bool is_pulse_analysis_complete = false;
 	bool is_forced_analysis_complete = false;
 
 	// Solver object
@@ -126,7 +125,7 @@ private:
 	// Analysis window
 	modal_analysis_window* modal_solver_window = nullptr;
 	pulse_analysis_window* pulse_solver_window = nullptr;
-	forced_analysis_window* forced_solver_window = nullptr;
+	forcedresp_analysis_window* forcedresp_solver_window = nullptr;
 
 
 	void paint_model(); // Paint the model

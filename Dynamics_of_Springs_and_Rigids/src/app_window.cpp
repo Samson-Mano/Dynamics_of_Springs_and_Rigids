@@ -77,11 +77,11 @@ void app_window::init()
 
 	modal_solver_window.init(); // Modal analysis solver window
 	pulse_solver_window.init(); // Pulse analysis solver window
-	forced_solver_window.init(); // Forced response analysis solver window
+	forcedresp_solver_window.init(); // Forced response analysis solver window
 
 	geom.update_WindowDimension(window_width, window_height);
 	// Initialize the geometry (initialize only after model window is initialized)
-	geom.init(&modal_solver_window, &pulse_solver_window, &forced_solver_window,
+	geom.init(&modal_solver_window, &pulse_solver_window, &forcedresp_solver_window,
 		&op_window, &nd_cnst_window, &nd_load_window,
 		&nd_ptmass_window, &nd_inlcond_window, &elm_prop_window);
 
@@ -299,8 +299,8 @@ void app_window::menu_events()
 			if (ImGui::MenuItem("Forced Response Analysis Solve"))
 			{
 				// Forced Response Analysis Solve
-				forced_solver_window.execute_forced_analysis = true;
-				forced_solver_window.is_show_window = true;
+				forcedresp_solver_window.execute_forcedresp_analysis = true;
+				forcedresp_solver_window.is_show_window = true;
 			}
 
 			ImGui::EndMenu();
@@ -319,7 +319,7 @@ void app_window::menu_events()
 	op_window.render_window(); // Option window
 	modal_solver_window.render_window(); // Modal Analysis Solver window
 	pulse_solver_window.render_window(); // Pulse Analysis Solver window
-	forced_solver_window.render_window(); // Forced response analysis Solver window
+	forcedresp_solver_window.render_window(); // Forced response analysis Solver window
 
 	// Pop the custom font after using it
 	ImGui::PopFont();
