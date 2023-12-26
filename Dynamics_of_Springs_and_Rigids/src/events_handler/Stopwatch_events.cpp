@@ -24,7 +24,7 @@ void Stopwatch_events::stop()
 	m_bRunning = false;
 }
 
-double Stopwatch_events::elapsed()
+double Stopwatch_events::elapsed() const
 {
 	std::chrono::time_point<std::chrono::high_resolution_clock> endTime;
 

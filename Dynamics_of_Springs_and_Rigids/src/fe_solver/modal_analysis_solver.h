@@ -56,6 +56,7 @@ public:
 	Eigen::VectorXd reduced_modalStiff;
 	Eigen::VectorXi globalDOFMatrix;
 	Eigen::MatrixXd globalSupportInclinationMatrix;
+	Eigen::MatrixXd reduced_eigenvectors_transformed;
 	Eigen::MatrixXd global_eigenvectors_transformed;
 
 	modal_analysis_solver();
@@ -120,25 +121,22 @@ private:
 		std::ofstream& output_file);
 
 
-	void get_reduced_global_penalty_matrices(Eigen::MatrixXd& reduced_globalStiffnessMatrix,
+	void get_reduced_global_matrices(Eigen::MatrixXd& reduced_globalStiffnessMatrix,
 		Eigen::MatrixXd& reduced_globalPointMassMatrix,
+		Eigen::MatrixXd& reduced_globalSupportInclinationMatrix,
 		const Eigen::MatrixXd& globalStiffnessMatrix,
 		const Eigen::MatrixXd& globalPointMassMatrix,
+		const Eigen::MatrixXd& globalSupportInclinationMatrix,
 		const Eigen::VectorXi& globalDOFMatrix,
 		const int& numDOF,
 		const int& reducedDOF,
 		std::ofstream& output_file);
 
 
-	void get_reduced_global_lagrange_matrices(Eigen::MatrixXd& reduced_globalStiffnessMatrix,
-		Eigen::MatrixXd& reduced_globalPointMassMatrix,
-		Eigen::MatrixXd& reduced_globalAGMatrix,
-		const Eigen::MatrixXd& globalStiffnessMatrix,
-		const Eigen::MatrixXd& globalPointMassMatrix,
+	void get_reduced_global_augmentation_matrices(Eigen::MatrixXd& reduced_globalAGMatrix,
 		const Eigen::MatrixXd& globalAGMatrix,
 		const Eigen::VectorXi& globalDOFMatrix,
 		const int& numDOF,
-		const int& reducedDOF,
 		const int& agDOF,
 		std::ofstream& output_file);
 
@@ -224,14 +222,6 @@ private:
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements,
 		std::ofstream& output_file);
-
-
-	void get_reduced_modal_matrices(Eigen::MatrixXd& reduced_eigenvectors_transformed,
-		const Eigen::MatrixXd& global_eigenvectors_transformed,
-		const Eigen::VectorXi& globalDOFMatrix,
-		const int& numDOF,
-		const int& reducedDOF);
-
 
 
 	void get_modal_matrices(Eigen::VectorXd& reduced_modalMass,

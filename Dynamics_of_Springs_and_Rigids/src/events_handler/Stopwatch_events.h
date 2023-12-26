@@ -8,7 +8,7 @@ public:
     ~Stopwatch_events();
     void start();
     void stop();
-    double elapsed();
+    double elapsed() const;
 
 
 private:

@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 #include <sstream>
 #include "geometry_buffers/font_atlas.h"
-#include <chrono>
 
 // Stopwatch
 #include "../events_handler/Stopwatch_events.h"
@@ -30,17 +29,6 @@ struct material_data
 	std::string material_name = "";
 	double material_stiffness = 0.0;
 };
-//
-//class Stopwatch
-//{
-//public:
-//	void reset_time();
-//	double current_elapsed() const;
-//
-//private:
-//	std::chrono::time_point<std::chrono::high_resolution_clock> m_startTime = std::chrono::high_resolution_clock::time_point();
-//	// std::chrono::time_point<std::chrono::high_resolution_clock> m_endTime;
-//};
 
 
 class geom_parameters
@@ -53,7 +41,7 @@ public:
 	// Geometry size
 	const float point_size = 3.0f;
 	const float selected_point_size = 6.0f;
-	const float line_width = 1.6f;
+	const float line_width = 2.1f;
 	const float selected_line_width = 4.2f;
 	
 	// element width

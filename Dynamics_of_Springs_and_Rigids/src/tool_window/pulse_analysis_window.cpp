@@ -17,6 +17,7 @@ void pulse_analysis_window::init()
 	execute_pulse_open = false; // Solver window execute opening event flag
 	execute_pulse_close = false; // Closing of solution window event flag
 	
+	stopwatch.start();
 	mode_result_str.clear(); // Remove the mode result list
 	selected_modal_option1 = 0;
 	selected_modal_option2 = 0;
@@ -293,7 +294,7 @@ void pulse_analysis_window::render_window()
 			// Handle Stop button click
 			animate_play = false;
 			animate_pause = true;
-			time_step = time_step_count;
+			time_step = time_step_count-1;
 		}
 
 		// Animation speed control
@@ -381,13 +382,8 @@ void pulse_analysis_window::render_window()
 		}
 		else if (animate_pause == true)
 		{
-			// Pause the animation
-		}
-		else
-		{
-			// Stop the animation (show the end of animation)
-			stopwatch.stop(); // Stop the time
-			time_step = time_step_count - 1;
+			// Pause or stop the animation
+		
 		}
 	}
 

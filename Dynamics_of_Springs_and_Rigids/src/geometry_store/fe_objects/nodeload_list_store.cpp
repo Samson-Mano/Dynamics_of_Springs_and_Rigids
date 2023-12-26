@@ -81,10 +81,12 @@ void nodeload_list_store::delete_load(int& node_id)
 		// Delete the iD from the load ids
 		auto it = std::find(all_load_ids.begin(), all_load_ids.end(), del_id);
 		all_load_ids.erase(it);
+
+
+		// Reduce the load count
+		load_count--;
 	}
 
-	// Reduce the load count
-	load_count--;
 }
 
 void nodeload_list_store::set_buffer()

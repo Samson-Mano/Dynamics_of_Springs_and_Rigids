@@ -18,6 +18,10 @@ void modal_elementline_list_store::init(geom_parameters* geom_param_ptr)
 	// Set the geometry parameters for the labels (and clear the labels)
 	modal_element_lines.init(geom_param_ptr);
 
+	// Reset the element line max & min
+	element_max_length = 0.0;
+	element_min_length = DBL_MAX;
+
 	// Clear the element lines
 	modal_elementline_count = 0;
 	modal_elementlineMap.clear();
@@ -26,6 +30,10 @@ void modal_elementline_list_store::init(geom_parameters* geom_param_ptr)
 void  modal_elementline_list_store::clear_data()
 {
 	modal_element_lines.clear_lines();
+
+	// Reset the element line max & min
+	element_max_length = 0.0;
+	element_min_length = DBL_MAX;
 
 	// Clear the element lines
 	modal_elementline_count = 0;
@@ -185,7 +193,7 @@ void modal_elementline_list_store::set_rigid_element_line(modal_elementline_stor
 	temp_pt2 = end_node_pt;
 
 	// offset
-	temp_pt1_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.75f); 
+	temp_pt1_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.75f);
 	temp_pt2_offset = endpt_modal_displ;
 
 	displ_ratio_1 = geom_parameters::get_line_length(origin, temp_pt1_offset);
@@ -300,7 +308,7 @@ void modal_elementline_list_store::set_spring_element_line(modal_elementline_sto
 
 	// offset
 	temp_pt1_offset = startpt_modal_displ;
-	temp_pt2_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.25f);
+	temp_pt2_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.25f );
 
 	displ_ratio_1 = geom_parameters::get_line_length(origin, temp_pt1_offset);
 	displ_ratio_2 = geom_parameters::get_line_length(origin, temp_pt2_offset);
@@ -385,7 +393,7 @@ void modal_elementline_list_store::set_spring_element_line(modal_elementline_sto
 	temp_pt2 = geom_parameters::linear_interpolation(start_node_pt, end_node_pt, 0.75f);
 
 	// offset
-	temp_pt1_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.25f + (param_t * 0.5f));
+	temp_pt1_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.25f  + (param_t * 0.5f));
 	temp_pt2_offset = geom_parameters::linear_interpolation(startpt_modal_displ, endpt_modal_displ, 0.75f);
 
 	displ_ratio_1 = geom_parameters::get_line_length(origin, temp_pt1_offset);

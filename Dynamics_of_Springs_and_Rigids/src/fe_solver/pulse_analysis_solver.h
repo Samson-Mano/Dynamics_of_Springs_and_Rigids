@@ -91,7 +91,8 @@ private:
 		const Eigen::MatrixXd& globalSupportInclinationMatrix,
 		const Eigen::MatrixXd& reduced_eigenVectorsMatrix_transpose,
 		const int& numDOF,
-		const int& reducedDOF);
+		const int& reducedDOF,
+		std::ofstream& output_file);
 
 
 	void get_steady_state_initial_condition_soln(double& steady_state_displ_resp,

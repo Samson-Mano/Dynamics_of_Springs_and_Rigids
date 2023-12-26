@@ -63,17 +63,15 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	Eigen::VectorXi globalDOFMatrix = modal_solver.globalDOFMatrix; // retrive the global DOF matrix from the modal solver
 	Eigen::MatrixXd globalSupportInclinationMatrix = modal_solver.globalSupportInclinationMatrix; // retrive the global Support Inclination matrix from the modal solver
 	Eigen::MatrixXd global_eigenVectorsMatrix = modal_solver.global_eigenvectors_transformed; // Retrive the global EigenVectors matrix 
+	Eigen::MatrixXd reduced_eigenVectorsMatrix = modal_solver.reduced_eigenvectors_transformed; // Retrive the reduced EigenVectors matrix 
 
-	// Reduce the global Eigen Vector matrix
-	Eigen::MatrixXd reduced_eigenVectorsMatrix(reducedDOF, reducedDOF);
-	reduced_eigenVectorsMatrix.setZero();
-
-	get_reduced_global_matrix(reduced_eigenVectorsMatrix,
-		global_eigenVectorsMatrix,
-		globalDOFMatrix,
-		numDOF,
-		reducedDOF);
-
+	if (print_matrix == true)
+	{
+		// Print the Reduced eigen vectors 
+		output_file << "Reduced Eigen vectors matrix" << std::endl;
+		output_file << reduced_eigenVectorsMatrix << std::endl;
+		output_file << std::endl;
+	}
 
 	//--------------------------------------------------------------------------------------------------------------------
 	// Create modal reduced intial condition matrices
@@ -107,7 +105,8 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			globalSupportInclinationMatrix,
 			reduced_eigenVectorsMatrix.transpose(),
 			numDOF,
-			reducedDOF);
+			reducedDOF,
+			output_file);
 
 		k++; // iterate load id
 	}
@@ -192,8 +191,13 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			glm::vec2 node_displ = glm::vec2(displ_ampl_RespMatrix.coeff((nd_index * 2) + 0),
 				displ_ampl_RespMatrix.coeff((nd_index * 2) + 1));
 
-			double displ_magnitude = static_cast<float>(node_displ.length());
-			glm::vec2 normalized_node_displ = glm::normalize(node_displ);
+			double displ_magnitude = static_cast<float>(glm::length(node_displ));
+			glm::vec2 normalized_node_displ = glm::vec2(1.0, 0.0);
+
+			if (displ_magnitude > 0.0)
+			{
+				normalized_node_displ = glm::normalize(node_displ);
+			}
 
 			// Add the index
 			node_results[nd_id].index.push_back(r_id);
@@ -363,6 +367,11 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 
 	if (print_matrix == true)
 	{
+		// Print the Reduced eigen vectors inverse
+		output_file << "Reduced Eigen vectors matrix inverse" << std::endl;
+		output_file << reduced_eigenVectorsMatrix_inv_matrix << std::endl;
+		output_file << std::endl;
+
 		// Print the Modal Reduced Initial Displacement matrix
 		output_file << "Modal Reduced Initial Displacement Matrix" << std::endl;
 		output_file << modal_reducedInitialDisplacementMatrix << std::endl;
@@ -440,7 +449,8 @@ void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_lo
 	const Eigen::MatrixXd& globalSupportInclinationMatrix,
 	const Eigen::MatrixXd& reduced_eigenVectorsMatrix_transpose,
 	const int& numDOF,
-	const int& reducedDOF)
+	const int& reducedDOF,
+	std::ofstream& output_file)
 {
 	// Create the global load amplitude matrix
 	// Extract the line in which the load is applied
@@ -462,7 +472,6 @@ void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_lo
 
 	globalLoadamplMatrix.coeffRef((n_id * 2) + 0) += f_x;
 	globalLoadamplMatrix.coeffRef((n_id * 2) + 1) += f_y;
-
 
 	//______________________________________________________________________________________________
 	// Apply support inclination transformation to Global load matrices
@@ -498,6 +507,15 @@ void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_lo
 	pulse_loads.globalLoadamplMatrix = globalLoadamplMatrix; // Global load matrix for this load
 	pulse_loads.reducedLoadamplMatrix = reducedLoadamplMatrix; // Reduced load matrix with constraint matrix
 	pulse_loads.modal_reducedLoadamplMatrix = modal_reducedLoadamplMatrix; // Modal reduction applied to load matrix
+
+
+	if (print_matrix == true)
+	{
+		// Print the Modal Reduced Load Amplitude matrix
+		output_file << "Modal Reduced Load Amplitude Matrix " << std::endl;
+		output_file << modal_reducedLoadamplMatrix << std::endl;
+		output_file << std::endl;
+	}
 }
 
 

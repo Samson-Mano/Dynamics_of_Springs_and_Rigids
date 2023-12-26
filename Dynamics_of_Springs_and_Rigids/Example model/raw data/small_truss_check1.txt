@@ -1,0 +1,25 @@
+node, 0, -216, -0
+node, 1, -108, -0
+node, 2, 3.65575e-06, -0
+node, 3, 108, -0
+node, 4, 216, -0
+node, 5, -108, 72
+node, 6, 108, 72
+line, 0, 0, 1, 1
+line, 1, 1, 2, 1
+line, 2, 2, 3, 1
+line, 3, 3, 4, 1
+line, 4, 1, 5, 1
+line, 5, 3, 6, 1
+line, 6, 5, 2, 1
+line, 7, 2, 6, 1
+line, 8, 6, 4, 1
+line, 9, 0, 5, 1
+line, 10, 5, 6, 1
+cnst, 4, 0, 90
+cnst, 0, 0, 90
+load, 0, 2, 100, 90, 0, 0.2, 0.9, 3.65575e-06, -0
+ptms, 5, 100, 100
+ptms, 6, 100, 100
+mtrl, 0, Default Rigid, inf
+mtrl, 1, Default Spring, 100
