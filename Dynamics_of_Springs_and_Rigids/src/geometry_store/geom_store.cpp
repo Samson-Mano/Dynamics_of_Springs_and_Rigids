@@ -29,7 +29,7 @@ void geom_store::init(modal_analysis_window* modal_solver_window,
 	// Initialize the solvers
 	modal_solver.clear_results(); 
 	pulse_solver.clear_results();
-	is_forced_analysis_complete = false;
+	freq_solver.clear_results();
 
 
 	// Add the window pointers
@@ -217,8 +217,7 @@ void geom_store::read_varai2d(std::ifstream& input_file)
 	// Re-Initialize the solver
 	modal_solver.clear_results();
 	pulse_solver.clear_results();
-	is_forced_analysis_complete = false;
-
+	freq_solver.clear_results();
 
 	// Set the buffer
 	// Geometry is loaded
@@ -375,8 +374,7 @@ void geom_store::read_dxfdata(std::ostringstream& input_data)
 	// Re-Initialize the solver
 	modal_solver.clear_results();
 	pulse_solver.clear_results();
-	is_forced_analysis_complete = false;
-
+	freq_solver.clear_results();
 
 	// Set the buffer
 	// Geometry is loaded
@@ -463,7 +461,7 @@ void geom_store::read_rawdata(std::ifstream& input_file)
 	// Re-Initialize the solver
 	modal_solver.clear_results();
 	pulse_solver.clear_results();
-	is_forced_analysis_complete = false;
+	freq_solver.clear_results();
 
 	//Node Point list
 	std::vector<glm::vec2> node_pts_list;
@@ -924,7 +922,6 @@ void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::ve
 			nd_inlcond_window->add_to_node_list(selected_node_ids, is_rightbutton);
 		}
 
-
 		// Element Properties Window
 		if (elm_prop_window->is_show_window == true)
 		{
@@ -932,6 +929,15 @@ void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::ve
 			std::vector<int> selected_elm_ids = model_lineelements.is_line_selected(o_pt, c_pt);
 			elm_prop_window->add_to_element_list(selected_elm_ids, is_rightbutton);
 		}
+
+		// Forced Response Analysis Window
+		if (forcedresp_solver_window->is_show_window == true)
+		{
+			// Selected Node Index
+			std::vector<int> selected_node_ids = model_nodes.is_node_selected(o_pt, c_pt);
+			forcedresp_solver_window->add_to_node_list(selected_node_ids, is_rightbutton);
+		}
+
 	}
 }
 
@@ -1507,7 +1513,7 @@ void geom_store::paint_modal_analysis_results()
 
 		// reset the frequency response and pulse response solution
 		pulse_solver.clear_results();
-		is_forced_analysis_complete = false;
+		freq_solver.clear_results();
 
 		// Check whether the modal analysis is complete or not
 		if (modal_solver.is_modal_analysis_complete == true)
@@ -1552,6 +1558,7 @@ void geom_store::paint_pulse_analysis_results()
 	{
 		return;
 	}
+
 
 	// Paint the pulse analysis result
 	if (pulse_solver.is_pulse_analysis_complete == true)
@@ -1649,7 +1656,64 @@ void geom_store::paint_pulse_analysis_results()
 
 void geom_store::paint_forced_resp_analysis_results()
 {
-	// Paint the forced response analysis results
 
+	// Check whether the modal analysis solver window is open or not
+	if (forcedresp_solver_window->is_show_window == false)
+	{
+		return;
+	}
+
+
+	if (forcedresp_solver_window->execute_forcedresp_open == true)
+	{
+		// Execute the open sequence
+		if (modal_solver.is_modal_analysis_complete == false)
+		{
+			// Exit the window (when modal analysis is not complete)
+			forcedresp_solver_window->is_show_window = false;
+		}
+		else
+		{
+			// Modal analysis Results
+			forcedresp_solver_window->number_of_modes = static_cast<int>(modal_solver.m_eigenvalues.size());
+			forcedresp_solver_window->modal_first_frequency = std::sqrt(modal_solver.m_eigenvalues.at(0)) / (2.0 * m_pi); // std::sqrt(modal_results.eigen_values[i]) / (2.0 * m_pi);
+			forcedresp_solver_window->modal_end_frequency = std::sqrt(modal_solver.m_eigenvalues.at(forcedresp_solver_window->number_of_modes - 1)) / (2.0 * m_pi);
+			forcedresp_solver_window->mode_result_str = modal_solver.mode_result_str;
+
+		}
+		forcedresp_solver_window->execute_forcedresp_open = false;
+	}
+
+	// Selection rectangle
+	selection_rectangle.paint_selection_rectangle();
+
+	// Paint the selected nodes
+	if (forcedresp_solver_window->is_selected_count == true)
+	{
+		glPointSize(geom_param.selected_point_size);
+		model_nodes.paint_selected_model_nodes();
+		glPointSize(geom_param.point_size);
+	}
+
+	// Check whether the selection changed
+	if (forcedresp_solver_window->is_selection_changed == true)
+	{
+		model_nodes.add_selection_nodes(forcedresp_solver_window->selected_nodes);
+		forcedresp_solver_window->is_selection_changed = false;
+	}
+
+
+	// Execute the forced response analysis results
+	if (forcedresp_solver_window->execute_forcedresp_analysis == true)
+	{
+		if (forcedresp_solver_window->is_selected_count == true)
+		{
+
+
+
+
+		}
+		forcedresp_solver_window->execute_forcedresp_analysis = false;
+	}
 
 }

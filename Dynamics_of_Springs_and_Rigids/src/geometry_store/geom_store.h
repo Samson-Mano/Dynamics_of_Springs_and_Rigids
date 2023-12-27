@@ -20,6 +20,7 @@
 // Solver
 #include "../fe_solver/modal_analysis_solver.h"
 #include "../fe_solver/pulse_analysis_solver.h"
+#include "../fe_solver/forcedresp_analysis_solver.h"
 
 // FE Objects
 #include "fe_objects/nodes_list_store.h"
@@ -103,15 +104,10 @@ private:
 	pulse_node_list_store pulse_result_nodes;
 	pulse_elementline_list_store pulse_result_lineelements;
 
-	// Forced response analysis result
-
-
-	// Analysis
-	bool is_forced_analysis_complete = false;
-
 	// Solver object
 	modal_analysis_solver modal_solver;
 	pulse_analysis_solver pulse_solver;
+	forcedresp_analysis_solver freq_solver;
 
 
 	// Window pointers
