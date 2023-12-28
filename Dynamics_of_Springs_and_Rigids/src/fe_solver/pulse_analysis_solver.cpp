@@ -412,8 +412,8 @@ void pulse_analysis_solver::get_reduced_global_vector(Eigen::VectorXd& reducedgl
 }
 
 
-void pulse_analysis_solver::get_global_resp_vector(Eigen::VectorXd& displ_ampl_RespMatrix_b4supp_trans,
-	const Eigen::VectorXd& displ_ampl_RespMatrix_reduced,
+void pulse_analysis_solver::get_global_resp_vector(Eigen::VectorXd& globalVector,
+	const Eigen::VectorXd& reducedglobalVector,
 	const Eigen::VectorXi& globalDOFMatrix,
 	const int& numDOF,
 	const int& reducedDOF)
@@ -433,7 +433,7 @@ void pulse_analysis_solver::get_global_resp_vector(Eigen::VectorXd& displ_ampl_R
 		else
 		{
 			// Get the reduced matrices
-			displ_ampl_RespMatrix_b4supp_trans.coeffRef(i) = displ_ampl_RespMatrix_reduced(r);
+			globalVector.coeffRef(i) = reducedglobalVector(r);
 			r++;
 		}
 	}

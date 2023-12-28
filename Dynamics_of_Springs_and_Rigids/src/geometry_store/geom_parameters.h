@@ -23,6 +23,14 @@ struct geom_color_theme
 	glm::vec3 inlcond_velo_color = glm::vec3(0);
 };
 
+
+struct frequency_reponse_data
+{
+	std::vector<double> frequency_x;
+	std::vector<double> response_y;
+};
+
+
 struct material_data
 {
 	unsigned int material_id = 0;

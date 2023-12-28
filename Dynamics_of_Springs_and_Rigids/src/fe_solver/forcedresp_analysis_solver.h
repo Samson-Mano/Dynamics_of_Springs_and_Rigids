@@ -1,12 +1,24 @@
 #pragma once
 #include "pulse_analysis_solver.h"
 
+
+struct forceresp_load_data
+{
+	int load_id = 0;
+	double load_phase = 0.0;
+	Eigen::VectorXd modal_reducedLoadamplMatrix;
+	Eigen::VectorXd reducedLoadamplMatrix;
+	Eigen::VectorXd globalLoadamplMatrix;
+};
+
+
 class forcedresp_analysis_solver
 {
 public:
 	const double m_pi = 3.14159265358979323846;
 	const double epsilon = 0.000001;
 	bool print_matrix = false;
+
 
 	// Analysis settings and results
 	bool is_forcedresp_analysis_complete = false;
@@ -15,12 +27,12 @@ public:
 	forcedresp_analysis_solver();
 	~forcedresp_analysis_solver();
 	void clear_results();
-	void forcedresp_analysis_start(const nodes_list_store& model_nodes,
+	void forcedresp_analysis_start(std::vector<frequency_reponse_data> frf_data,
+		const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const nodeconstraint_list_store& node_constraints,
 		const nodeload_list_store& node_loads,
 		const nodepointmass_list_store& node_ptmass,
-		const nodeinlcond_list_store& node_inlcond,
 		const std::unordered_map<int, material_data>& material_list,
 		const modal_analysis_solver& modal_solver,
 		const std::vector<int> selected_nodes,
@@ -33,5 +45,22 @@ public:
 
 
 private:
+	std::unordered_map<int, int> nodeid_map;
+
+	void create_forcedresp_load_matrices(forceresp_load_data& forcedresp_loads,
+		const load_data& ld,
+		const nodes_list_store& model_nodes,
+		const Eigen::VectorXi& globalDOFMatrix,
+		const Eigen::MatrixXd& globalSupportInclinationMatrix,
+		const Eigen::MatrixXd& reduced_eigenVectorsMatrix_transpose,
+		const int& numDOF,
+		const int& reducedDOF,
+		std::ofstream& output_file);
+
+	void get_reduced_global_vector(Eigen::VectorXd& reducedglobalVector,
+		const Eigen::VectorXd& globalVector,
+		const Eigen::VectorXi& globalDOFMatrix,
+		const int& numDOF,
+		const int& reducedDOF);
 
 };

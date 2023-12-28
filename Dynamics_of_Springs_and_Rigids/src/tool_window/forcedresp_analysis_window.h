@@ -7,6 +7,7 @@
 #include "../ImGui/stb_implement.h"
 #include "../geometry_store/geom_parameters.h"
 
+
 class forcedresp_analysis_window
 {
 public:
@@ -14,6 +15,8 @@ public:
 	bool execute_forcedresp_analysis = false; // Main solver run event flag
 	bool execute_forcedresp_open = false; // Solver window execute opening event flag
 	bool execute_forcedresp_close = false; // Closing of solution window event flag
+
+	double damping_ratio = 0.01; // Damping ratio
 
 	// Modal analysis Results
 	double modal_first_frequency = 0.0;
@@ -37,6 +40,8 @@ public:
 	bool is_selected_count = false;
 	std::vector<int> selected_nodes;
 
+	// Frequency Response Data
+	std::vector<frequency_reponse_data> frf_data;
 
 	forcedresp_analysis_window();
 	~forcedresp_analysis_window();

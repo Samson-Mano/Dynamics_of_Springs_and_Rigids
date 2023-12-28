@@ -1708,7 +1708,20 @@ void geom_store::paint_forced_resp_analysis_results()
 	{
 		if (forcedresp_solver_window->is_selected_count == true)
 		{
-
+			freq_solver.forcedresp_analysis_start(model_nodes,
+				model_lineelements,
+				node_constraints,
+				node_loads,
+				node_ptmass,
+				elm_prop_window->material_list,
+				modal_solver,
+				forcedresp_solver_window->selected_nodes,
+				forcedresp_solver_window->start_frequency,
+				forcedresp_solver_window->end_frequency,
+				forcedresp_solver_window->frequency_interval,
+				forcedresp_solver_window->damping_ratio,
+				forcedresp_solver_window->selected_modal_option1,
+				forcedresp_solver_window->selected_modal_option2);
 
 
 
