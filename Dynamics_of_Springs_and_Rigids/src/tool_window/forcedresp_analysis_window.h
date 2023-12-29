@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include "../ImGui/imgui.h"
+#include "../ImGui/implot.h"
 #include "../ImGui/imgui_impl_glfw.h"
 #include "../ImGui/imgui_impl_opengl3.h"
 #include "../ImGui/stb_implement.h"
@@ -42,6 +43,7 @@ public:
 
 	// Frequency Response Data
 	std::vector<frequency_reponse_data> frf_data;
+	chart_setting_data frf_chart_setting;
 
 	forcedresp_analysis_window();
 	~forcedresp_analysis_window();
@@ -49,6 +51,8 @@ public:
 	void render_window();
 	void add_to_node_list(const std::vector<int>& selected_nodes, const bool& is_right);
 private:
+	std::vector<const char*> dropdownlist_cstr;
+	int selected_response_option = 0;
 
 	void get_frequency_start_input();
 	void get_frequency_end_input();

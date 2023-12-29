@@ -27,7 +27,8 @@ public:
 	forcedresp_analysis_solver();
 	~forcedresp_analysis_solver();
 	void clear_results();
-	void forcedresp_analysis_start(std::vector<frequency_reponse_data> frf_data,
+	void forcedresp_analysis_start(std::vector<frequency_reponse_data>& frf_data,
+		chart_setting_data& frf_chart_setting,
 		const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const nodeconstraint_list_store& node_constraints,
@@ -62,5 +63,21 @@ private:
 		const Eigen::VectorXi& globalDOFMatrix,
 		const int& numDOF,
 		const int& reducedDOF);
+
+
+	void get_global_resp_vector(Eigen::VectorXd& globalVector,
+		const Eigen::VectorXd& reducedglobalVector,
+		const Eigen::VectorXi& globalDOFMatrix,
+		const int& numDOF,
+		const int& reducedDOF);
+
+
+	void get_steady_state_harmonic_periodic_soln(double& steady_state_displ_resp,
+		double& phase_resp,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& damping_ratio,
+		const double& modal_force_ampl,
+		const double& forcing_freq);
 
 };

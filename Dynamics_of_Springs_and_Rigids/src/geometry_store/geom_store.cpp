@@ -1708,7 +1708,9 @@ void geom_store::paint_forced_resp_analysis_results()
 	{
 		if (forcedresp_solver_window->is_selected_count == true)
 		{
-			freq_solver.forcedresp_analysis_start(model_nodes,
+			freq_solver.forcedresp_analysis_start(forcedresp_solver_window->frf_data,
+				forcedresp_solver_window->frf_chart_setting,
+				model_nodes,
 				model_lineelements,
 				node_constraints,
 				node_loads,
@@ -1723,7 +1725,7 @@ void geom_store::paint_forced_resp_analysis_results()
 				forcedresp_solver_window->selected_modal_option1,
 				forcedresp_solver_window->selected_modal_option2);
 
-
+			forcedresp_solver_window->forcedresp_analysis_complete = freq_solver.is_forcedresp_analysis_complete;
 
 		}
 		forcedresp_solver_window->execute_forcedresp_analysis = false;

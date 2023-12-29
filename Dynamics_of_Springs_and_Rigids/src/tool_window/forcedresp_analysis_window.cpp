@@ -19,6 +19,24 @@ void forcedresp_analysis_window::init()
 	selected_modal_option1 = 0;
 	selected_modal_option2 = 0;
 
+	// Add to list
+	dropdownlist_cstr.clear();
+
+	// Displ Response
+	std::string temp_str = "Magnitude Response";
+	dropdownlist_cstr.push_back(temp_str.c_str());
+
+	// X Response
+	temp_str = "X Response";
+	dropdownlist_cstr.push_back(temp_str.c_str());
+
+	// Y Response
+	temp_str = "Y Response";
+	dropdownlist_cstr.push_back(temp_str.c_str());
+
+	forcedresp_analysis_complete = false;
+	frf_data.clear();
+
 	// Selected node
 	is_selection_changed = false;
 	is_selected_count = false;
@@ -158,6 +176,97 @@ void forcedresp_analysis_window::render_window()
 		execute_forcedresp_analysis = false; // Main solver run event flag
 
 		is_show_window = false;
+	}
+
+	//__________________________________________________________________________________________
+	ImGui::Spacing();
+
+	// Analysis Results
+
+	if (forcedresp_analysis_complete == true)
+	{
+		if (frf_data.empty() == false)
+		{
+			// Dropdown list (Response Option)
+			// Add the Response options to the dropdown list
+			const char* current_item3 = (selected_response_option >= 0 && selected_response_option < dropdownlist_cstr.size()) ? dropdownlist_cstr[selected_response_option] : "";
+
+			if (ImGui::BeginCombo("Response", current_item3))
+			{
+				for (int i = 0; i < dropdownlist_cstr.size(); i++)
+				{
+					const bool is_selected = (selected_response_option == i);
+					if (ImGui::Selectable(dropdownlist_cstr[i], is_selected))
+					{
+						selected_response_option = i;
+					}
+
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (is_selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+
+			//__________________________________________________________________________________________
+
+			if (selected_response_option == 0)
+			{
+				// Magnitude
+				ImGui::Text("Contour Bar - Angular Acceleration");
+
+				ImPlot::CreateContext();
+
+
+				if (ImPlot::BeginPlot("Frequency vs. Magnitude Amplitude", ImVec2(-1, 0)))
+				{
+
+					ImPlot::SetupAxis(ImAxis_X1, "Frequency (Hz)");
+					ImPlot::SetupAxis(ImAxis_Y1, "Magnitude Amplitude");
+
+					ImPlot::SetupAxisLimits(ImAxis_X1, frf_chart_setting.chart_x_min, frf_chart_setting.chart_x_max); // Set X-axis limits
+					ImPlot::SetupAxisLimits(ImAxis_Y1, frf_chart_setting.chart_y_min, frf_chart_setting.chart_y_max); // Set Y-axis limits
+
+
+					for (int j = 0; j < static_cast<int>(frf_data.size()); j++)
+					{
+						std::string plotLabel = "Node " + std::to_string(frf_data[j].node_id);
+
+						// Plot the X-Y data
+						ImPlot::PlotLine(plotLabel.c_str(), frf_data[j].frequency_values.data(), frf_data[j].displ_magnitude.data(),
+							frf_chart_setting.data_pt_count);
+					}
+					
+
+					// End the plot
+					ImPlot::EndPlot();
+				}
+
+				ImPlot::DestroyContext();
+
+
+
+			}
+			else if (selected_response_option == 1)
+			{
+				// X Response
+
+
+			}
+			else if (selected_response_option == 2)
+			{
+				// Y Response
+
+
+			}
+
+
+
+		}
+
 	}
 
 	//__________________________________________________________________________________________

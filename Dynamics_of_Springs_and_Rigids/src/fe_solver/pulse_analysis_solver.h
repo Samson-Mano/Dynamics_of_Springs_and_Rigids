@@ -77,8 +77,8 @@ private:
 		const int& reducedDOF);
 
 
-	void get_global_resp_vector(Eigen::VectorXd& displ_ampl_RespMatrix_b4supp_trans,
-		const Eigen::VectorXd& displ_ampl_RespMatrix_reduced,
+	void get_global_resp_vector(Eigen::VectorXd& globalVector,
+		const Eigen::VectorXd& reducedglobalVector,
 		const Eigen::VectorXi& globalDOFMatrix,
 		const int& numDOF,
 		const int& reducedDOF);

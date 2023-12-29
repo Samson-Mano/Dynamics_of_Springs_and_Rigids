@@ -389,7 +389,7 @@ void modal_analysis_solver::modal_analysis_penaltymethod_start(const nodes_list_
 		m_eigenvectors.insert({ i, eigen_vec });
 
 		// Frequency
-		double nat_freq = std::sqrt(eigenvalues.coeff(i) / (2.0 * m_pi));
+		double nat_freq = std::sqrt(eigenvalues.coeff(i)) / (2.0 * m_pi);
 
 		// Modal results
 		std::stringstream ss, mf;
@@ -848,7 +848,7 @@ void modal_analysis_solver::modal_analysis_lagrange_start(const nodes_list_store
 		m_eigenvectors.insert({ i, eigen_vec });
 
 		// Frequency
-		double nat_freq = std::sqrt(eigenvalues.coeff(i) / (2.0 * m_pi));
+		double nat_freq = std::sqrt(eigenvalues.coeff(i)) / (2.0 * m_pi);
 
 		// Modal results
 		std::stringstream ss;

@@ -23,11 +23,36 @@ struct geom_color_theme
 	glm::vec3 inlcond_velo_color = glm::vec3(0);
 };
 
+struct chart_setting_data
+{
+	// X Range
+	float chart_x_max = 0.0f;
+	float chart_x_min = 0.0f;
+
+	// Y Range
+	float chart_y_max = 0.0f;
+	float chart_y_min = 0.0f;
+
+	// Number of data points
+	int data_pt_count = 0;
+};
 
 struct frequency_reponse_data
 {
-	std::vector<double> frequency_x;
-	std::vector<double> response_y;
+	int node_id;
+	std::vector<double> frequency_values;
+	// X response
+	std::vector<double> displ_x;
+	std::vector<double> phase_x;
+
+	// Y response
+	std::vector<double> displ_y;
+	std::vector<double> phase_y;
+
+	// Magnitude response
+	std::vector<double> displ_magnitude;
+	std::vector<double> phase_magnitude;
+
 };
 
 
