@@ -1,0 +1,10 @@
+node, 0, -50, -0
+node, 1, 50, -0
+line, 0, 0, 1, 2
+cnst, 0, 0, 90
+cnst, 1, 1, 90
+load, 0, 1, 100, 180, 0, 1, 3, 50, -0
+ptms, 1, 100, 0
+mtrl, 0, Default Rigid, inf
+mtrl, 1, Default Spring, 100
+mtrl, 2, New Material, 986.96

@@ -1631,6 +1631,7 @@ void geom_store::paint_pulse_analysis_results()
 			pulse_solver_window->damping_ratio,
 			pulse_solver_window->selected_modal_option1,
 			pulse_solver_window->selected_modal_option2,
+			pulse_solver_window->selected_pulse_option,
 			pulse_result_nodes,
 			pulse_result_lineelements);
 

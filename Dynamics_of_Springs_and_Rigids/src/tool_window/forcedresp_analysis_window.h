@@ -43,7 +43,7 @@ public:
 
 	// Frequency Response Data
 	std::vector<frequency_reponse_data> frf_data;
-	chart_setting_data frf_chart_setting;
+	std::vector<chart_setting_data> frf_chart_setting; // 0 = Displ magnitude, 1 = Displ Phase
 
 	forcedresp_analysis_window();
 	~forcedresp_analysis_window();

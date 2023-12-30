@@ -33,6 +33,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	const double damping_ratio, 
 	const int mode_range_startid,
 	const int mode_range_endid,
+	const int selected_pulse_option,
 	pulse_node_list_store& pulse_result_nodes, 
 	pulse_elementline_list_store& pulse_result_lineelements)
 {
@@ -45,6 +46,15 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	{
 		return;
 	}
+
+	//____________________________________________
+	Eigen::initParallel();  // Initialize Eigen's thread pool
+
+	stopwatch.start();
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << std::fixed << std::setprecision(6);
+	std::cout << "Pulse analysis started" << std::endl;
 
 	// Assign the node id map
 	this->nodeid_map = modal_solver.nodeid_map;
@@ -72,6 +82,10 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 		output_file << reduced_eigenVectorsMatrix << std::endl;
 		output_file << std::endl;
 	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Reduced Eigen vectors retrived at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	//--------------------------------------------------------------------------------------------------------------------
 	// Create modal reduced intial condition matrices
@@ -111,6 +125,10 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 		k++; // iterate load id
 	}
 
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Pulse loads matrices created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
 	//____________________________________________________________________________________________________________________
 	// Pulse Response
 	std::unordered_map<int, pulse_node_result> node_results;
@@ -122,7 +140,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 		Eigen::VectorXd displ_ampl_RespMatrix_reduced_b4eig_trans(reducedDOF);
 		displ_ampl_RespMatrix_reduced_b4eig_trans.setZero();
 
-		for (int i = mode_range_startid; i < mode_range_endid; i++)
+		for (int i = mode_range_startid; i <= mode_range_endid; i++)
 		{
 			double displ_resp_initial = 0.0; // Displacement response due to initial condition
 
@@ -142,13 +160,58 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 				// Go through all the force
 				double at_force_displ_resp = 0.0;
 
-				get_steady_state_half_sine_pulse_soln(at_force_displ_resp,
-					time_t,
-					modal_solver.reduced_modalMass(i),
-					modal_solver.reduced_modalStiff(i),
-					pulse_load.modal_reducedLoadamplMatrix(i),
-					pulse_load.load_start_time,
-					pulse_load.load_end_time);
+				if (selected_pulse_option == 0)
+				{
+					// Half sine pulse
+
+					get_steady_state_half_sine_pulse_soln(at_force_displ_resp,
+						time_t,
+						modal_solver.reduced_modalMass(i),
+						modal_solver.reduced_modalStiff(i),
+						pulse_load.modal_reducedLoadamplMatrix(i),
+						pulse_load.load_start_time,
+						pulse_load.load_end_time);
+
+				}
+				else if (selected_pulse_option == 1)
+				{
+					// Rectangular pulse
+
+					get_steady_state_rectangular_pulse_soln(at_force_displ_resp,
+						time_t,
+						modal_solver.reduced_modalMass(i),
+						modal_solver.reduced_modalStiff(i),
+						pulse_load.modal_reducedLoadamplMatrix(i),
+						pulse_load.load_start_time,
+						pulse_load.load_end_time);
+
+				}
+				else if (selected_pulse_option == 2)
+				{
+					// Triangular pulse
+
+					get_steady_state_triangular_pulse_soln(at_force_displ_resp,
+						time_t,
+						modal_solver.reduced_modalMass(i),
+						modal_solver.reduced_modalStiff(i),
+						pulse_load.modal_reducedLoadamplMatrix(i),
+						pulse_load.load_start_time,
+						pulse_load.load_end_time);
+
+				}
+				else if (selected_pulse_option == 3)
+				{
+					// Step force with finite rise
+
+					get_steady_state_stepforce_finiterise_soln(at_force_displ_resp,
+						time_t,
+						modal_solver.reduced_modalMass(i),
+						modal_solver.reduced_modalStiff(i),
+						pulse_load.modal_reducedLoadamplMatrix(i),
+						pulse_load.load_start_time,
+						pulse_load.load_end_time);
+
+				}
 
 				displ_resp_force = displ_resp_force + at_force_displ_resp;
 			}
@@ -213,6 +276,10 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	}
 
 
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Pulse analysis solved at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
 	// Map the results
 	map_pulse_analysis_results(pulse_result_nodes,
 		pulse_result_lineelements,
@@ -221,6 +288,9 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 		model_lineelements,
 		node_results);
 
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	// Save the Pulse analysis settings
 	this->time_step_count = r_id;
@@ -230,8 +300,17 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	if (pulse_result_lineelements.max_line_displ == 0)
 	{
 		// Analysis failed 
+		stopwatch_elapsed_str.str("");
+		stopwatch_elapsed_str << stopwatch.elapsed();
+		std::cout << "Analysis failed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 		return;
 	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str.clear();
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results storage completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Pulse analysis complete " << std::endl;
 
 	// Analysis complete
 	this->is_pulse_analysis_complete = true;
@@ -595,6 +674,162 @@ void pulse_analysis_solver::get_steady_state_half_sine_pulse_soln(double& steady
 				double k_fact = (modal_force_ampl / modal_stiff) * ((2 * const1) / const2) * std::cos(modal_omega_n * t_d * 0.5);
 				steady_state_displ_resp = k_fact * std::sin(modal_omega_n * (t_at - (t_d * 0.5)));
 			}
+		}
+	}
+
+}
+
+
+void pulse_analysis_solver::get_steady_state_rectangular_pulse_soln(double& steady_state_displ_resp,
+	const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_force_ampl,
+	const double& modal_force_starttime,
+	const double& modal_force_endtime)
+{
+	// Return the steady state solution for the Rectangular pulse
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+	double modal_omega_f = m_pi / (modal_force_endtime - modal_force_starttime);
+
+	// natural time period
+	double T_n = (2.0 * m_pi) / modal_omega_n;
+	// Force period
+	double t_d = (modal_force_endtime - modal_force_starttime);
+	// time at
+	double t_at = 0.0;
+
+	steady_state_displ_resp = 0.0;
+
+	// Check whether the current time is greater than the force start time
+	if (time_t >= modal_force_starttime)
+	{
+		t_at = time_t - modal_force_starttime;
+		double k_fact = (modal_force_ampl / modal_stiff);
+
+		if (time_t <= modal_force_endtime)
+		{
+
+			// current time is within the force period
+			steady_state_displ_resp = k_fact * (1.0 - std::cos(modal_omega_n * t_at));
+
+		}
+		else if (time_t > modal_force_endtime)
+		{
+			// current time is over the force period
+			steady_state_displ_resp = k_fact * (std::cos(modal_omega_n * (t_at - t_d)) - std::cos(modal_omega_n * t_at));
+
+		}
+	}
+
+}
+
+
+void pulse_analysis_solver::get_steady_state_triangular_pulse_soln(double& steady_state_displ_resp,
+	const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_force_ampl,
+	const double& modal_force_starttime,
+	const double& modal_force_endtime)
+{
+	// Return the steady state solution for the Triangular pulse
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+	double modal_omega_f = m_pi / (modal_force_endtime - modal_force_starttime);
+
+	// natural time period
+	double T_n = (2.0 * m_pi) / modal_omega_n;
+	// Force period
+	double t_d = (modal_force_endtime - modal_force_starttime);
+	// time at
+	double t_at = 0.0;
+
+	steady_state_displ_resp = 0.0;
+
+	// Check whether the current time is greater than the force start time
+	if (time_t >= modal_force_starttime)
+	{
+		t_at = time_t - modal_force_starttime;
+
+		if (time_t <= modal_force_endtime)
+		{
+			// current time is within the force period
+			if (t_at < (t_d / 2.0))
+			{
+				double k_fact = ((2.0*modal_force_ampl) /  modal_stiff);
+
+				steady_state_displ_resp = k_fact * ((t_at / t_d)-(std::sin(modal_omega_n * t_at) / (t_d * modal_omega_n)));
+			}
+			else
+			{
+				double k_fact = ((2.0 * modal_force_ampl) / modal_stiff);
+				double factor1 = (1 / (t_d * modal_omega_n)) * ((2.0 * std::sin(modal_omega_n * (t_at - (0.5 * t_d)))) - 
+					std::sin(modal_omega_n * t_at));
+
+				steady_state_displ_resp = k_fact * (1.0 - (t_at / t_d) + factor1);
+			}
+
+		}
+		else if (time_t > modal_force_endtime)
+		{
+			// current time is over the force period
+			
+				double k_fact = ((2.0 * modal_force_ampl) / modal_stiff);
+				double m_factor = (1 / (t_d * modal_omega_n));
+				double factor1 = 2.0 * std::sin(modal_omega_n * (t_at - (0.5 * t_d)));
+				double factor2 = std::sin(modal_omega_n * (t_at - (0.5 * t_d)));
+
+				steady_state_displ_resp = k_fact *(m_factor * (factor1 - factor2 - std::sin(modal_omega_n * t_at)));
+			
+		}
+	}
+
+}
+
+
+
+void pulse_analysis_solver::get_steady_state_stepforce_finiterise_soln(double& steady_state_displ_resp,
+	const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_force_ampl,
+	const double& modal_force_starttime,
+	const double& modal_force_endtime)
+{
+	// Return the steady state solution for the Step Force with Finite Rise
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+	double modal_omega_f = m_pi / (modal_force_endtime - modal_force_starttime);
+
+	// natural time period
+	double T_n = (2.0 * m_pi) / modal_omega_n;
+	// Force period
+	double t_d = (modal_force_endtime - modal_force_starttime);
+	// time at
+	double t_at = 0.0;
+
+	steady_state_displ_resp = 0.0;
+
+	// Check whether the current time is greater than the force start time
+	if (time_t >= modal_force_starttime)
+	{
+		t_at = time_t - modal_force_starttime;
+		double k_fact = (modal_force_ampl / modal_stiff);
+
+		if (time_t <= modal_force_endtime)
+		{
+
+			// current time is within the force period
+			steady_state_displ_resp = k_fact * ((t_at / t_d) - 
+				(std::sin(modal_omega_n * t_at)/(t_d * modal_omega_n)));
+
+		}
+		else if (time_t > modal_force_endtime)
+		{
+			// current time is over the force period
+			double factor1 = std::sin(modal_omega_n * (t_at - t_d)) - std::sin(modal_omega_n * t_at);
+
+			steady_state_displ_resp = k_fact * (1.0 + (1/(modal_omega_n * t_d)) * factor1);
+
 		}
 	}
 

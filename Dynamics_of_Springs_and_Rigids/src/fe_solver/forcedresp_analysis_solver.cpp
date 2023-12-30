@@ -17,7 +17,7 @@ void forcedresp_analysis_solver::clear_results()
 }
 
 void forcedresp_analysis_solver::forcedresp_analysis_start(std::vector<frequency_reponse_data>& frf_data,
-	chart_setting_data& frf_chart_setting,
+	std::vector<chart_setting_data>& frf_chart_setting,
 	const nodes_list_store& model_nodes, 
 	const elementline_list_store& model_lineelements, 
 	const nodeconstraint_list_store& node_constraints, 
@@ -240,9 +240,11 @@ void forcedresp_analysis_solver::forcedresp_analysis_start(std::vector<frequency
 		}
 	}
 
+	frf_chart_setting.resize(6);
+
 	// Set the chart data
-	frf_chart_setting.chart_x_min = start_frequency_d;
-	frf_chart_setting.chart_x_max = end_frequency + frequency_interval;
+	frf_chart_setting[0].chart_x_min = start_frequency_d;
+	frf_chart_setting[0].chart_x_max = end_frequency + frequency_interval;
 
 	double max_displ_magnitude = DBL_MIN;
 	double min_displ_magnitude = DBL_MAX;
@@ -272,10 +274,10 @@ void forcedresp_analysis_solver::forcedresp_analysis_start(std::vector<frequency
 
 	}
 
-	frf_chart_setting.chart_y_min = min_displ_magnitude;
-	frf_chart_setting.chart_y_max =	max_displ_magnitude;
+	frf_chart_setting[0].chart_y_min = min_displ_magnitude;
+	frf_chart_setting[0].chart_y_max = max_displ_magnitude;
 
-	frf_chart_setting.data_pt_count = static_cast<int>(frf_data[0].displ_magnitude.size());
+	frf_chart_setting[0].data_pt_count = static_cast<int>(frf_data[0].displ_magnitude.size());
 
 
 	this->is_forcedresp_analysis_complete = true;

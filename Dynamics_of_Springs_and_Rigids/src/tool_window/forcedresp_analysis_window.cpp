@@ -227,8 +227,10 @@ void forcedresp_analysis_window::render_window()
 					ImPlot::SetupAxis(ImAxis_X1, "Frequency (Hz)");
 					ImPlot::SetupAxis(ImAxis_Y1, "Magnitude Amplitude");
 
-					ImPlot::SetupAxisLimits(ImAxis_X1, frf_chart_setting.chart_x_min, frf_chart_setting.chart_x_max); // Set X-axis limits
-					ImPlot::SetupAxisLimits(ImAxis_Y1, frf_chart_setting.chart_y_min, frf_chart_setting.chart_y_max); // Set Y-axis limits
+					ImPlot::SetupAxisLimits(ImAxis_X1, frf_chart_setting[selected_response_option].chart_x_min, 
+						frf_chart_setting[selected_response_option].chart_x_max); // Set X-axis limits
+					ImPlot::SetupAxisLimits(ImAxis_Y1, frf_chart_setting[selected_response_option].chart_y_min, 
+						frf_chart_setting[selected_response_option].chart_y_max); // Set Y-axis limits
 
 
 					for (int j = 0; j < static_cast<int>(frf_data.size()); j++)
@@ -237,7 +239,7 @@ void forcedresp_analysis_window::render_window()
 
 						// Plot the X-Y data
 						ImPlot::PlotLine(plotLabel.c_str(), frf_data[j].frequency_values.data(), frf_data[j].displ_magnitude.data(),
-							frf_chart_setting.data_pt_count);
+							frf_chart_setting[selected_response_option].data_pt_count);
 					}
 					
 

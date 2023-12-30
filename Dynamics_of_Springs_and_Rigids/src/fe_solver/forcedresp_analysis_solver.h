@@ -28,7 +28,7 @@ public:
 	~forcedresp_analysis_solver();
 	void clear_results();
 	void forcedresp_analysis_start(std::vector<frequency_reponse_data>& frf_data,
-		chart_setting_data& frf_chart_setting,
+		std::vector<chart_setting_data>& frf_chart_setting,
 		const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const nodeconstraint_list_store& node_constraints,

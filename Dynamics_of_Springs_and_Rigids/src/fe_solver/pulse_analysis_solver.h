@@ -45,10 +45,14 @@ public:
 		const double damping_ratio,
 		const int mode_range_startid,
 		const int mode_range_endid,
+		const int selected_pulse_option,
 		pulse_node_list_store& pulse_result_nodes,
 		pulse_elementline_list_store& pulse_result_lineelements);
 
 private:
+	Stopwatch_events stopwatch;
+	std::stringstream stopwatch_elapsed_str;
+
 	std::unordered_map<int, int> nodeid_map;
 
 
@@ -111,6 +115,32 @@ private:
 		const double& modal_force_starttime,
 		const double& modal_force_endtime);
 
+
+	void get_steady_state_rectangular_pulse_soln(double& steady_state_displ_resp,
+		const double& time_t,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& modal_force_ampl,
+		const double& modal_force_starttime,
+		const double& modal_force_endtime);
+
+
+	void get_steady_state_triangular_pulse_soln(double& steady_state_displ_resp,
+		const double& time_t,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& modal_force_ampl,
+		const double& modal_force_starttime,
+		const double& modal_force_endtime);
+
+
+	void get_steady_state_stepforce_finiterise_soln(double& steady_state_displ_resp,
+		const double& time_t,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& modal_force_ampl,
+		const double& modal_force_starttime,
+		const double& modal_force_endtime);
 
 
 	void map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,

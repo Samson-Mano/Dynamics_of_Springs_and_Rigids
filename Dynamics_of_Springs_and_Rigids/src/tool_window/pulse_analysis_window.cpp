@@ -17,6 +17,14 @@ void pulse_analysis_window::init()
 	execute_pulse_open = false; // Solver window execute opening event flag
 	execute_pulse_close = false; // Closing of solution window event flag
 	
+	// Pulse option string
+	pulse_option_str.clear();
+	pulse_option_str.push_back("Half sine pulse");
+	pulse_option_str.push_back("Rectangular pulse");
+	pulse_option_str.push_back("Triangular pulse");
+	pulse_option_str.push_back("Step force with finite rise");
+
+
 	stopwatch.start();
 	mode_result_str.clear(); // Remove the mode result list
 	selected_modal_option1 = 0;
@@ -195,7 +203,37 @@ void pulse_analysis_window::render_window()
 	ImGui::Text("Time Interval = %.3f", time_interval);
 	//_________________________________________________________________________________________
 
+	// Dropdown list 3 Pulse Type
+	// Add the pulse type dropdown list
+	std::vector<const char*> items_pulse_cstr;
+	for (const auto& item : pulse_option_str)
+	{
+		items_pulse_cstr.push_back(item.c_str());
+	}
 
+	const char* current_item3 = (selected_pulse_option >= 0 && selected_pulse_option < items_pulse_cstr.size()) ? items_pulse_cstr[selected_pulse_option] : "";
+
+	if (ImGui::BeginCombo("Pulse Option", current_item3))
+	{
+		for (int i = 0; i < items_pulse_cstr.size(); i++)
+		{
+			const bool is_selected = (selected_pulse_option == i);
+			if (ImGui::Selectable(items_pulse_cstr[i], is_selected))
+			{
+				selected_pulse_option = i;
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if (is_selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+
+		ImGui::EndCombo();
+	}
+
+	//_________________________________________________________________________________________
 	// Add check boxes to show the Deformed model
 	ImGui::Checkbox("Show Model", &show_undeformed_model);
 
