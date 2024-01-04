@@ -243,8 +243,8 @@ void forcedresp_analysis_solver::forcedresp_analysis_start(std::vector<frequency
 	frf_chart_setting.resize(6);
 
 	// Set the chart data
-	frf_chart_setting[0].chart_x_min = start_frequency_d;
-	frf_chart_setting[0].chart_x_max = end_frequency + frequency_interval;
+	frf_chart_setting[0].chart_x_min = static_cast<float>(start_frequency_d);
+	frf_chart_setting[0].chart_x_max = static_cast<float>(end_frequency + frequency_interval);
 
 	double max_displ_magnitude = DBL_MIN;
 	double min_displ_magnitude = DBL_MAX;
@@ -274,8 +274,8 @@ void forcedresp_analysis_solver::forcedresp_analysis_start(std::vector<frequency
 
 	}
 
-	frf_chart_setting[0].chart_y_min = min_displ_magnitude;
-	frf_chart_setting[0].chart_y_max = max_displ_magnitude;
+	frf_chart_setting[0].chart_y_min = static_cast<float>(min_displ_magnitude);
+	frf_chart_setting[0].chart_y_max = static_cast<float>(max_displ_magnitude);
 
 	frf_chart_setting[0].data_pt_count = static_cast<int>(frf_data[0].displ_magnitude.size());
 

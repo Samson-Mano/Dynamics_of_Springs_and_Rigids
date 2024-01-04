@@ -193,7 +193,7 @@ void pulse_elementline_list_store::set_rigid_element_line(const pulse_elementlin
 			displ_ratio_2 * endpt_normalized_displ[i], 0.25f);
 		temp_pt2_offset.push_back(temp_offset_pt);
 		temp_pt2_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f)));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f))));
 
 	}
 
@@ -224,7 +224,7 @@ void pulse_elementline_list_store::set_rigid_element_line(const pulse_elementlin
 			displ_ratio_2 * endpt_normalized_displ[i], 0.75f);
 		temp_pt1_offset.push_back(temp_offset_pt);
 		temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f)));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f))));
 
 		// Add the end point offset and end point color
 		temp_offset_pt = displ_ratio_2 * endpt_normalized_displ[i];
@@ -267,14 +267,14 @@ void pulse_elementline_list_store::set_rigid_element_line(const pulse_elementlin
 			displ_ratio_2 * endpt_normalized_displ[i], 0.25f);
 		temp_pt1_offset.push_back(temp_offset_pt);
 		temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f)));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f))));
 
 		// Add the end point offset and end point color
 		temp_offset_pt = geom_parameters::linear_interpolation(displ_ratio_1 * startpt_normalized_displ[i],
 			displ_ratio_2 * endpt_normalized_displ[i], 0.75f);
 		temp_pt2_offset.push_back(temp_offset_pt);
 		temp_pt2_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f)));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f))));
 
 	}
 
@@ -311,14 +311,14 @@ void pulse_elementline_list_store::set_rigid_element_line(const pulse_elementlin
 			displ_ratio_2 * endpt_normalized_displ[i], 0.25f);
 		temp_pt1_offset.push_back(temp_offset_pt);
 		temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f)));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f))));
 
 		// Add the end point offset and end point color
 		temp_offset_pt = geom_parameters::linear_interpolation(displ_ratio_1 * startpt_normalized_displ[i],
 			displ_ratio_2 * endpt_normalized_displ[i], 0.75f);
 		temp_pt2_offset.push_back(temp_offset_pt);
 		temp_pt2_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f)));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f))));
 
 	}
 
@@ -390,7 +390,7 @@ void pulse_elementline_list_store::set_spring_element_line(const pulse_elementli
 			displ_ratio_2 * endpt_normalized_displ[i], 0.25f);
 		temp_pt2_offset.push_back(temp_offset_pt);
 		temp_pt2_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f)));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f))));
 
 	}
 
@@ -421,7 +421,7 @@ void pulse_elementline_list_store::set_spring_element_line(const pulse_elementli
 			displ_ratio_2 * endpt_normalized_displ[i], 0.75f);
 		temp_pt1_offset.push_back(temp_offset_pt);
 		temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f)));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f))));
 
 		// Add the end point offset and end point color
 		temp_offset_pt = displ_ratio_2 * endpt_normalized_displ[i];
@@ -479,14 +479,14 @@ void pulse_elementline_list_store::set_spring_element_line(const pulse_elementli
 				displ_ratio_2 * endpt_normalized_displ[j], 0.25f + (param_t_prev * 0.5f));
 			temp_pt1_offset.push_back(temp_offset_pt);
 			temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f -
-				geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f + (param_t_prev * 0.5f))));
+				static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f + (param_t_prev * 0.5f)))));
 
 			// Add the end point offset and end point color
 			temp_offset_pt = geom_parameters::linear_interpolation(displ_ratio_1 * startpt_normalized_displ[j],
 				displ_ratio_2 * endpt_normalized_displ[j], 0.25f + (param_t * 0.5f));
 			temp_pt2_offset.push_back(temp_offset_pt);
 			temp_pt2_color.push_back(geom_parameters::getContourColor_d(1.0f -
-				geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f + (param_t * 0.5f))));
+				static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f + (param_t * 0.5f)))));
 
 		}
 
@@ -518,14 +518,14 @@ void pulse_elementline_list_store::set_spring_element_line(const pulse_elementli
 			displ_ratio_2 * endpt_normalized_displ[j], 0.25f + (param_t * 0.5f));
 		temp_pt1_offset.push_back(temp_offset_pt);
 		temp_pt1_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f + (param_t * 0.5f))));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.25f + (param_t * 0.5f)))));
 
 		// Add the end point offset and end point color
 		temp_offset_pt = geom_parameters::linear_interpolation(displ_ratio_1 * startpt_normalized_displ[j],
 			displ_ratio_2 * endpt_normalized_displ[j], 0.75f);
 		temp_pt2_offset.push_back(temp_offset_pt);
 		temp_pt2_color.push_back(geom_parameters::getContourColor_d(1.0f -
-			geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f)));
+			static_cast<float>(geom_parameters::get_lerp(displ_ratio_1, displ_ratio_2, 0.75f))));
 
 	}
 

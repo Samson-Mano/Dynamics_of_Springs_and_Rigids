@@ -613,7 +613,7 @@ void modal_analysis_solver::modal_analysis_lagrange_start(const nodes_list_store
 
 	//____________________________________________________________________________________________________________________
 	// Gloabl Augmentation matrix
-	int agDOF = 0.0; // size of the augmentation matrix
+	int agDOF = 0; // size of the augmentation matrix
 
 	Eigen::MatrixXd	globalAGMatrix(0, numDOF);
 	globalAGMatrix.setZero();
