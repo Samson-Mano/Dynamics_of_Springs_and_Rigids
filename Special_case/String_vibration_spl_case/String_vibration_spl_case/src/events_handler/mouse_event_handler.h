@@ -20,7 +20,7 @@ public:
 	mouse_event_handler();
 	~mouse_event_handler();
 
-	void init();
+	void init(geom_store& geom);
 	// Mouse button callback function
 	static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 	// Mouse move callback function

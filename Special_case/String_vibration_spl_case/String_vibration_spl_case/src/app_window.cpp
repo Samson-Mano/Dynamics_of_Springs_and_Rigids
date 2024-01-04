@@ -88,7 +88,7 @@ void app_window::init()
 	glfwSetWindowUserPointer(window, &mouse_Handler);
 
 	// Passing the address of geom and window dimensions to mouse handler
-	mouse_Handler.init();
+	mouse_Handler.init(geom);
 
 	// Pass the address of options window, material window, solver window
 	// geom.add_window_ptr(&op_window, &mat_window, &fe_window);

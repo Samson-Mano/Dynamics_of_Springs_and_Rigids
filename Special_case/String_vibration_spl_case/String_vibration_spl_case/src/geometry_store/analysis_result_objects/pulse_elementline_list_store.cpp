@@ -16,7 +16,7 @@ void pulse_elementline_list_store::init(geom_parameters* geom_param_ptr)
 	this->geom_param_ptr = geom_param_ptr;
 
 	// Set the geometry parameters for the line
-	pulse_element_lines.init(geom_param_ptr);
+//	pulse_element_lines.init(geom_param_ptr);
 
 	max_line_displ = 0.0;
 	element_max_length = 0.0;
@@ -30,7 +30,7 @@ void pulse_elementline_list_store::init(geom_parameters* geom_param_ptr)
 void pulse_elementline_list_store::clear_data()
 {
 	// Dynamic lines
-	pulse_element_lines.clear_lines();
+// 	pulse_element_lines.clear_lines();
 
 	max_line_displ = 0.0;
 	element_max_length = 0.0;
@@ -93,7 +93,7 @@ void pulse_elementline_list_store::add_pulse_elementline(int& line_id, pulse_nod
 void pulse_elementline_list_store::set_buffer()
 {
 	// Clear the lines
-	pulse_element_lines.clear_lines();
+//	pulse_element_lines.clear_lines();
 
 	//__________________________ Add the Dynamic lines
 	for (auto& line_m : pulse_elementlineMap)
@@ -103,33 +103,35 @@ void pulse_elementline_list_store::set_buffer()
 		if (rline.is_rigid == true)
 		{
 			// Line is rigid (so no deformation along the length)
-			set_rigid_element_line(rline, pulse_element_lines);
+	//		set_rigid_element_line(rline, pulse_element_lines);
 
 		}
 		else
 		{
 			// Line is spring
-			set_spring_element_line(rline, pulse_element_lines);
+//			set_spring_element_line(rline, pulse_element_lines);
 
 		}
 	}
 
 	// Set the buffer (Only the index buffer is set because its a dynamic paint)
-	pulse_element_lines.set_buffer();
+//	pulse_element_lines.set_buffer();
 }
 
 void pulse_elementline_list_store::paint_pulse_elementlines(const int& dyn_index)
 {
 	// Paint the lines
-	pulse_element_lines.paint_lines(dyn_index);
+	// pulse_element_lines.paint_lines(dyn_index);
 }
 
 void pulse_elementline_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Result line update geometry 
-	pulse_element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation,
-		set_zoomtranslation, set_transparency, set_deflscale);
+	//pulse_element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation,
+	//	set_zoomtranslation, set_transparency, set_deflscale);
 }
+
+/*
 
 void pulse_elementline_list_store::set_rigid_element_line(const pulse_elementline_store& rline, dynamic_line_list_store& pulse_element_lines)
 {
@@ -534,3 +536,5 @@ void pulse_elementline_list_store::set_spring_element_line(const pulse_elementli
 	pulse_element_lines.add_line(temp_line_id, temp_pt1, temp_pt2,
 		temp_pt1_offset, temp_pt2_offset, temp_pt1_color, temp_pt2_color);
 }
+
+*/

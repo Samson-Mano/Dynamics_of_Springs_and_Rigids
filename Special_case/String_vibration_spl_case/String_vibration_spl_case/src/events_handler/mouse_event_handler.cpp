@@ -11,10 +11,10 @@ mouse_event_handler::~mouse_event_handler()
 	// Empty destructor
 }
 
-void mouse_event_handler::init()
+void mouse_event_handler::init(geom_store& geom)
 {
 	// Add the pointers to initialize the mouse events
-	mouse_evnt.init();
+	mouse_evnt.init(geom);
 }
 
 void mouse_event_handler::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)

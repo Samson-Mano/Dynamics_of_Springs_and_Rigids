@@ -1,6 +1,6 @@
 #pragma once
 #include "pulse_node_list_store.h"
-#include "../geometry_objects/dynamic_line_list_store.h"
+// #include "../geometry_objects/dynamic_line_list_store.h"
 
 
 struct pulse_elementline_store
@@ -43,8 +43,8 @@ public:
 
 private:
 	geom_parameters* geom_param_ptr = nullptr;
-	dynamic_line_list_store pulse_element_lines;
+	// dynamic_line_list_store pulse_element_lines;
 
-	void set_rigid_element_line(const pulse_elementline_store& rline, dynamic_line_list_store& result_element_lines);
-	void set_spring_element_line(const pulse_elementline_store& rline, dynamic_line_list_store& result_element_lines);
+	// void set_rigid_element_line(const pulse_elementline_store& rline, dynamic_line_list_store& result_element_lines);
+	// void set_spring_element_line(const pulse_elementline_store& rline, dynamic_line_list_store& result_element_lines);
 };

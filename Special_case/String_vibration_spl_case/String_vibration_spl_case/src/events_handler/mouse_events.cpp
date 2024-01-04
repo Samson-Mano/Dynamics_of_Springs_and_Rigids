@@ -10,10 +10,10 @@ mouse_events::~mouse_events()
 	// Empty destructor
 }
 
-void mouse_events::init()
+void mouse_events::init(geom_store& geom)
 {
 	// Intialize the geometry and tool window pointers
-	this->geom = geom;
+	this->geom = &geom;
 
 
 }

@@ -18,7 +18,7 @@ public:
 
 	mouse_events();
 	~mouse_events();
-	void init();
+	void init(geom_store& geom);
 
 	void mouse_location(glm::vec2& loc);
 
