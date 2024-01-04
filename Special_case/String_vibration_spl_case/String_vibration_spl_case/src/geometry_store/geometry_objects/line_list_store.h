@@ -1,6 +1,5 @@
 #pragma once
-#include "../geometry_buffers/gBuffers.h"
-#include "../geom_parameters.h"
+#include "point_list_store.h"
 
 struct line_store
 {

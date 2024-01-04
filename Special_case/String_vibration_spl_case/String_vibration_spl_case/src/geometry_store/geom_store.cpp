@@ -614,9 +614,7 @@ void geom_store::paint_modal_analysis_results()
 			model_lineelements,
 			node_constraints,
 			node_ptmass,
-			mat_data,
-			modal_result_nodes,
-			modal_result_lineelements);
+			mat_data);
 
 		// reset the frequency response and pulse response solution
 		pulse_solver.clear_results();
@@ -737,9 +735,7 @@ void geom_store::paint_pulse_analysis_results()
 			pulse_solver_window->damping_ratio,
 			pulse_solver_window->selected_modal_option1,
 			pulse_solver_window->selected_modal_option2,
-			pulse_solver_window->selected_pulse_option,
-			pulse_result_nodes,
-			pulse_result_lineelements);
+			pulse_solver_window->selected_pulse_option);
 
 		// Check whether the modal analysis is complete or not
 		if (pulse_solver.is_pulse_analysis_complete == true)

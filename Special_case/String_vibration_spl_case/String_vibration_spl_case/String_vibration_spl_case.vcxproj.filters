@@ -69,12 +69,6 @@
     <ClInclude Include="src\events_handler\Stopwatch_events.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe_solver\modal_analysis_solver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe_solver\pulse_analysis_solver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\geometry_store\geom_parameters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -123,12 +117,6 @@
     <ClInclude Include="src\geometry_store\fe_objects\nodes_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\geometry_store\geometry_objects\dynamic_line_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\geometry_objects\dynamic_point_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\geometry_store\geometry_objects\dynamic_selrectangle_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -159,9 +147,6 @@
     <ClInclude Include="src\tool_window\pulse_analysis_window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\geometry_store\analysis_result_objects\modal_elementline_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\geometry_store\analysis_result_objects\modal_nodes_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -172,6 +157,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\tool_window\new_model_window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\geometry_store\analysis_result_objects\modal_elementline_list_store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe_solver\modal_analysis_solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe_solver\pulse_analysis_solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\geometry_store\geometry_objects\dynamic_point_list_store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\geometry_store\geometry_objects\dynamic_line_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -219,12 +219,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\events_handler\Stopwatch_events.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe_solver\modal_analysis_solver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe_solver\pulse_analysis_solver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\geometry_store\geom_parameters.cpp">
@@ -275,12 +269,6 @@
     <ClCompile Include="src\geometry_store\fe_objects\nodes_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\geometry_objects\dynamic_line_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\geometry_store\geometry_objects\dynamic_point_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\geometry_store\geometry_objects\dynamic_selrectangle_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -311,9 +299,6 @@
     <ClCompile Include="src\tool_window\pulse_analysis_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\analysis_result_objects\modal_elementline_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\geometry_store\analysis_result_objects\modal_nodes_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -324,6 +309,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tool_window\new_model_window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\geometry_store\analysis_result_objects\modal_elementline_list_store.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe_solver\modal_analysis_solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe_solver\pulse_analysis_solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\geometry_store\geometry_objects\dynamic_line_list_store.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\geometry_store\geometry_objects\dynamic_point_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

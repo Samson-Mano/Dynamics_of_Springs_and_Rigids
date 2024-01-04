@@ -17,12 +17,12 @@ void pulse_node_list_store::init(geom_parameters* geom_param_ptr)
 	this->geom_param_ptr = geom_param_ptr;
 
 	// Set the geometry parameters for the points
-	pulse_node_points.init(geom_param_ptr);
+	// pulse_node_points.init(geom_param_ptr);
 
 	// Clear the results
 	node_count = 0;
 	pulse_nodeMap.clear();
-	pulse_node_points.clear_points();
+	// pulse_node_points.clear_points();
 	max_node_displ = 0.0; // Maximum nodal displacement
 }
 
@@ -31,7 +31,7 @@ void pulse_node_list_store::clear_data()
 	// Clear the results
 	node_count = 0;
 	pulse_nodeMap.clear();
-	pulse_node_points.clear_points();
+	// pulse_node_points.clear_points();
 	max_node_displ = 0.0; // Maximum nodal displacement
 }
 
@@ -61,7 +61,7 @@ void pulse_node_list_store::add_result_node(int& node_id, glm::vec2& node_pt,
 void pulse_node_list_store::set_buffer()
 {
 	// Clear the points
-	pulse_node_points.clear_points();
+	// pulse_node_points.clear_points();
 
 	//__________________________ Add the Dynamic points
 	for (auto& nd_m : pulse_nodeMap)
@@ -92,11 +92,11 @@ void pulse_node_list_store::set_buffer()
 		}
 
 		// Add to the pulse points
-		pulse_node_points.add_point(nd.node_id, nd.node_pt, point_offset, point_color);
+		// pulse_node_points.add_point(nd.node_id, nd.node_pt, point_offset, point_color);
 	}
 
 	// Set buffer
-	pulse_node_points.set_buffer();
+// 	pulse_node_points.set_buffer();
 
 
 }
@@ -104,11 +104,11 @@ void pulse_node_list_store::set_buffer()
 void pulse_node_list_store::paint_pulse_nodes(const int& dyn_index)
 {
 	// Paint the points
-	pulse_node_points.paint_points(dyn_index);
+	// pulse_node_points.paint_points(dyn_index);
 }
 
 void pulse_node_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Pulse node points update geometry 
-	pulse_node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	// pulse_node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
 }
