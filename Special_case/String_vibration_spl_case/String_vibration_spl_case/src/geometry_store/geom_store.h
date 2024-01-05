@@ -24,7 +24,6 @@
 #include "fe_objects/nodeconstraint_list_store.h"
 #include "fe_objects/nodeload_list_store.h"
 #include "fe_objects/nodeinlcond_list_store.h"
-#include "fe_objects/nodepointmass_list_store.h"
 
 // Geometry Objects
 #include "geometry_objects/dynamic_selrectangle_store.h"
@@ -88,8 +87,9 @@ private:
 	// Node initial condition, loads & Constraints
 	nodeconstraint_list_store node_constraints;
 	nodeload_list_store node_loads;
-	nodepointmass_list_store node_ptmass;
-	nodeinlcond_list_store node_inlcond;
+	nodeinlcond_list_store node_inldispl;
+	nodeinlcond_list_store node_inlvelo;
+
 
 	// Modal analysis result 
 	modal_nodes_list_store modal_result_nodes;

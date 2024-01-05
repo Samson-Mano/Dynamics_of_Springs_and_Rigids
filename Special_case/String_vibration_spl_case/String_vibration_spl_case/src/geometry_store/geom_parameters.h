@@ -63,6 +63,7 @@ struct material_data
 	double line_length = 0.0;
 	double line_tension = 0.0;
 	double material_density = 0.0;
+	int model_type = -1;
 };
 
 

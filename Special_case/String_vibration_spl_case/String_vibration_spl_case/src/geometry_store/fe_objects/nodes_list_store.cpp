@@ -18,8 +18,8 @@ void nodes_list_store::init(geom_parameters* geom_param_ptr)
 	// Set the geometry parameters for the labels (and clear the labels)
 	node_points.init(geom_param_ptr);
 	selected_node_points.init(geom_param_ptr);
-	node_id_labels.init(geom_param_ptr);
-	node_coord_labels.init(geom_param_ptr);
+	// node_id_labels.init(geom_param_ptr);
+	// node_coord_labels.init(geom_param_ptr);
 
 	// Clear the nodes
 	node_count = 0;
@@ -53,22 +53,22 @@ void nodes_list_store::add_node(int& node_id, glm::vec2& node_pt)
 
 	node_points.add_point(node_id, node_pt, node_pt_offset, temp_color, false);
 
-	//__________________________ Add the node labels
-	std::string temp_str = std::to_string(node_id);
+	////__________________________ Add the node labels
+	//std::string temp_str = std::to_string(node_id);
 
-	node_id_labels.add_text(temp_str, node_pt, glm::vec2(0), temp_color, 0.0f, true, false);
+	//node_id_labels.add_text(temp_str, node_pt, glm::vec2(0), temp_color, 0.0f, true, false);
 
-	// Add the node coordinate label
+	//// Add the node coordinate label
 
-	std::stringstream ss_x;
-	ss_x << std::fixed << std::setprecision(geom_param_ptr->coord_precision) << node_pt.x;
+	//std::stringstream ss_x;
+	//ss_x << std::fixed << std::setprecision(geom_param_ptr->coord_precision) << node_pt.x;
 
-	std::stringstream ss_y;
-	ss_y << std::fixed << std::setprecision(geom_param_ptr->coord_precision) << node_pt.y;
+	//std::stringstream ss_y;
+	//ss_y << std::fixed << std::setprecision(geom_param_ptr->coord_precision) << node_pt.y;
 
-	temp_str = "(" + ss_x.str() + ", " + ss_y.str() + ")";
+	//temp_str = "(" + ss_x.str() + ", " + ss_y.str() + ")";
 
-	node_coord_labels.add_text(temp_str, node_pt, glm::vec2(0), temp_color, 0.0f, false, false);
+	//node_coord_labels.add_text(temp_str, node_pt, glm::vec2(0), temp_color, 0.0f, false, false);
 }
 
 void nodes_list_store::add_selection_nodes(const std::vector<int>& selected_node_ids)
@@ -91,8 +91,8 @@ void nodes_list_store::set_buffer()
 {
 	// Set the buffers for the Model
 	node_points.set_buffer();
-	node_id_labels.set_buffer();
-	node_coord_labels.set_buffer();
+	// node_id_labels.set_buffer();
+	// node_coord_labels.set_buffer();
 }
 
 
@@ -107,19 +107,6 @@ void nodes_list_store::paint_selected_model_nodes()
 	// Paint the model nodes
 	selected_node_points.paint_points();
 }
-
-void nodes_list_store::paint_label_node_ids()
-{
-	// Paint the node id labels
-	node_id_labels.paint_text();
-}
-
-void nodes_list_store::paint_label_node_coords()
-{
-	// Paint the node coordinate labels
-	node_coord_labels.paint_text();
-}
-
 
 int nodes_list_store::is_node_hit(glm::vec2& loc)
 {
@@ -210,6 +197,6 @@ void nodes_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_p
 	node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
 	selected_node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
 
-	node_id_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	node_coord_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	// node_id_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	// node_coord_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
 }

@@ -28,65 +28,301 @@ void nodeload_list_store::init(geom_parameters* geom_param_ptr)
 	load_max = 0.0;
 	loadMap.clear();
 	all_load_ids.clear();
+	all_load_setids.clear();
 }
 
-void nodeload_list_store::add_load(int& node_id, glm::vec2& load_loc, double& load_start_time, double& load_end_time,
-	double& load_value, double& load_angle, double& load_phase_angle)
+void nodeload_list_store::set_zero_condition(int& number_of_nodes, double& model_total_length)
 {
-	load_data temp_load;
-	temp_load.load_id = get_unique_load_id(); // Load id
-	temp_load.node_id = node_id; // id of the line its applied to
-	temp_load.load_loc = load_loc; // Load location
-	temp_load.load_start_time = load_start_time; // Load start time
-	temp_load.load_end_time = load_end_time; // Load end time
-	temp_load.load_value = load_value; // Load value
-	temp_load.load_angle = load_angle; // Load angle
-	temp_load.load_phase = load_phase_angle; // Load phase angle
-
-	// Insert the load to line
-	loadMap.insert({ temp_load.load_id, temp_load });
-	all_load_ids.push_back(temp_load.load_id); // Add to the id vector
-	load_count++;
+	this->number_of_nodes = number_of_nodes; // Number of nodes
+	this->model_total_length = model_total_length; // Total length
 }
 
-void nodeload_list_store::delete_load(int& node_id)
+void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_start_time, double& load_end_time,
+	double& load_value, int& model_type, int& node_start_id, int& node_end_id, int& interpolation_type)
 {
-	if (load_count == 0)
-	{
+
+	// Check 1 node start is less than node end
+	if (node_start_id >= node_end_id)
 		return;
+
+	// Check 2 before adding (Node start is within the node range or not)
+	if (node_start_id<0 || node_start_id >(number_of_nodes - 1))
+		return;
+
+	// Check 3 before adding (Node end is within the node range or not)
+	if (node_end_id<0 || node_end_id >(number_of_nodes - 1))
+		return;
+
+	// Check 4 if there is any load value or not
+	if (std::abs(load_value) < epsilon)
+		return;
+
+	// Calculate the angle
+	bool calculate_angle = false;
+	double load_angle = 90.0f;
+	if (model_type == 2 || model_type == 3)
+	{
+		calculate_angle = true;
 	}
 
-	// Delete all the loads in the node
-	std::vector<int> delete_load_id;
+	// Declare 4 points for quadratic interpolation
+	glm::vec2 pt1 = glm::vec2(0); // end point 1
+	glm::vec2 pt2 = glm::vec2(0); // slope point 1
+	glm::vec2 pt3 = glm::vec2(0); // end point 2
+	glm::vec2 pt4 = glm::vec2(0); // slope point 2
+	glm::vec2 pt_t = glm::vec2(0); // interpolation point
+	double t_val = 0.0; // interpolation parameter t
 
-	for (auto& ldx : loadMap)
+	// temporary initial condition
+	std::vector<load_data> temp_loadMap;
+	double segment_length = model_total_length / number_of_nodes;
+
+	//_____________________________________________________ Input is valid
+	double load_spread_length = (static_cast<float>(node_end_id - node_start_id) / static_cast<float>(number_of_nodes)) * model_total_length;
+
+	if (interpolation_type == 0)
 	{
-		load_data ld = ldx.second;
+		// Linear interpolation
+		int mid_node_id = ((node_start_id + node_end_id) / 2);
 
-		// Check whether the load's nodeID is the nodeID
-		if (ld.node_id == node_id)
+		// Positive slope interpolation end points
+		pt1 = glm::vec2(0, 0);
+		pt2 = glm::vec2(load_spread_length / 2.0f, load_value);
+
+		// Go through start to mid node (Positive slope)
+		for (int i = node_start_id; i < mid_node_id; i++)
 		{
-			// Add to the delete load ID
-			delete_load_id.push_back(ld.load_id);
+			t_val = static_cast<float>(i - node_start_id) / static_cast<float>(mid_node_id - node_start_id);
+
+			pt_t = linear_interpolation(pt1, pt2, t_val);
+
+			// Dont add zero loads
+			if (std::abs(pt_t.y) < epsilon)
+			{
+				continue;
+			}
+
+			// Create a temporary load data
+			load_data temp_load;
+			temp_load.load_id = 0; //NULL Load id
+			temp_load.node_id = i; // id of the line its applied to
+			temp_load.load_loc = model_nodes.nodeMap[i].node_pt; // Load location
+			temp_load.load_start_time = load_start_time; // Load start time
+			temp_load.load_end_time = load_end_time; // Load end time
+			temp_load.load_value = pt_t.y; // Load value
+			temp_load.load_angle = load_angle; // Load angle
+			temp_load.show_load_label = false;
+
+			// Add to the vector
+			temp_loadMap.push_back(temp_load);
+		}
+
+		// Negative slope interpolation end points
+		pt1 = glm::vec2(load_spread_length / 2.0f, load_value);
+		pt2 = glm::vec2(load_spread_length, 0);
+
+		// Go through mid to end node (Negative slope)
+		for (int i = mid_node_id; i <= node_end_id; i++)
+		{
+			t_val = static_cast<float>(i - mid_node_id) / static_cast<float>(node_end_id - mid_node_id);
+
+			pt_t = linear_interpolation(pt1, pt2, t_val);
+
+			// Dont add zero loads
+			if (std::abs(pt_t.y) < epsilon)
+			{
+				continue;
+			}
+
+			// Create a temporary load data
+			load_data temp_load;
+			temp_load.load_id = 0; //NULL Load id
+			temp_load.node_id = i; // id of the line its applied to
+			temp_load.load_loc = model_nodes.nodeMap[i].node_pt; // Load location
+			temp_load.load_start_time = load_start_time; // Load start time
+			temp_load.load_end_time = load_end_time; // Load end time
+			temp_load.load_value = pt_t.y; // Load value
+			temp_load.load_angle = load_angle; // Load angle
+			temp_load.show_load_label = false;
+
+			if (pt_t.y == load_value)
+			{
+				temp_load.show_load_label = true;
+			}
+
+			// Add to the vector
+			temp_loadMap.push_back(temp_load);
 		}
 	}
-
-	//____________________________________
-
-	for (auto& del_id : delete_load_id)
+	else if (interpolation_type == 1)
 	{
-		// Delete load ID
-		loadMap.erase(del_id);
+		// Cubic bezier interpolation
+		// Linear interpolation
+		int mid_node_id = ((node_start_id + node_end_id) / 2);
 
-		// Delete the iD from the load ids
-		auto it = std::find(all_load_ids.begin(), all_load_ids.end(), del_id);
-		all_load_ids.erase(it);
+		// Positive slope interpolation end points
+		pt1 = glm::vec2(0, 0);
+		pt2 = glm::vec2(load_spread_length / 4.0f, 0);
+		pt3 = glm::vec2(load_spread_length / 4.0f, load_value);
+		pt4 = glm::vec2(load_spread_length / 2.0f, load_value);
 
+		// Go through start to mid node (Positive slope)
+		for (int i = node_start_id; i < mid_node_id; i++)
+		{
+			t_val = static_cast<float>(i - node_start_id) / static_cast<float>(mid_node_id - node_start_id);
 
-		// Reduce the load count
-		load_count--;
+			pt_t = cubic_bezier_interpolation(pt1, pt2, pt3, pt4, t_val);
+
+			// Dont add zero loads
+			if (std::abs(pt_t.y) < epsilon)
+			{
+				continue;
+			}
+
+			// Create a temporary load data
+			load_data temp_load;
+			temp_load.load_id = 0; //NULL Load id
+			temp_load.node_id = i; // id of the line its applied to
+			temp_load.load_loc = model_nodes.nodeMap[i].node_pt; // Load location
+			temp_load.load_start_time = load_start_time; // Load start time
+			temp_load.load_end_time = load_end_time; // Load end time
+			temp_load.load_value = pt_t.y; // Load value
+			temp_load.load_angle = load_angle; // Load angle
+			temp_load.show_load_label = false;
+
+			// Add to the vector
+			temp_loadMap.push_back(temp_load);
+		}
+
+		// Negative slope interpolation end points
+		pt1 = glm::vec2(load_spread_length / 2.0f, load_value);
+		pt2 = glm::vec2(load_spread_length * (3.0f / 4.0f), load_value);
+		pt3 = glm::vec2(load_spread_length * (3.0f / 4.0f), 0);
+		pt4 = glm::vec2(load_spread_length, 0);
+
+		// Go through mid to end node (Negative slope)
+		for (int i = mid_node_id; i <= node_end_id; i++)
+		{
+			t_val = static_cast<float>(i - mid_node_id) / static_cast<float>(node_end_id - mid_node_id);
+
+			pt_t = cubic_bezier_interpolation(pt1, pt2, pt3, pt4, t_val);
+
+			// Dont add zero loads
+			if (std::abs(pt_t.y) < epsilon)
+			{
+				continue;
+			}
+
+			// Create a temporary load data
+			load_data temp_load;
+			temp_load.load_id = 0; //NULL Load id
+			temp_load.node_id = i; // id of the line its applied to
+			temp_load.load_loc = model_nodes.nodeMap[i].node_pt; // Load location
+			temp_load.load_start_time = load_start_time; // Load start time
+			temp_load.load_end_time = load_end_time; // Load end time
+			temp_load.load_value = pt_t.y; // Load value
+			temp_load.load_angle = load_angle; // Load angle
+			temp_load.show_load_label = false;
+
+			if (pt_t.y == load_value)
+			{
+				temp_load.show_load_label = true;
+			}
+
+			// Add to the vector
+			temp_loadMap.push_back(temp_load);
+		}
+	}
+	else if (interpolation_type == 2)
+	{
+		// Sine interpolation
+		pt1 = glm::vec2(0, 0);
+		pt2 = glm::vec2(load_spread_length / 2.0f, load_value);
+		pt3 = glm::vec2(load_spread_length, 0);
+
+		int mid_node_id = ((node_start_id + node_end_id) / 2);
+
+		// Go through start to mid node (Positive slope)
+		for (int i = node_start_id; i <= node_end_id; i++)
+		{
+			t_val = static_cast<float>(i - node_start_id) / static_cast<float>(node_end_id - node_start_id);
+
+			pt_t = half_sine_interpolation(pt1, pt2, pt3, t_val);
+
+			// Dont add zero loads
+			if (std::abs(pt_t.y) < epsilon)
+			{
+				continue;
+			}
+
+			// Create a temporary load data
+			load_data temp_load;
+			temp_load.load_id = 0; //NULL Load id
+			temp_load.node_id = i; // id of the line its applied to
+			temp_load.load_loc = model_nodes.nodeMap[i].node_pt; // Load location
+			temp_load.load_start_time = load_start_time; // Load start time
+			temp_load.load_end_time = load_end_time; // Load end time
+			temp_load.load_value = pt_t.y; // Load value
+			temp_load.load_angle = load_angle; // Load angle
+			temp_load.show_load_label = false;
+
+			if (i == mid_node_id)
+			{
+				temp_load.show_load_label = true;
+			}
+
+			// Add to the vector
+			temp_loadMap.push_back(temp_load);
+		}
+
+	}
+	else if (interpolation_type == 3)
+	{
+		// Create a temporary load data
+		load_data temp_load;
+		temp_load.load_id = 0; //NULL Load id
+		temp_load.node_id = node_start_id; // id of the line its applied to
+		temp_load.load_loc = model_nodes.nodeMap[node_start_id].node_pt; // Load location
+		temp_load.load_start_time = load_start_time; // Load start time
+		temp_load.load_end_time = load_end_time; // Load end time
+		temp_load.load_value = load_value; // Load value
+		temp_load.load_angle = load_angle; // Load angle
+		temp_load.show_load_label = true;
+
+		// Add to the vector
+		temp_loadMap.push_back(temp_load);
+
 	}
 
+	int temp_load_setids = get_unique_load_id(all_load_setids);
+
+	for (auto& temp_load : temp_loadMap)
+	{
+		// Insert the load to line
+		int temp_load_id = get_unique_load_id(all_load_ids);
+		temp_load.load_id = temp_load_id;
+		temp_load.load_setid = temp_load_setids;
+		loadMap.insert({ temp_load_id, temp_load });
+		all_load_ids.push_back(temp_load_id); // Add to the id vector
+		load_count++;
+	}
+
+
+	all_load_setids.push_back(temp_load_setids);
+
+	set_buffer();
+}
+
+void nodeload_list_store::delete_all_loads()
+{
+	// Delete all the loads in the node
+	load_count = 0;
+	load_max = 0.0;
+	loadMap.clear();
+	all_load_ids.clear();
+	all_load_setids.clear();
+
+	set_buffer();
 }
 
 void nodeload_list_store::set_buffer()
@@ -117,22 +353,24 @@ void nodeload_list_store::set_buffer()
 		}
 		//__________________________________________________________________________
 
-
-		std::stringstream ss;
-		ss << std::fixed << std::setprecision(geom_param_ptr->load_precision) << std::abs(load.load_value);
-
-		glm::vec3 temp_color = geom_param_ptr->geom_colors.load_color;
-		std::string	temp_str = "(" + std::to_string(load.load_id) + ") " + ss.str();
-		double load_angle = load.load_angle;
-		double load_angle_rad = ((90 - load_angle) * 3.14159365f) / 180.0f;
-
-		bool is_load_val_above = false;
-		if (load.load_value < 0)
+		if (load.show_load_label == true)
 		{
-			is_load_val_above = true;
-		}
+			std::stringstream ss;
+			ss << std::fixed << std::setprecision(geom_param_ptr->load_precision) << std::abs(load.load_value);
 
-		load_value_labels.add_text(temp_str, load.load_loc, glm::vec2(0), temp_color, load_angle_rad, is_load_val_above, false);
+			glm::vec3 temp_color = geom_param_ptr->geom_colors.load_color;
+			std::string	temp_str = "(" + std::to_string(load.node_id) + ") " + ss.str();
+			double load_angle = load.load_angle;
+			double load_angle_rad = ((90 - load_angle) * 3.14159365f) / 180.0f;
+
+			bool is_load_val_above = false;
+			if (load.load_value < 0)
+			{
+				is_load_val_above = true;
+			}
+
+			load_value_labels.add_text(temp_str, load.load_loc, glm::vec2(0), temp_color, load_angle_rad, is_load_val_above, false);
+		}
 	}
 
 	load_value_labels.set_buffer();
@@ -246,9 +484,9 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	double sin_theta = sin(radians);
 
 	glm::vec2 rotated_load_arrow_startpt = glm::vec2((load_arrow_startpt.x * cos_theta) + (load_arrow_startpt.y * sin_theta),
-			-(load_arrow_startpt.x * sin_theta) + (load_arrow_startpt.y * cos_theta)); // 0
+		-(load_arrow_startpt.x * sin_theta) + (load_arrow_startpt.y * cos_theta)); // 0
 	glm::vec2 rotated_load_arrow_endpt = glm::vec2((load_arrow_endpt.x * cos_theta) + (load_arrow_endpt.y * sin_theta),
-			-(load_arrow_endpt.x * sin_theta) + (load_arrow_endpt.y * cos_theta)); // 1
+		-(load_arrow_endpt.x * sin_theta) + (load_arrow_endpt.y * cos_theta)); // 1
 
 
 	// Load arrow point 1
@@ -257,7 +495,7 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	sin_theta = sin(radians);
 
 	glm::vec2 rotated_load_arrow_pt1 = glm::vec2((load_arrow_pt1.x * cos_theta) + (load_arrow_pt1.y * sin_theta),
-			-(load_arrow_pt1.x * sin_theta) + (load_arrow_pt1.y * cos_theta)); // 2
+		-(load_arrow_pt1.x * sin_theta) + (load_arrow_pt1.y * cos_theta)); // 2
 
 
 	// Load arrow point 2
@@ -266,7 +504,7 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	sin_theta = sin(radians);
 
 	glm::vec2 rotated_load_arrow_pt2 = glm::vec2((load_arrow_pt2.x * cos_theta) + (load_arrow_pt2.y * sin_theta),
-			-(load_arrow_pt2.x * sin_theta) + (load_arrow_pt2.y * cos_theta)); // 3
+		-(load_arrow_pt2.x * sin_theta) + (load_arrow_pt2.y * cos_theta)); // 3
 
 	//__________________________________________________________________________________________________________
 
@@ -342,7 +580,7 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	// Line 0,1
 	load_indices[load_i_index + 0] = t_id + 0;
 	load_indices[load_i_index + 1] = t_id + 1;
-	
+
 	// Line 0,2
 	load_indices[load_i_index + 2] = t_id + 0;
 	load_indices[load_i_index + 3] = t_id + 2;
@@ -355,25 +593,65 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	load_i_index = load_i_index + 6;
 }
 
-int nodeload_list_store::get_unique_load_id()
+int nodeload_list_store::get_unique_load_id(std::vector<int>& all_ids)
 {
 	// Return the unique Load id
-	if (all_load_ids.size() != 0)
+	if (all_ids.size() != 0)
 	{
 		int i;
-		std::sort(all_load_ids.begin(), all_load_ids.end());
+		std::sort(all_ids.begin(), all_ids.end());
 
 		// Find if any of the nodes are missing in an ordered int
-		for (i = 0; i < all_load_ids.size(); i++)
+		for (i = 0; i < all_ids.size(); i++)
 		{
-			if (all_load_ids[i] != i)
+			if (all_ids[i] != i)
 			{
 				return i;
 			}
 		}
 
 		// no node id is missing in an ordered list so add to the end
-		return static_cast<int>(all_load_ids.size());
+		return static_cast<int>(all_ids.size());
 	}
 	return 0;
+}
+
+
+
+glm::vec2 nodeload_list_store::linear_interpolation(glm::vec2 pt1, glm::vec2 pt2, double t_val)
+{
+	double x = ((1 - t_val) * pt1.x) + (t_val * pt2.x);
+
+	double y = ((1 - t_val) * pt1.y) + (t_val * pt2.y);
+
+	return (glm::vec2(x, y));
+}
+
+glm::vec2 nodeload_list_store::cubic_bezier_interpolation(glm::vec2 pt1, glm::vec2 pt2, glm::vec2 pt3, glm::vec2 pt4, double t_val)
+{
+	double x = (std::pow((1 - t_val), 3) * pt1.x) +
+		(3 * std::pow((1 - t_val), 2) * t_val * pt2.x) +
+		(3 * (1 - t_val) * std::pow(t_val, 2) * pt3.x) +
+		(std::pow(t_val, 3) * pt4.x);
+
+	double y = (std::pow((1 - t_val), 3) * pt1.y) +
+		(3 * std::pow((1 - t_val), 2) * t_val * pt2.y) +
+		(3 * (1 - t_val) * std::pow(t_val, 2) * pt3.y) +
+		(std::pow(t_val, 3) * pt4.y);
+
+	return (glm::vec2(x, y));
+}
+
+glm::vec2 nodeload_list_store::half_sine_interpolation(glm::vec2 pt1, glm::vec2 pt2, glm::vec2 pt3, double t_val)
+{
+	// Calculate the half-sine weight for the y component
+	double weightY = sin(t_val * glm::pi<double>());
+
+	// Linearly interpolate the x component between pt1 and pt3
+	double x = ((1.0 - t_val) * pt1.x) + (t_val * pt3.x);
+
+	// Interpolate the y component between pt1.y and pt2.y using the weight
+	double y = pt1.y + weightY * (pt2.y - pt1.y);
+
+	return glm::vec2(x, y);
 }

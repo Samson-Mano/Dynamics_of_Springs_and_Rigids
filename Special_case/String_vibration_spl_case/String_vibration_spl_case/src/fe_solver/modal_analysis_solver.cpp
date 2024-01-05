@@ -28,7 +28,6 @@ void modal_analysis_solver::clear_results()
 void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
 	const nodeconstraint_list_store& node_constraints,
-	const nodepointmass_list_store& node_ptmass,
 	const material_data& mat_data)
 {
 	// Main solver call
@@ -43,12 +42,6 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 	// Number of elements
 	if (model_lineelements.elementline_count == 0)
-	{
-		return;
-	}
-
-	// Number of point mass
-	if (node_ptmass.ptmass_count == 0)
 	{
 		return;
 	}

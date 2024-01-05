@@ -63,7 +63,10 @@ void node_load_window::render_window()
 	//_________________________________________________________________________________________
 	// Get the load end node
 
-	get_load_End_Node();
+	if (node_load_type != 3)
+	{
+		get_load_End_Node();
+	}
 
 	//__________________________________________________________________________________________
 	// Apply and Delete Button
@@ -271,6 +274,11 @@ void node_load_window::get_load_Start_Node()
 		}
 	}
 
+	if (node_load_start >= node_load_end)
+	{
+		node_load_end = node_load_start + 1;
+	}
+
 	// Text for Load At Node
 	ImGui::SameLine();
 	ImGui::Text("Nodal Load Start Node = %i", node_load_start);
@@ -304,8 +312,17 @@ void node_load_window::get_load_End_Node()
 		{
 			// convert the input string to int
 			nodeLoadEndnode_input = static_cast<int>(atoi(nodeLoadEndnode_str));
-			// set the Load End Node to input value
-			node_load_end = nodeLoadEndnode_input;
+			// set the load End Node to input value
+			if (nodeLoadEndnode_input > node_load_start)
+			{
+				// set the Load End Node to input value
+				node_load_end = nodeLoadEndnode_input;
+			}
+			else
+			{
+				nodeLoadEndnode_input = static_cast<float>(node_load_end);
+			}
+
 		}
 
 		// Button to switch back to slider mode

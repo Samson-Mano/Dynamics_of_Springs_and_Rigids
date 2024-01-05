@@ -6,7 +6,6 @@
 #include "../geometry_store/fe_objects/nodes_list_store.h"
 #include "../geometry_store/fe_objects/elementline_list_store.h"
 #include "../geometry_store/fe_objects/nodeconstraint_list_store.h"
-#include "../geometry_store/fe_objects/nodepointmass_list_store.h"
 
 // FE Results Modal Analysis
 
@@ -65,7 +64,6 @@ public:
 	void modal_analysis_start(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const nodeconstraint_list_store& node_constraints,
-		const nodepointmass_list_store& node_ptmass,
 		const material_data& mat_data);
 private:
 	const double m_pi = 3.14159265358979323846;

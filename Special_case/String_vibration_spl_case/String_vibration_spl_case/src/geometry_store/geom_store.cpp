@@ -68,8 +68,8 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	// Node constraints
 	this->node_constraints.init(&geom_param);
 	this->node_loads.init(&geom_param);
-	this->node_ptmass.init(&geom_param);
-	this->node_inlcond.init(&geom_param);
+	this->node_inldispl.init(&geom_param);
+	this->node_inlvelo.init(&geom_param);
 
 	// Re-initialize the result elements
 	this->modal_result_nodes.init(&geom_param);
@@ -119,16 +119,19 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 			mat_data.line_tension = std::stod(fields[1]);
 
 		}
-		else if (type == "Length")
+		else if (fields[0] == "Length")
 		{
 			// Length
 			mat_data.line_length = std::stod(fields[1]);
 		}
-		else if (type == "Density")
+		else if (fields[0] == "Density")
 		{
 			// Density
 			mat_data.material_density = std::stod(fields[1]);
 		}
+
+		// Material type
+		mat_data.model_type = model_type;
 
 		// Iterate line
 		j++;
@@ -146,6 +149,7 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 		// Add first node
 		glm::vec2 node_pt = glm::vec2(i*dl, 0);
 		this->model_nodes.add_node(i, node_pt);
+		node_pts_list.push_back(node_pt);
 
 		// Add other nodes
 		for (i = 1; i < node_count; i++)
@@ -153,6 +157,7 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 			// Node point
 			node_pt = glm::vec2(i * dl, 0);
 			this->model_nodes.add_node(i, node_pt);
+			node_pts_list.push_back(node_pt);
 
 			// Add element
 			int line_id = i - 1;
@@ -167,14 +172,18 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 
 		i = node_count - 1;
 		this->node_constraints.add_constraint(i, this->model_nodes.nodeMap[i].node_pt, constraint_type, constraint_angle);
+
+
+		// Set the initial condition
+		this->node_inldispl.set_zero_condition(node_count, mat_data.line_length, 0);
+		this->node_inlvelo.set_zero_condition(node_count, mat_data.line_length, 1);
+		this->node_loads.set_zero_condition(node_count, mat_data.line_length);
+
 	}
 
 
-
-
-
 	// Input read failed??
-	if (model_nodes.node_count < 1 || model_lineelements.elementline_count < 1)
+	if (model_nodes.node_count < 2 || model_lineelements.elementline_count < 1)
 	{
 		is_geometry_set = false;
 		std::cerr << "Input error !!" << std::endl;
@@ -204,8 +213,8 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	// Set the constraints buffer
 	this->node_constraints.set_buffer();
 	this->node_loads.set_buffer();
-	this->node_ptmass.set_buffer();
-	this->node_inlcond.set_buffer();
+	this->node_inldispl.set_buffer();
+	this->node_inlvelo.set_buffer();
 
 	// Set the result object buffers
 
@@ -257,8 +266,8 @@ void geom_store::update_model_matrix()
 	model_lineelements.update_geometry_matrices(true, false, false, true, false);
 	node_constraints.update_geometry_matrices(true, false, false, true, false);
 	node_loads.update_geometry_matrices(true, false, false, true, false);
-	node_ptmass.update_geometry_matrices(true, false, false, true, false);
-	node_inlcond.update_geometry_matrices(true, false, false, true, false);
+	node_inldispl.update_geometry_matrices(true, false, false, true, false);
+	node_inlvelo.update_geometry_matrices(true, false, false, true, false);
 
 	// Update the modal analysis result matrix
 	modal_result_nodes.update_geometry_matrices(true, false, false, false, false);
@@ -284,8 +293,8 @@ void geom_store::update_model_zoomfit()
 	model_lineelements.update_geometry_matrices(false, true, true, false, false);
 	node_constraints.update_geometry_matrices(false, true, true, false, false);
 	node_loads.update_geometry_matrices(false, true, true, false, false);
-	node_ptmass.update_geometry_matrices(false, true, true, false, false);
-	node_inlcond.update_geometry_matrices(false, true, true, false, false);
+	node_inldispl.update_geometry_matrices(false, true, true, false, false);
+	node_inlvelo.update_geometry_matrices(false, true, true, false, false);
 
 	// Update the modal analysis result matrix
 	modal_result_nodes.update_geometry_matrices(false, true, true, false, false);
@@ -311,8 +320,8 @@ void geom_store::update_model_pan(glm::vec2& transl)
 	model_lineelements.update_geometry_matrices(false, true, false, false, false);
 	node_constraints.update_geometry_matrices(false, true, false, false, false);
 	node_loads.update_geometry_matrices(false, true, false, false, false);
-	node_ptmass.update_geometry_matrices(false, true, false, false, false);
-	node_inlcond.update_geometry_matrices(false, true, false, false, false);
+	node_inldispl.update_geometry_matrices(false, true, false, false, false);
+	node_inlvelo.update_geometry_matrices(false, true, false, false, false);
 
 	// Update the modal analysis result matrix
 	modal_result_nodes.update_geometry_matrices(false, true, false, false, false);
@@ -335,8 +344,8 @@ void geom_store::update_model_zoom(double& z_scale)
 	model_lineelements.update_geometry_matrices(false, false, true, false, false);
 	node_constraints.update_geometry_matrices(false, false, true, false, false);
 	node_loads.update_geometry_matrices(false, false, true, false, false);
-	node_ptmass.update_geometry_matrices(false, false, true, false, false);
-	node_inlcond.update_geometry_matrices(false, false, true, false, false);
+	node_inldispl.update_geometry_matrices(false, false, true, false, false);
+	node_inlvelo.update_geometry_matrices(false, false, true, false, false);
 
 	// Update the modal analysis result matrix
 	modal_result_nodes.update_geometry_matrices(false, false, true, false, false);
@@ -367,8 +376,8 @@ void geom_store::update_model_transperency(bool is_transparent)
 	model_lineelements.update_geometry_matrices(false, false, false, true, false);
 	node_constraints.update_geometry_matrices(false, false, false, true, false);
 	node_loads.update_geometry_matrices(false, false, false, true, false);
-	node_ptmass.update_geometry_matrices(false, false, false, true, false);
-	node_inlcond.update_geometry_matrices(false, false, false, true, false);
+	node_inldispl.update_geometry_matrices(false, false, false, true, false);
+	node_inlvelo.update_geometry_matrices(false, false, false, true, false);
 
 	// Donot update result elements transparency
 
@@ -390,6 +399,21 @@ void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::ve
 
 void geom_store::paint_geometry()
 {
+
+	if (md_window->is_show_window == true)
+	{
+		// New Model Window
+		if (md_window->execute_create_model == true)
+		{
+			// Load a model
+			load_model(md_window->option_model_type, md_window->input_data);
+
+			md_window->execute_create_model = false;
+		}
+
+	}
+
+
 	if (is_geometry_set == false)
 		return;
 
@@ -425,6 +449,9 @@ void geom_store::paint_model()
 		}
 	}
 
+
+
+
 	//______________________________________________
 	// Paint the model
 	if (op_window->is_show_modelelements == true)
@@ -432,17 +459,17 @@ void geom_store::paint_model()
 		// Show the model elements
 		model_lineelements.paint_elementlines();
 
-		if (op_window->is_show_modelelementids == true)
-		{
-			// Show model element ids
-			model_lineelements.paint_label_line_ids();
+		//if (op_window->is_show_modelelementids == true)
+		//{
+		//	// Show model element ids
+		//	model_lineelements.paint_label_line_ids();
 
-		}
-		if (op_window->is_show_modelelementlengths == true)
-		{
-			// Show model element lengths
-			model_lineelements.paint_label_line_lengths();
-		}
+		//}
+		//if (op_window->is_show_modelelementlengths == true)
+		//{
+		//	// Show model element lengths
+		//	model_lineelements.paint_label_line_lengths();
+		//}
 
 	}
 
@@ -451,29 +478,29 @@ void geom_store::paint_model()
 		// Show the model nodes
 		model_nodes.paint_model_nodes();
 
-		if (op_window->is_show_modelnodeids == true)
-		{
-			// Show model node ids
-			model_nodes.paint_label_node_ids();
-		}
-		if (op_window->is_show_modelnodecoords == true)
-		{
-			// Show model node co-ordinates
-			model_nodes.paint_label_node_coords();
-		}
+		//if (op_window->is_show_modelnodeids == true)
+		//{
+		//	// Show model node ids
+		//	model_nodes.paint_label_node_ids();
+		//}
+		//if (op_window->is_show_modelnodecoords == true)
+		//{
+		//	// Show model node co-ordinates
+		//	model_nodes.paint_label_node_coords();
+		//}
 	}
 
-	if (op_window->is_show_ptmass == true)
-	{
-		// Show the node point mass
-		node_ptmass.paint_pointmass();
+	//if (op_window->is_show_ptmass == true)
+	//{
+	//	// Show the node point mass
+	//	node_ptmass.paint_pointmass();
 
-		if (op_window->is_show_ptmass_labels == true)
-		{
-			// Show the node point mass label
-			node_ptmass.paint_pointmass_label();
-		}
-	}
+	//	if (op_window->is_show_ptmass_labels == true)
+	//	{
+	//		// Show the node point mass label
+	//		node_ptmass.paint_pointmass_label();
+	//	}
+	//}
 
 	if (op_window->is_show_constraint == true)
 	{
@@ -496,21 +523,91 @@ void geom_store::paint_model()
 	if (op_window->is_show_inlcondition == true)
 	{
 		// Show the node initial condition
-		node_inlcond.paint_inlcondition_label();
+		// Initial Displacement
+		node_inldispl.paint_inlcond();
+		node_inldispl.paint_inlcond_label();
+
+		// Initial Velocity
+		node_inlvelo.paint_inlcond();
+		node_inlvelo.paint_inlcond_label();
+
 	}
 
-	if (md_window->is_show_window == true)
+
+	if (nd_inlcond_window->is_show_window == true)
 	{
-		// New Model Window
-		if (md_window->execute_create_model == true)
+		// Initial condition window open
+		if (nd_inlcond_window->execute_apply_displ == true)
 		{
-			// Load a model
+			// Apply initial Displacement
+			node_inldispl.add_inlcondition(nd_inlcond_window->inl_displacement_start,
+				nd_inlcond_window->inl_displacement,
+				nd_inlcond_window->inl_displacement_end,
+				nd_inlcond_window->inl_displacement_type);
+
+			nd_inlcond_window->execute_apply_displ = false;
+		}
+
+		if (nd_inlcond_window->execute_remove_displ == true)
+		{
+			// Delete initial Displacement
+			node_inldispl.delete_all_inlcondition();
+
+			nd_inlcond_window->execute_remove_displ = false;
+		}
 
 
-			md_window->execute_create_model = false;
+		if (nd_inlcond_window->execute_apply_velo == true)
+		{
+			// Apply initial Velocity
+			node_inlvelo.add_inlcondition(nd_inlcond_window->inl_velocity_start,
+				nd_inlcond_window->inl_velocity,
+				nd_inlcond_window->inl_velocity_end,
+				nd_inlcond_window->inl_velocity_type);
+
+			nd_inlcond_window->execute_apply_velo = false;
+		}
+
+		if (nd_inlcond_window->execute_remove_velo == true)
+		{
+			// Delete initial Velocity
+			node_inlvelo.delete_all_inlcondition();
+
+			nd_inlcond_window->execute_remove_velo = false;
 		}
 
 	}
+
+	if (nd_load_window->is_show_window == true)
+	{
+		// Node load window is open
+		if (nd_load_window->execute_apply_load == true)
+		{
+
+			// Apply nodal load
+			node_loads.add_loads(model_nodes,
+				nd_load_window->load_start_time,
+				nd_load_window->load_end_time,
+				nd_load_window->load_amplitude,
+				mat_data.model_type,
+				nd_load_window->node_load_start,
+				nd_load_window->node_load_end,
+				nd_load_window->node_load_type);
+
+			nd_load_window->execute_apply_load = false;
+		}
+
+		if (nd_load_window->execute_remove_load == true)
+		{
+			// Delete nodal load
+			node_loads.delete_all_loads();
+
+			nd_load_window->execute_remove_load = false;
+		}
+
+
+	}
+
 
 
 }
@@ -583,7 +680,7 @@ void geom_store::paint_modal_analysis_results()
 		if (modal_solver_window->show_result_text_values == true)
 		{
 			// Paint the modal result vector
-			modal_result_nodes.paint_label_mode_vectors();
+			// modal_result_nodes.paint_label_mode_vectors();
 		}
 
 	}
@@ -613,7 +710,6 @@ void geom_store::paint_modal_analysis_results()
 		modal_solver.modal_analysis_start(model_nodes,
 			model_lineelements,
 			node_constraints,
-			node_ptmass,
 			mat_data);
 
 		// reset the frequency response and pulse response solution
@@ -726,8 +822,8 @@ void geom_store::paint_pulse_analysis_results()
 			model_lineelements,
 			node_constraints,
 			node_loads,
-			node_ptmass,
-			node_inlcond,
+			node_inldispl,
+			node_inlvelo,
 			mat_data,
 			modal_solver,
 			pulse_solver_window->total_simulation_time,

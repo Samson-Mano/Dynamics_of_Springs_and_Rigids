@@ -87,7 +87,7 @@ void inlcondition_window::render_window()
 		ImGui::RadioButton("Linear Velocity Interpolation", &inl_velocity_type, 0);
 		ImGui::RadioButton("Cubic Bezier Velocity Interpolation", &inl_velocity_type, 1);
 		ImGui::RadioButton("Sine Velocity Interpolation", &inl_velocity_type, 2);
-		ImGui::RadioButton("Single Node Displacement", &inl_velocity_type, 3);
+		ImGui::RadioButton("Single Node Velocity", &inl_velocity_type, 3);
 
 		// Text for Initial Velocity At Node
 		//_________________________________________________________________________________________
@@ -216,6 +216,11 @@ void inlcondition_window::get_Initial_Displacement_Start_Node()
 		}
 	}
 
+	if (inl_displacement_start >= inl_displacement_end)
+	{
+		inl_displacement_end = inl_displacement_start + 1;
+	}
+
 	// Text for Initial Displacement At Node
 	ImGui::SameLine();
 	ImGui::Text("Initial Displacement Start Node = %i", inl_displacement_start);
@@ -249,8 +254,16 @@ void inlcondition_window::get_Initial_Displacement_End_Node()
 		{
 			// convert the input string to int
 			inlDisplacementEnd_input = static_cast<int>(atoi(inlDisplacementEnd_str));
-			// set the Initial Displacement End Node to input value
-			inl_displacement_end = inlDisplacementEnd_input;
+			// set the load End Node to input value
+			if (inlDisplacementEnd_input > inl_displacement_start)
+			{
+				// set the Initial Displacement End Node to input value
+				inl_displacement_end = inlDisplacementEnd_input;
+			}
+			else
+			{
+				inlDisplacementEnd_input = static_cast<float>(inl_displacement_end);
+			}
 		}
 
 		// Button to switch back to slider mode
@@ -353,6 +366,11 @@ void inlcondition_window::get_Initial_Velocity_Start_Node()
 		}
 	}
 
+	if (inl_velocity_start >= inl_velocity_end)
+	{
+		inl_velocity_end = inl_velocity_start + 1;
+	}
+
 	// Text for Initial Velocity At Node
 	ImGui::SameLine();
 	ImGui::Text("Initial Velocity At Node = %i", inl_velocity_start);
@@ -387,8 +405,16 @@ void inlcondition_window::get_Initial_Velocity_End_Node()
 		{
 			// convert the input string to int
 			inlVelocityEnd_input = static_cast<int>(atoi(inlVelocityEnd_str));
-			// set the Initial Velocity End Node to input value
-			inl_velocity_end = inlVelocityEnd_input;
+			// set the load End Node to input value
+			if (inlVelocityEnd_input > inl_velocity_start)
+			{
+				// set the Initial Velocity End Node to input value
+				inl_velocity_end = inlVelocityEnd_input;
+			}
+			else
+			{
+				inlVelocityEnd_input = static_cast<float>(inl_velocity_end);
+			}
 		}
 
 		// Button to switch back to slider mode

@@ -60,6 +60,19 @@ void new_model_window::render_window()
 		execute_create_model = true;
 	}
 
+	//__________________________________________________________________________________________
+	ImGui::Spacing();
+
+	// Close button
+	if (ImGui::Button("Close"))
+	{
+		is_show_window = false;
+		execute_create_model = false;
+	}
+
+	//__________________________________________________________________________________________
+
+
 
 	ImGui::End();
 

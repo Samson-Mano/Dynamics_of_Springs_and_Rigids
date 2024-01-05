@@ -25,12 +25,12 @@ public:
 	void add_result_node(int& node_id, glm::vec2& node_pt, std::unordered_map<int, glm::vec2> node_modal_displ);
 	void set_buffer(int selected_mode);
 	void paint_modal_nodes();
-	void paint_label_mode_vectors();
+	// void paint_label_mode_vectors();
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 
 private:
 	geom_parameters* geom_param_ptr = nullptr;
-	label_list_store modal_node_vector_labels;
+	// label_list_store modal_node_vector_labels;
 	point_list_store modal_node_points;
 
 };
