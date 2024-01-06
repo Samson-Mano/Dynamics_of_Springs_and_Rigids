@@ -21,16 +21,17 @@ void nodeinlcond_list_store::init(geom_parameters* geom_param_ptr)
 
 }
 
-void nodeinlcond_list_store::set_zero_condition(int& number_of_nodes, double& model_total_length, int inl_cond_type)
+void nodeinlcond_list_store::set_zero_condition(nodes_list_store& model_nodes,double& model_total_length, int inl_cond_type,const int& model_type)
 {
-	this->number_of_nodes = number_of_nodes; // Number of nodes
+	this->number_of_nodes = model_nodes.node_count; // Number of nodes
 	this->model_total_length = model_total_length; // Total length
 	this->inl_cond_type = inl_cond_type; // Initial condition type 0 - Displacement, 1 - Velocity
+	this->model_type = model_type; // Model type 0, 1 Line, 2,3 Circle
 
-	delete_all_inlcondition();
+	delete_all_inlcondition(model_nodes);
 }
 
-void nodeinlcond_list_store::add_inlcondition(int& node_start, double& inl_cond_val, int& node_end, int& interpolation_type)
+void nodeinlcond_list_store::add_inlcondition(double& inl_cond_val,int& node_start, int& node_end, int& interpolation_type, nodes_list_store& model_nodes)
 {
 	// Check 1 node start is less than node end
 	if (node_start >= node_end)
@@ -58,10 +59,9 @@ void nodeinlcond_list_store::add_inlcondition(int& node_start, double& inl_cond_
 
 	// temporary initial condition
 	std::vector<nodeinl_cond> temp_inlcondMap;
-	double segment_length = model_total_length / number_of_nodes;
 
 	//_____________________________________________________ Input is valid
-	double inlcond_spread_length = (static_cast<float>(node_end - node_start) / static_cast<float>(number_of_nodes)) * model_total_length;
+	double inlcond_spread_length = (static_cast<float>(node_end - node_start) / static_cast<float>(number_of_nodes));
 
 	if (interpolation_type == 0)
 	{
@@ -82,7 +82,6 @@ void nodeinlcond_list_store::add_inlcondition(int& node_start, double& inl_cond_
 			// Create a temporary initial displacement data
 			nodeinl_cond temp_inl_displ;
 			temp_inl_displ.node_id = i;
-			temp_inl_displ.x_loc = (i * segment_length);
 			temp_inl_displ.y_val = pt_t.y;
 
 			// Add to the vector
@@ -103,7 +102,6 @@ void nodeinlcond_list_store::add_inlcondition(int& node_start, double& inl_cond_
 			// Create a temporary initial displacement data
 			nodeinl_cond temp_inl_displ;
 			temp_inl_displ.node_id = i;
-			temp_inl_displ.x_loc = (i * segment_length);
 			temp_inl_displ.y_val = pt_t.y;
 
 			// Add to the vector
@@ -132,7 +130,6 @@ void nodeinlcond_list_store::add_inlcondition(int& node_start, double& inl_cond_
 			// Create a temporary initial displacement data
 			nodeinl_cond temp_inl_displ;
 			temp_inl_displ.node_id = i;
-			temp_inl_displ.x_loc = (i * segment_length);
 			temp_inl_displ.y_val = pt_t.y;
 
 			// Add to the vector
@@ -155,7 +152,6 @@ void nodeinlcond_list_store::add_inlcondition(int& node_start, double& inl_cond_
 			// Create a temporary initial displacement data
 			nodeinl_cond temp_inl_displ;
 			temp_inl_displ.node_id = i;
-			temp_inl_displ.x_loc = (i * segment_length);
 			temp_inl_displ.y_val = pt_t.y;
 
 			// Add to the vector
@@ -179,7 +175,6 @@ void nodeinlcond_list_store::add_inlcondition(int& node_start, double& inl_cond_
 			// Create a temporary initial displacement data
 			nodeinl_cond temp_inl_displ;
 			temp_inl_displ.node_id = i;
-			temp_inl_displ.x_loc = (i * segment_length);
 			temp_inl_displ.y_val = pt_t.y;
 
 			// Add to the vector
@@ -192,15 +187,12 @@ void nodeinlcond_list_store::add_inlcondition(int& node_start, double& inl_cond_
 		// Single Node
 		nodeinl_cond temp_inl_displ;
 		temp_inl_displ.node_id = node_start;
-		temp_inl_displ.x_loc = (node_start * segment_length);
 		temp_inl_displ.y_val = inl_cond_val;
 
 		// Add to the vector
 		temp_inlcondMap.push_back(temp_inl_displ);
 
 	}
-
-
 
 	//___________________________________________________________________________________________
 	// Add to the displacement
@@ -219,10 +211,10 @@ void nodeinlcond_list_store::add_inlcondition(int& node_start, double& inl_cond_
 	}
 
 	// Create the displacement lines
-	create_inlcondition_pts();
+	create_inlcondition_pts(model_nodes);
 }
 
-void nodeinlcond_list_store::create_inlcondition_pts()
+void nodeinlcond_list_store::create_inlcondition_pts(nodes_list_store& model_nodes)
 {
 	double max_displ = 0.0;
 
@@ -262,36 +254,39 @@ void nodeinlcond_list_store::create_inlcondition_pts()
 	glm::vec2 node_pt_offset = glm::vec2(0);
 
 	int node_id = 0;
-	glm::vec2 node_pt = glm::vec2(0.0, 0.0);
-	double segment_length = model_total_length / number_of_nodes;
+	glm::vec2 inl_cond_node_pt = glm::vec2(0.0, 0.0);
 
-	for (int i = 0; i < number_of_nodes; i++)
+	for (auto& node_m : model_nodes.nodeMap)
 	{
-		// Loop through the nodes
-		node_pt = glm::vec2((i * segment_length), (this->inlcondMap[node_id].y_val / max_displ) * model_total_length * 0.1);
+		// Get the node pt of model nodes
+		node_id = node_m.first;
+		node_store node = node_m.second;
 
-		// Add node points as is
-		this->inlcond_points.add_point(node_id, node_pt, node_pt_offset, temp_color, false);
+		inl_cond_node_pt = get_inlcondition_offset(node.node_pt, (this->inlcondMap[node_id].y_val / max_displ));
+
+		// Add node points based on the initial condition value
+		this->inlcond_points.add_point(node_id, inl_cond_node_pt, node_pt_offset, temp_color, false);
+
 
 		//__________________________________________________________________________________________________________________________
 		// Create label at the local maximum
 		bool create_label = false;
-		if (i != 0 && i != (number_of_nodes - 1))
+		if (node_id != 0 && node_id != (number_of_nodes - 1))
 		{
-			if ((std::abs(this->inlcondMap[node_id].y_val) > std::abs(this->inlcondMap[node_id - 1].y_val)) &&
+			if ((std::abs(this->inlcondMap[node_id].y_val) >= std::abs(this->inlcondMap[node_id - 1].y_val)) &&
 				(std::abs(this->inlcondMap[node_id].y_val) > std::abs(this->inlcondMap[node_id + 1].y_val)))
 			{
 				create_label = true;
 			}
 		}
-		else if (i == 0)
+		else if (node_id == 0)
 		{
 			if (std::abs(this->inlcondMap[node_id].y_val) > std::abs(this->inlcondMap[node_id + 1].y_val))
 			{
 				create_label = true;
 			}
 		}
-		else if (i == (number_of_nodes - 1))
+		else if (node_id == (number_of_nodes - 1))
 		{
 			if (std::abs(this->inlcondMap[node_id].y_val) > std::abs(this->inlcondMap[node_id - 1].y_val))
 			{
@@ -327,13 +322,8 @@ void nodeinlcond_list_store::create_inlcondition_pts()
 			}
 
 			// Add the label
-			this->inl_condition_labels.add_text(temp_str, node_pt, node_pt_offset, temp_color, 0, is_above_pt, false);
+			this->inl_condition_labels.add_text(temp_str, inl_cond_node_pt, node_pt_offset, temp_color, 0, is_above_pt, false);
 		}
-
-
-
-		// Increment node ID
-		node_id++;
 
 	}
 
@@ -343,7 +333,7 @@ void nodeinlcond_list_store::create_inlcondition_pts()
 }
 
 
-void nodeinlcond_list_store::delete_all_inlcondition()
+void nodeinlcond_list_store::delete_all_inlcondition(nodes_list_store& model_nodes)
 {
 	// Clear the data
 	this->inlcond_points.clear_points();
@@ -365,17 +355,18 @@ void nodeinlcond_list_store::delete_all_inlcondition()
 		temp_color = geom_param_ptr->geom_colors.inlcond_velo_color; // Velocity Color
 	}
 
-	glm::vec2 node_pt_offset = glm::vec2(0);
-
 	// Set the zero displacement
 	int node_id = 0;
 	glm::vec2 node_pt = glm::vec2(0.0, 0.0);
-	double segment_length = model_total_length / number_of_nodes;
+	glm::vec2 node_pt_offset = glm::vec2(0);
 
-	for (int i = 0; i < number_of_nodes; i++)
+	for (auto& node_m : model_nodes.nodeMap)
 	{
-		// Loop through the nodes
-		node_pt = glm::vec2((i * segment_length), 0.0);
+		// Get the node pt of model nodes
+		node_id = node_m.first;
+		node_store node = node_m.second;
+
+		node_pt = node.node_pt; 
 
 		// Add node points as is
 		this->inlcond_points.add_point(node_id, node_pt, node_pt_offset, temp_color, false);
@@ -383,12 +374,9 @@ void nodeinlcond_list_store::delete_all_inlcondition()
 		// Add zero displacement profile
 		nodeinl_cond temp_inldispl;
 		temp_inldispl.node_id = node_id;
-		temp_inldispl.x_loc = (i * segment_length);
 		temp_inldispl.y_val = 0.0;
 
-		this->inlcondMap[i] = temp_inldispl;
-
-		node_id++;
+		this->inlcondMap[node_id] = temp_inldispl;
 	}
 
 	// Set Buffer
@@ -456,4 +444,24 @@ glm::vec2 nodeinlcond_list_store::half_sine_interpolation(glm::vec2 pt1, glm::ve
 	double y = pt1.y + weightY * (pt2.y - pt1.y);
 
 	return glm::vec2(x, y);
+}
+
+glm::vec2 nodeinlcond_list_store::get_inlcondition_offset(glm::vec2& node_pt, double y_val)
+{
+	// return the node offset based on the initial condition value
+	if (model_type == 0 || model_type == 1)
+	{
+		// Line
+		return (glm::vec2(node_pt.x, node_pt.y + (this->model_total_length * y_val * 0.1)));
+	}
+	else if (model_type == 2 || model_type == 3)
+	{
+		// Circular
+
+		glm::vec2 node_pt_unit = glm::normalize(node_pt);
+		float length = glm::length(node_pt) + (this->model_total_length * y_val * 0.1);
+
+		return (length * node_pt_unit);
+	}
+
 }

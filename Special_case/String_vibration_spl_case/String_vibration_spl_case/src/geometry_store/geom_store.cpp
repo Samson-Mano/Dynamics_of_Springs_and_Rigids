@@ -88,9 +88,6 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	modal_solver.clear_results();
 	pulse_solver.clear_results();
 
-	//Node Point list
-	std::vector<glm::vec2> node_pts_list;
-
 	int node_count = 0;
 
 	// Process the lines
@@ -140,14 +137,20 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 
 	// Model input
 	int material_id = 0;
-	if (model_type == 0)
+	int line_id = 0;
+	double dl = 0.0;
+	glm::vec2 node_pt = glm::vec2(0);
+	//Node Point list
+	std::vector<glm::vec2> node_pts_list;
+
+	if (model_type == 0 || model_type == 1)
 	{
 		// Line (Fixed - Fixed)
-		int i = 0;
-		double dl = mat_data.line_length / static_cast<double>(node_count);
+		i = 0;
+		dl = mat_data.line_length / static_cast<double>(node_count);
 
 		// Add first node
-		glm::vec2 node_pt = glm::vec2(i*dl, 0);
+		node_pt = glm::vec2(i*dl, 0);
 		this->model_nodes.add_node(i, node_pt);
 		node_pts_list.push_back(node_pt);
 
@@ -160,25 +163,63 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 			node_pts_list.push_back(node_pt);
 
 			// Add element
-			int line_id = i - 1;
+			line_id = i - 1;
 			this->model_lineelements.add_elementline(line_id, &this->model_nodes.nodeMap[i - 1], &this->model_nodes.nodeMap[i], material_id);
 		}
 
 		// Add end constraint
 		int constraint_type = 0;
 		double constraint_angle = 90;
-		i = 0;
-		this->node_constraints.add_constraint(i, this->model_nodes.nodeMap[i].node_pt, constraint_type, constraint_angle);
+		if (model_type == 0)
+		{
+			i = 0;
+			this->node_constraints.add_constraint(i, this->model_nodes.nodeMap[i].node_pt, constraint_type, constraint_angle);
+		}
 
 		i = node_count - 1;
 		this->node_constraints.add_constraint(i, this->model_nodes.nodeMap[i].node_pt, constraint_type, constraint_angle);
 
 
 		// Set the initial condition
-		this->node_inldispl.set_zero_condition(node_count, mat_data.line_length, 0);
-		this->node_inlvelo.set_zero_condition(node_count, mat_data.line_length, 1);
-		this->node_loads.set_zero_condition(node_count, mat_data.line_length);
+		this->node_inldispl.set_zero_condition(model_nodes, mat_data.line_length, 0, model_type);
+		this->node_inlvelo.set_zero_condition(model_nodes, mat_data.line_length, 1, model_type);
+		this->node_loads.set_zero_condition(mat_data.line_length, node_count, model_type);
+	}
+	else if (model_type == 2)
+	{
+		// Circular 
+		// Add the nodes
+		i = 0;
+		dl = (static_cast<float>(i) / static_cast<float>(node_count)) * 2.0 * m_pi; // Angle (Radian) 
 
+		// Add first node
+		node_pt = glm::vec2(mat_data.line_length * std::cos(dl), mat_data.line_length * std::sin(dl));
+		this->model_nodes.add_node(i, node_pt);
+		node_pts_list.push_back(node_pt);
+
+		for (i = 1; i < node_count; i++)
+		{
+			dl = (static_cast<float>(i) / static_cast<float>(node_count))*2.0*m_pi; // Angle (Radian) 
+
+			// Node point
+			node_pt = glm::vec2(mat_data.line_length * std::cos(dl), mat_data.line_length * std::sin(dl));
+			this->model_nodes.add_node(i, node_pt);
+			node_pts_list.push_back(node_pt);
+
+			// Add element
+			line_id = i - 1;
+			this->model_lineelements.add_elementline(line_id, &this->model_nodes.nodeMap[i - 1], &this->model_nodes.nodeMap[i], material_id);
+		}
+
+
+		// Add final element
+		line_id = i - 1;
+		this->model_lineelements.add_elementline(line_id, &this->model_nodes.nodeMap[i - 1], &this->model_nodes.nodeMap[0], material_id);
+
+		// Set the initial condition
+		this->node_inldispl.set_zero_condition(model_nodes, mat_data.line_length, 0, model_type);
+		this->node_inlvelo.set_zero_condition(model_nodes, mat_data.line_length, 1, model_type);
+		this->node_loads.set_zero_condition(mat_data.line_length, node_count, model_type);
 	}
 
 
@@ -449,27 +490,25 @@ void geom_store::paint_model()
 		}
 	}
 
-
-
-
 	//______________________________________________
 	// Paint the model
 	if (op_window->is_show_modelelements == true)
 	{
 		// Show the model elements
 		model_lineelements.paint_elementlines();
+	}
 
-		//if (op_window->is_show_modelelementids == true)
-		//{
-		//	// Show model element ids
-		//	model_lineelements.paint_label_line_ids();
 
-		//}
-		//if (op_window->is_show_modelelementlengths == true)
-		//{
-		//	// Show model element lengths
-		//	model_lineelements.paint_label_line_lengths();
-		//}
+	if (op_window->is_show_inlcondition == true)
+	{
+		// Show the node initial condition
+		// Initial Displacement
+		node_inldispl.paint_inlcond();
+		node_inldispl.paint_inlcond_label();
+
+		// Initial Velocity
+		node_inlvelo.paint_inlcond();
+		node_inlvelo.paint_inlcond_label();
 
 	}
 
@@ -477,30 +516,8 @@ void geom_store::paint_model()
 	{
 		// Show the model nodes
 		model_nodes.paint_model_nodes();
-
-		//if (op_window->is_show_modelnodeids == true)
-		//{
-		//	// Show model node ids
-		//	model_nodes.paint_label_node_ids();
-		//}
-		//if (op_window->is_show_modelnodecoords == true)
-		//{
-		//	// Show model node co-ordinates
-		//	model_nodes.paint_label_node_coords();
-		//}
 	}
 
-	//if (op_window->is_show_ptmass == true)
-	//{
-	//	// Show the node point mass
-	//	node_ptmass.paint_pointmass();
-
-	//	if (op_window->is_show_ptmass_labels == true)
-	//	{
-	//		// Show the node point mass label
-	//		node_ptmass.paint_pointmass_label();
-	//	}
-	//}
 
 	if (op_window->is_show_constraint == true)
 	{
@@ -520,30 +537,17 @@ void geom_store::paint_model()
 		}
 	}
 
-	if (op_window->is_show_inlcondition == true)
-	{
-		// Show the node initial condition
-		// Initial Displacement
-		node_inldispl.paint_inlcond();
-		node_inldispl.paint_inlcond_label();
-
-		// Initial Velocity
-		node_inlvelo.paint_inlcond();
-		node_inlvelo.paint_inlcond_label();
-
-	}
-
-
 	if (nd_inlcond_window->is_show_window == true)
 	{
 		// Initial condition window open
 		if (nd_inlcond_window->execute_apply_displ == true)
 		{
 			// Apply initial Displacement
-			node_inldispl.add_inlcondition(nd_inlcond_window->inl_displacement_start,
-				nd_inlcond_window->inl_displacement,
+			node_inldispl.add_inlcondition(nd_inlcond_window->inl_displacement, 
+				nd_inlcond_window->inl_displacement_start,
 				nd_inlcond_window->inl_displacement_end,
-				nd_inlcond_window->inl_displacement_type);
+				nd_inlcond_window->inl_displacement_type,
+				model_nodes);
 
 			nd_inlcond_window->execute_apply_displ = false;
 		}
@@ -551,7 +555,7 @@ void geom_store::paint_model()
 		if (nd_inlcond_window->execute_remove_displ == true)
 		{
 			// Delete initial Displacement
-			node_inldispl.delete_all_inlcondition();
+			node_inldispl.delete_all_inlcondition(model_nodes);
 
 			nd_inlcond_window->execute_remove_displ = false;
 		}
@@ -560,10 +564,11 @@ void geom_store::paint_model()
 		if (nd_inlcond_window->execute_apply_velo == true)
 		{
 			// Apply initial Velocity
-			node_inlvelo.add_inlcondition(nd_inlcond_window->inl_velocity_start,
-				nd_inlcond_window->inl_velocity,
+			node_inlvelo.add_inlcondition(nd_inlcond_window->inl_velocity, 
+				nd_inlcond_window->inl_velocity_start,
 				nd_inlcond_window->inl_velocity_end,
-				nd_inlcond_window->inl_velocity_type);
+				nd_inlcond_window->inl_velocity_type,
+				model_nodes);
 
 			nd_inlcond_window->execute_apply_velo = false;
 		}
@@ -571,7 +576,7 @@ void geom_store::paint_model()
 		if (nd_inlcond_window->execute_remove_velo == true)
 		{
 			// Delete initial Velocity
-			node_inlvelo.delete_all_inlcondition();
+			node_inlvelo.delete_all_inlcondition(model_nodes);
 
 			nd_inlcond_window->execute_remove_velo = false;
 		}
@@ -589,7 +594,6 @@ void geom_store::paint_model()
 				nd_load_window->load_start_time,
 				nd_load_window->load_end_time,
 				nd_load_window->load_amplitude,
-				mat_data.model_type,
 				nd_load_window->node_load_start,
 				nd_load_window->node_load_end,
 				nd_load_window->node_load_type);
@@ -604,11 +608,7 @@ void geom_store::paint_model()
 
 			nd_load_window->execute_remove_load = false;
 		}
-
-
 	}
-
-
 
 }
 
@@ -710,7 +710,9 @@ void geom_store::paint_modal_analysis_results()
 		modal_solver.modal_analysis_start(model_nodes,
 			model_lineelements,
 			node_constraints,
-			mat_data);
+			mat_data,
+			modal_result_nodes,
+			modal_result_lineelements);
 
 		// reset the frequency response and pulse response solution
 		pulse_solver.clear_results();

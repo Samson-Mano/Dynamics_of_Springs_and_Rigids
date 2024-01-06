@@ -31,14 +31,15 @@ void nodeload_list_store::init(geom_parameters* geom_param_ptr)
 	all_load_setids.clear();
 }
 
-void nodeload_list_store::set_zero_condition(int& number_of_nodes, double& model_total_length)
+void nodeload_list_store::set_zero_condition(double& model_total_length,const int& number_of_nodes, const int& model_type)
 {
 	this->number_of_nodes = number_of_nodes; // Number of nodes
 	this->model_total_length = model_total_length; // Total length
+	this->model_type = model_type; // Model type 0,1 Line, 2,3 Circular
 }
 
 void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_start_time, double& load_end_time,
-	double& load_value, int& model_type, int& node_start_id, int& node_end_id, int& interpolation_type)
+	double& load_value, int& node_start_id, int& node_end_id, int& interpolation_type)
 {
 
 	// Check 1 node start is less than node end
@@ -57,14 +58,6 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 	if (std::abs(load_value) < epsilon)
 		return;
 
-	// Calculate the angle
-	bool calculate_angle = false;
-	double load_angle = 90.0f;
-	if (model_type == 2 || model_type == 3)
-	{
-		calculate_angle = true;
-	}
-
 	// Declare 4 points for quadratic interpolation
 	glm::vec2 pt1 = glm::vec2(0); // end point 1
 	glm::vec2 pt2 = glm::vec2(0); // slope point 1
@@ -75,10 +68,9 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 
 	// temporary initial condition
 	std::vector<load_data> temp_loadMap;
-	double segment_length = model_total_length / number_of_nodes;
 
 	//_____________________________________________________ Input is valid
-	double load_spread_length = (static_cast<float>(node_end_id - node_start_id) / static_cast<float>(number_of_nodes)) * model_total_length;
+	double load_spread_length = (static_cast<float>(node_end_id - node_start_id) / static_cast<float>(number_of_nodes));
 
 	if (interpolation_type == 0)
 	{
@@ -110,7 +102,7 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 			temp_load.load_start_time = load_start_time; // Load start time
 			temp_load.load_end_time = load_end_time; // Load end time
 			temp_load.load_value = pt_t.y; // Load value
-			temp_load.load_angle = load_angle; // Load angle
+			temp_load.load_angle = get_load_angle(model_nodes.nodeMap[i].node_pt); // Load angle
 			temp_load.show_load_label = false;
 
 			// Add to the vector
@@ -142,7 +134,7 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 			temp_load.load_start_time = load_start_time; // Load start time
 			temp_load.load_end_time = load_end_time; // Load end time
 			temp_load.load_value = pt_t.y; // Load value
-			temp_load.load_angle = load_angle; // Load angle
+			temp_load.load_angle = get_load_angle(model_nodes.nodeMap[i].node_pt); // Load angle
 			temp_load.show_load_label = false;
 
 			if (pt_t.y == load_value)
@@ -187,7 +179,7 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 			temp_load.load_start_time = load_start_time; // Load start time
 			temp_load.load_end_time = load_end_time; // Load end time
 			temp_load.load_value = pt_t.y; // Load value
-			temp_load.load_angle = load_angle; // Load angle
+			temp_load.load_angle = get_load_angle(model_nodes.nodeMap[i].node_pt); // Load angle
 			temp_load.show_load_label = false;
 
 			// Add to the vector
@@ -221,7 +213,7 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 			temp_load.load_start_time = load_start_time; // Load start time
 			temp_load.load_end_time = load_end_time; // Load end time
 			temp_load.load_value = pt_t.y; // Load value
-			temp_load.load_angle = load_angle; // Load angle
+			temp_load.load_angle = get_load_angle(model_nodes.nodeMap[i].node_pt); // Load angle
 			temp_load.show_load_label = false;
 
 			if (pt_t.y == load_value)
@@ -263,7 +255,7 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 			temp_load.load_start_time = load_start_time; // Load start time
 			temp_load.load_end_time = load_end_time; // Load end time
 			temp_load.load_value = pt_t.y; // Load value
-			temp_load.load_angle = load_angle; // Load angle
+			temp_load.load_angle = get_load_angle(model_nodes.nodeMap[i].node_pt); // Load angle
 			temp_load.show_load_label = false;
 
 			if (i == mid_node_id)
@@ -286,7 +278,7 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 		temp_load.load_start_time = load_start_time; // Load start time
 		temp_load.load_end_time = load_end_time; // Load end time
 		temp_load.load_value = load_value; // Load value
-		temp_load.load_angle = load_angle; // Load angle
+		temp_load.load_angle = get_load_angle(model_nodes.nodeMap[node_start_id].node_pt); // Load angle
 		temp_load.show_load_label = true;
 
 		// Add to the vector
@@ -654,4 +646,20 @@ glm::vec2 nodeload_list_store::half_sine_interpolation(glm::vec2 pt1, glm::vec2 
 	double y = pt1.y + weightY * (pt2.y - pt1.y);
 
 	return glm::vec2(x, y);
+}
+
+double nodeload_list_store::get_load_angle(const glm::vec2& node_pt)
+{
+	// Get Load angle
+	if (model_type == 0 || model_type == 1)
+	{
+		// Line
+		return 90.0;
+	}
+	else if (model_type == 2 || model_type == 3)
+	{
+		// Circular
+		return (180.0 - (std::atan2(node_pt.y, node_pt.x) * (180.0 / 3.14159265358979323846)));
+	}
+
 }

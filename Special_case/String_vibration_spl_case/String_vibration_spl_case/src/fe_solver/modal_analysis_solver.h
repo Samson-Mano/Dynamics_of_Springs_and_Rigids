@@ -8,7 +8,8 @@
 #include "../geometry_store/fe_objects/nodeconstraint_list_store.h"
 
 // FE Results Modal Analysis
-
+#include "../geometry_store/result_objects/modal_nodes_list_store.h"
+#include "../geometry_store/result_objects/modal_elementline_list_store.h"
 
 // Stop watch
 #include "../events_handler/Stopwatch_events.h"
@@ -64,7 +65,9 @@ public:
 	void modal_analysis_start(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const nodeconstraint_list_store& node_constraints,
-		const material_data& mat_data);
+		const material_data& mat_data,
+		modal_nodes_list_store& modal_result_nodes,
+		modal_elementline_list_store& modal_result_lineelements);
 private:
 	const double m_pi = 3.14159265358979323846;
 	bool print_matrix = false;

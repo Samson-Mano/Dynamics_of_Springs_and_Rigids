@@ -24,13 +24,14 @@ public:
 
 	double model_total_length = 0.0;
 	int number_of_nodes = 0;
+	int model_type = 0; // 0,1 - Line, 2,3 - Circle
 
 	nodeload_list_store();
 	~nodeload_list_store();
 	void init(geom_parameters* geom_param_ptr);
-	void set_zero_condition(int& number_of_nodes, double& model_total_length);
+	void set_zero_condition(double& model_total_length, const int& number_of_nodes, const int& model_type);
 	void add_loads(nodes_list_store& model_nodes, double& load_start_time, double& load_end_time,
-		double& load_value, int& model_type,int& node_start_id, int& node_end_id, int& interpolation_type);
+		double& load_value, int& node_start_id, int& node_end_id, int& interpolation_type);
 	void delete_all_loads();
 	void set_buffer();
 	void paint_loads();
@@ -51,4 +52,6 @@ private:
 
 	void get_load_buffer(load_data& ld, float* load_vertices, unsigned int& load_v_index, unsigned int* load_indices, unsigned int& load_i_index);
 	int get_unique_load_id(std::vector<int>& all_ids);
+
+	double get_load_angle(const glm::vec2& node_pt);
 };

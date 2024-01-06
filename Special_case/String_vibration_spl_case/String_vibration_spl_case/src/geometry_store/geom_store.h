@@ -29,12 +29,12 @@
 #include "geometry_objects/dynamic_selrectangle_store.h"
 
 // FE Result Objects Modal analysis
-#include "analysis_result_objects/modal_nodes_list_store.h";
-#include "analysis_result_objects/modal_elementline_list_store.h";
+#include "result_objects/modal_nodes_list_store.h";
+#include "result_objects/modal_elementline_list_store.h";
 
 // FE Result Objects Pulse analysis
-#include "analysis_result_objects/pulse_node_list_store.h"
-#include "analysis_result_objects/pulse_elementline_list_store.h"
+#include "result_objects/pulse_node_list_store.h"
+#include "result_objects/pulse_elementline_list_store.h"
 
 
 class geom_store
@@ -89,7 +89,6 @@ private:
 	nodeload_list_store node_loads;
 	nodeinlcond_list_store node_inldispl;
 	nodeinlcond_list_store node_inlvelo;
-
 
 	// Modal analysis result 
 	modal_nodes_list_store modal_result_nodes;
