@@ -651,12 +651,12 @@ glm::vec2 nodeload_list_store::half_sine_interpolation(glm::vec2 pt1, glm::vec2 
 double nodeload_list_store::get_load_angle(const glm::vec2& node_pt)
 {
 	// Get Load angle
-	if (model_type == 0 || model_type == 1)
+	if (model_type == 0 || model_type == 1 || model_type == 2)
 	{
 		// Line
 		return 90.0;
 	}
-	else if (model_type == 2 || model_type == 3)
+	else if (model_type == 3)
 	{
 		// Circular
 		return (180.0 - (std::atan2(node_pt.y, node_pt.x) * (180.0 / 3.14159265358979323846)));

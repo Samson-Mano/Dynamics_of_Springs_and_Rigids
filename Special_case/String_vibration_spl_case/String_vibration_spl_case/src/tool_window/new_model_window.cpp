@@ -28,12 +28,13 @@ void new_model_window::render_window()
 	// Create three radio buttons for model options
 
 	ImGui::RadioButton("String in Tension (Fixed both ends)", &option_model_type, 0);
-	ImGui::RadioButton("String in Tension (Free - Fixed)", &option_model_type, 1);
-	ImGui::RadioButton("Circular string in Tension", &option_model_type, 2);
+	ImGui::RadioButton("String in Tension (Fixed - Free)", &option_model_type, 1);
+	ImGui::RadioButton("String in Tension (Free - Free)", &option_model_type, 2);
+	ImGui::RadioButton("Circular string in Tension", &option_model_type, 3);
 
 	//_____________________________________________________________________________________________________________________________________________________________________
 	// Text box for input
-	static char temp_str[1024 * 16] = "NodeCount, 100\nTension, 40\nLength, 600\nDensity, 24";
+	static char temp_str[1024 * 16] = "NodeCount, 100\nTension, 6000\nLength, 100\nDensity, 24";
 
 	ImGui::InputTextMultiline("##InputText",
 		temp_str,

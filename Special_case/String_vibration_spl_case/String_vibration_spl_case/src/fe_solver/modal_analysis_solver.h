@@ -42,21 +42,18 @@ class modal_analysis_solver
 public:
 	// Result store
 	int number_of_modes = 0;
-	std::unordered_map<int, int> nodeid_map; // Node ID map
-	std::unordered_map<int, double> m_eigenvalues;
-	std::unordered_map<int, std::vector<double>> m_eigenvectors;
+	int node_count = 0;
+
+	// Eigen values matrices
+	Eigen::VectorXd angular_freq_vector;
+	Eigen::VectorXd eigen_values_vector;
+
+	// Eigen vector matrices
+	Eigen::MatrixXd eigen_vectors_matrix;
+	Eigen::MatrixXd eigen_vectors_matrix_inverse;
+
 	std::vector<std::string> mode_result_str;
 	bool is_modal_analysis_complete = false;
-	int numDOF = 0;
-	int reducedDOF = 0;
-
-	// Matrix stored
-	Eigen::VectorXd reduced_modalMass;
-	Eigen::VectorXd reduced_modalStiff;
-	Eigen::VectorXi globalDOFMatrix;
-	Eigen::MatrixXd globalSupportInclinationMatrix;
-	Eigen::MatrixXd reduced_eigenvectors_transformed;
-	Eigen::MatrixXd global_eigenvectors_transformed;
 
 	modal_analysis_solver();
 	~modal_analysis_solver();
@@ -74,5 +71,23 @@ private:
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
+	void modal_analysis_model_linear1(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements, 
+		const material_data& mat_data);
 
+
+	void modal_analysis_model_linear2(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		const material_data& mat_data);
+
+
+	void modal_analysis_model_linear3(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		const material_data& mat_data);
+
+
+	void map_modal_analysis_linear_results(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		modal_nodes_list_store& modal_result_nodes,
+		modal_elementline_list_store& modal_result_lineelements);
 };

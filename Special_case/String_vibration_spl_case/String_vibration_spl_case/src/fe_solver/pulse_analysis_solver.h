@@ -2,6 +2,9 @@
 #include "modal_analysis_solver.h"
 #include "../geometry_store/fe_objects/nodeload_list_store.h"
 #include "../geometry_store/fe_objects/nodeinlcond_list_store.h"
+#include "../geometry_store/result_objects/pulse_node_list_store.h"
+#include "../geometry_store/result_objects/pulse_elementline_list_store.h"
+
 
 struct pulse_load_data
 {
@@ -41,16 +44,52 @@ public:
 		const double total_simulation_time,
 		const double time_interval,
 		const double damping_ratio,
-		const int mode_range_startid,
-		const int mode_range_endid,
-		const int selected_pulse_option);
+		const int selected_pulse_option,
+		pulse_node_list_store& pulse_result_nodes,
+		pulse_elementline_list_store& pulse_result_lineelements);
 
 private:
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
-	std::unordered_map<int, int> nodeid_map;
 
+	double get_steady_state_initial_condition_soln(const double& time_t,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& modal_initial_displacement,
+		const double& modal_initial_velocity);
+
+
+	double get_steady_state_half_sine_pulse_soln(const double& time_t,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& modal_force_ampl,
+		const double& modal_force_starttime,
+		const double& modal_force_endtime);
+
+
+	double get_steady_state_rectangular_pulse_soln(const double& time_t,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& modal_force_ampl,
+		const double& modal_force_starttime,
+		const double& modal_force_endtime);
+
+
+	double get_steady_state_triangular_pulse_soln(const double& time_t,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& modal_force_ampl,
+		const double& modal_force_starttime,
+		const double& modal_force_endtime);
+
+
+	double get_steady_state_stepforce_finiterise_soln(const double& time_t,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& modal_force_ampl,
+		const double& modal_force_starttime,
+		const double& modal_force_endtime);
 
 
 };

@@ -449,12 +449,12 @@ glm::vec2 nodeinlcond_list_store::half_sine_interpolation(glm::vec2 pt1, glm::ve
 glm::vec2 nodeinlcond_list_store::get_inlcondition_offset(glm::vec2& node_pt, double y_val)
 {
 	// return the node offset based on the initial condition value
-	if (model_type == 0 || model_type == 1)
+	if (model_type == 0 || model_type == 1 || model_type == 2)
 	{
 		// Line
 		return (glm::vec2(node_pt.x, node_pt.y + (this->model_total_length * y_val * 0.1)));
 	}
-	else if (model_type == 2 || model_type == 3)
+	else if (model_type == 3)
 	{
 		// Circular
 

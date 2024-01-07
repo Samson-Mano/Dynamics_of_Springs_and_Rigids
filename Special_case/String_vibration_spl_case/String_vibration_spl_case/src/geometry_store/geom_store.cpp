@@ -27,7 +27,7 @@ void geom_store::init(modal_analysis_window* modal_solver_window,
 	is_geometry_set = false;
 
 	// Initialize the solvers
-	modal_solver.clear_results(); 
+	modal_solver.clear_results();
 	pulse_solver.clear_results();
 
 
@@ -81,9 +81,6 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	this->modal_solver_window->init();
 	this->pulse_solver_window->init();
 
-	// Material data list
-	material_data mat_data;
-
 	// Re-Initialize the solver
 	modal_solver.clear_results();
 	pulse_solver.clear_results();
@@ -113,22 +110,22 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 		else if (fields[0] == "Tension")
 		{
 			// Tension
-			mat_data.line_tension = std::stod(fields[1]);
+			this->mat_data.line_tension = std::stod(fields[1]);
 
 		}
 		else if (fields[0] == "Length")
 		{
 			// Length
-			mat_data.line_length = std::stod(fields[1]);
+			this->mat_data.line_length = std::stod(fields[1]);
 		}
 		else if (fields[0] == "Density")
 		{
 			// Density
-			mat_data.material_density = std::stod(fields[1]);
+			this->mat_data.material_density = std::stod(fields[1]);
 		}
 
 		// Material type
-		mat_data.model_type = model_type;
+		this->mat_data.model_type = model_type;
 
 		// Iterate line
 		j++;
@@ -143,14 +140,14 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	//Node Point list
 	std::vector<glm::vec2> node_pts_list;
 
-	if (model_type == 0 || model_type == 1)
+	if (model_type == 0 || model_type == 1 || model_type == 2)
 	{
 		// Line (Fixed - Fixed)
 		i = 0;
 		dl = mat_data.line_length / static_cast<double>(node_count);
 
 		// Add first node
-		node_pt = glm::vec2(i*dl, 0);
+		node_pt = glm::vec2(i * dl, 0);
 		this->model_nodes.add_node(i, node_pt);
 		node_pts_list.push_back(node_pt);
 
@@ -170,22 +167,27 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 		// Add end constraint
 		int constraint_type = 0;
 		double constraint_angle = 90;
-		if (model_type == 0)
+
+		if (model_type == 0 || model_type == 1)
 		{
+			// Fixed Node Start
 			i = 0;
 			this->node_constraints.add_constraint(i, this->model_nodes.nodeMap[i].node_pt, constraint_type, constraint_angle);
 		}
 
-		i = node_count - 1;
-		this->node_constraints.add_constraint(i, this->model_nodes.nodeMap[i].node_pt, constraint_type, constraint_angle);
-
+		if (model_type == 0)
+		{
+			// Fixed Node End
+			i = node_count - 1;
+			this->node_constraints.add_constraint(i, this->model_nodes.nodeMap[i].node_pt, constraint_type, constraint_angle);
+		}
 
 		// Set the initial condition
 		this->node_inldispl.set_zero_condition(model_nodes, mat_data.line_length, 0, model_type);
 		this->node_inlvelo.set_zero_condition(model_nodes, mat_data.line_length, 1, model_type);
 		this->node_loads.set_zero_condition(mat_data.line_length, node_count, model_type);
 	}
-	else if (model_type == 2)
+	else if (model_type == 3)
 	{
 		// Circular 
 		// Add the nodes
@@ -199,7 +201,7 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 
 		for (i = 1; i < node_count; i++)
 		{
-			dl = (static_cast<float>(i) / static_cast<float>(node_count))*2.0*m_pi; // Angle (Radian) 
+			dl = (static_cast<float>(i) / static_cast<float>(node_count)) * 2.0 * m_pi; // Angle (Radian) 
 
 			// Node point
 			node_pt = glm::vec2(mat_data.line_length * std::cos(dl), mat_data.line_length * std::sin(dl));
@@ -474,7 +476,7 @@ void geom_store::paint_model()
 	if (modal_solver_window->is_show_window == true ||
 		pulse_solver_window->is_show_window == true)
 	{
-		if (modal_solver_window->is_show_window == true && 
+		if (modal_solver_window->is_show_window == true &&
 			modal_solver.is_modal_analysis_complete == true &&
 			modal_solver_window->show_undeformed_model == false)
 		{
@@ -543,7 +545,7 @@ void geom_store::paint_model()
 		if (nd_inlcond_window->execute_apply_displ == true)
 		{
 			// Apply initial Displacement
-			node_inldispl.add_inlcondition(nd_inlcond_window->inl_displacement, 
+			node_inldispl.add_inlcondition(nd_inlcond_window->inl_displacement,
 				nd_inlcond_window->inl_displacement_start,
 				nd_inlcond_window->inl_displacement_end,
 				nd_inlcond_window->inl_displacement_type,
@@ -564,7 +566,7 @@ void geom_store::paint_model()
 		if (nd_inlcond_window->execute_apply_velo == true)
 		{
 			// Apply initial Velocity
-			node_inlvelo.add_inlcondition(nd_inlcond_window->inl_velocity, 
+			node_inlvelo.add_inlcondition(nd_inlcond_window->inl_velocity,
 				nd_inlcond_window->inl_velocity_start,
 				nd_inlcond_window->inl_velocity_end,
 				nd_inlcond_window->inl_velocity_type,
@@ -793,9 +795,9 @@ void geom_store::paint_pulse_analysis_results()
 		else
 		{
 			// Modal analysis Results
-			pulse_solver_window->number_of_modes = static_cast<int>(modal_solver.m_eigenvalues.size());
-			pulse_solver_window->modal_first_frequency = std::sqrt(modal_solver.m_eigenvalues.at(0)) / (2.0 * m_pi); // std::sqrt(modal_results.eigen_values[i]) / (2.0 * m_pi);
-			pulse_solver_window->modal_end_frequency = std::sqrt(modal_solver.m_eigenvalues.at(pulse_solver_window->number_of_modes - 1)) / (2.0 * m_pi);
+			// pulse_solver_window->number_of_modes = static_cast<int>(modal_solver.m_eigenvalues.size());
+			// pulse_solver_window->modal_first_frequency = std::sqrt(modal_solver.m_eigenvalues.at(0)) / (2.0 * m_pi); // std::sqrt(modal_results.eigen_values[i]) / (2.0 * m_pi);
+			// pulse_solver_window->modal_end_frequency = std::sqrt(modal_solver.m_eigenvalues.at(pulse_solver_window->number_of_modes - 1)) / (2.0 * m_pi);
 			pulse_solver_window->mode_result_str = modal_solver.mode_result_str;
 
 			// Modal analysis is complete (check whether frequency response analysis is complete or not)
@@ -831,9 +833,9 @@ void geom_store::paint_pulse_analysis_results()
 			pulse_solver_window->total_simulation_time,
 			pulse_solver_window->time_interval,
 			pulse_solver_window->damping_ratio,
-			pulse_solver_window->selected_modal_option1,
-			pulse_solver_window->selected_modal_option2,
-			pulse_solver_window->selected_pulse_option);
+			pulse_solver_window->selected_pulse_option,
+			pulse_result_nodes,
+			pulse_result_lineelements);
 
 		// Check whether the modal analysis is complete or not
 		if (pulse_solver.is_pulse_analysis_complete == true)

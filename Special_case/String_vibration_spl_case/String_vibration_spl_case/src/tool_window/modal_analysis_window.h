@@ -30,7 +30,7 @@ public:
 	bool animate_play = true;
 	bool animate_pause = false;
 	double time_val = 0.0;
-	double deformation_scale_max = 10.0;
+	double deformation_scale_max = 40.0;
 	double animation_speed = 20.0;
 	double normailzed_defomation_scale = 0.0;
 	double deformation_scale = 0.0;
