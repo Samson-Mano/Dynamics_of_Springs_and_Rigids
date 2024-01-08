@@ -29,7 +29,7 @@ void new_model_window::render_window()
 
 	ImGui::RadioButton("String in Tension (Fixed both ends)", &option_model_type, 0);
 	ImGui::RadioButton("String in Tension (Fixed - Free)", &option_model_type, 1);
-	ImGui::RadioButton("String in Tension (Free - Free)", &option_model_type, 2);
+	// ImGui::RadioButton("String in Tension (Free - Free)", &option_model_type, 2);
 	ImGui::RadioButton("Circular string in Tension", &option_model_type, 3);
 
 	//_____________________________________________________________________________________________________________________________________________________________________
