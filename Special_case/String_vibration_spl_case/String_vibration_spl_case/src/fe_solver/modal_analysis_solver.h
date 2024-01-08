@@ -43,12 +43,15 @@ public:
 	// Result store
 	int number_of_modes = 0;
 	int node_count = 0;
+	int matrix_size = 0;
+	int model_type = 0;
 
 	// Eigen values matrices
 	Eigen::VectorXd angular_freq_vector;
 	Eigen::VectorXd eigen_values_vector;
 
 	// Eigen vector matrices
+	Eigen::MatrixXd displ_vectors_matrix;
 	Eigen::MatrixXd eigen_vectors_matrix;
 	Eigen::MatrixXd eigen_vectors_matrix_inverse;
 
@@ -67,7 +70,7 @@ public:
 		modal_elementline_list_store& modal_result_lineelements);
 private:
 	const double m_pi = 3.14159265358979323846;
-	bool print_matrix = false;
+	bool print_matrix = true;
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
