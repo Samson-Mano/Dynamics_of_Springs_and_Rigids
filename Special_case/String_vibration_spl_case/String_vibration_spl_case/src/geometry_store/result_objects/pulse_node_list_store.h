@@ -1,6 +1,6 @@
 #pragma once
 #include "../fe_objects/nodes_list_store.h"
-// #include "../geometry_objects/dynamic_point_list_store.h"
+#include "../geometry_objects/dynamic_point_list_store.h"
 
 
 struct pulse_node_result
@@ -40,6 +40,6 @@ public:
 
 private:
 	geom_parameters* geom_param_ptr = nullptr;
-	// dynamic_point_list_store pulse_node_points;
+	dynamic_point_list_store pulse_node_points;
 	
 };

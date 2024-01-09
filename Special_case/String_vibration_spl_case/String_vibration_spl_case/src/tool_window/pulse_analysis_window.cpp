@@ -27,8 +27,6 @@ void pulse_analysis_window::init()
 
 	stopwatch.start();
 	mode_result_str.clear(); // Remove the mode result list
-	selected_modal_option1 = 0;
-	selected_modal_option2 = 0;
 
 	time_interval_atrun = 0.0; // Value of time interval used in the pulse response 
 	time_step_count = 0;
@@ -57,68 +55,6 @@ void pulse_analysis_window::render_window()
 //________________________________________________________________________________________
 	ImGui::Text("Start Mode 1 Frequency = %.3f Hz", static_cast<float>(modal_first_frequency));
 	ImGui::Text("End Mode %i Frequency = %.3f Hz", number_of_modes, static_cast<float>(modal_end_frequency));
-
-	// Add the modal analysis result list box
-	std::vector<const char*> items_cstr;
-	for (const auto& item : mode_result_str)
-	{
-		items_cstr.push_back(item.c_str());
-	}
-
-	if (selected_modal_option1 > selected_modal_option2)
-	{
-		selected_modal_option2 = selected_modal_option1;
-	}
-
-	// Dropdown list 1 Mode range 1
-	// Add the modal analysis result dropdown list
-	const char* current_item1 = (selected_modal_option1 >= 0 && selected_modal_option1 < items_cstr.size()) ? items_cstr[selected_modal_option1] : "";
-
-	if (ImGui::BeginCombo("Start Mode", current_item1))
-	{
-		for (int i = 0; i < items_cstr.size(); i++)
-		{
-			const bool is_selected = (selected_modal_option1 == i);
-			if (ImGui::Selectable(items_cstr[i], is_selected))
-			{
-				selected_modal_option1 = i;
-			}
-
-			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-			if (is_selected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-
-		ImGui::EndCombo();
-	}
-
-	// Dropdown list 2 Mode range 2
-	// Add the modal analysis result dropdown list
-	const char* current_item2 = (selected_modal_option2 >= 0 && selected_modal_option2 < items_cstr.size()) ? items_cstr[selected_modal_option2] : "";
-
-	if (ImGui::BeginCombo("End Mode", current_item2))
-	{
-		for (int i = 0; i < items_cstr.size(); i++)
-		{
-			const bool is_selected = (selected_modal_option2 == i);
-			if (ImGui::Selectable(items_cstr[i], is_selected))
-			{
-				selected_modal_option2 = i;
-			}
-
-			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-			if (is_selected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-
-		ImGui::EndCombo();
-	}
-
-	ImGui::Text("Mode range %i to %i", (selected_modal_option1+1), (selected_modal_option2+1));
 
 	// Inputs
 	// Text for total simulation time

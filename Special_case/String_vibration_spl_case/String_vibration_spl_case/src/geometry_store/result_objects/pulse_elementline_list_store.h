@@ -1,6 +1,6 @@
 #pragma once
 #include "pulse_node_list_store.h"
-// #include "../geometry_objects/dynamic_line_list_store.h"
+#include "../geometry_objects/dynamic_line_list_store.h"
 
 
 struct pulse_elementline_store
@@ -8,8 +8,6 @@ struct pulse_elementline_store
 	int line_id = 0; // ID of the line
 	pulse_node_store* startNode = nullptr; // start node
 	pulse_node_store* endNode = nullptr; // end node
-
-	bool is_rigid = false; // Check whether the line is rigid or not
 
 	// Line result displacement data
 	// Line displacement magnitude
@@ -35,7 +33,7 @@ public:
 	~pulse_elementline_list_store();
 	void init(geom_parameters* geom_param_ptr);
 	void clear_data();
-	void add_pulse_elementline(int& line_id, pulse_node_store* startNode, pulse_node_store* endNode, bool& is_rigid);
+	void add_pulse_elementline(int& line_id, pulse_node_store* startNode, pulse_node_store* endNode);
 	void set_buffer();
 	void paint_pulse_elementlines(const int& dyn_index);
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation,
@@ -43,8 +41,6 @@ public:
 
 private:
 	geom_parameters* geom_param_ptr = nullptr;
-	// dynamic_line_list_store pulse_element_lines;
+	dynamic_line_list_store pulse_element_lines;
 
-	// void set_rigid_element_line(const pulse_elementline_store& rline, dynamic_line_list_store& result_element_lines);
-	// void set_spring_element_line(const pulse_elementline_store& rline, dynamic_line_list_store& result_element_lines);
 };

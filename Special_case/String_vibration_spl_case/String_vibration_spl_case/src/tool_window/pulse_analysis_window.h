@@ -18,8 +18,6 @@ public:
 
 	std::vector<std::string> mode_result_str;
 	std::vector<std::string> pulse_option_str;
-	int selected_modal_option1 = 0;
-	int selected_modal_option2 = 0;
 	int selected_pulse_option = 0;
 
 	// Inputs for response calculation

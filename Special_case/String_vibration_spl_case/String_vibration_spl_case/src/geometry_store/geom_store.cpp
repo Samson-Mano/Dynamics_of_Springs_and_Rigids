@@ -796,8 +796,8 @@ void geom_store::paint_pulse_analysis_results()
 		{
 			// Modal analysis Results
 			// pulse_solver_window->number_of_modes = static_cast<int>(modal_solver.m_eigenvalues.size());
-			// pulse_solver_window->modal_first_frequency = std::sqrt(modal_solver.m_eigenvalues.at(0)) / (2.0 * m_pi); // std::sqrt(modal_results.eigen_values[i]) / (2.0 * m_pi);
-			// pulse_solver_window->modal_end_frequency = std::sqrt(modal_solver.m_eigenvalues.at(pulse_solver_window->number_of_modes - 1)) / (2.0 * m_pi);
+			pulse_solver_window->modal_first_frequency = modal_solver.angular_freq_vector.coeff(0) / (2.0 * m_pi);
+			pulse_solver_window->modal_end_frequency = modal_solver.angular_freq_vector.coeff(modal_solver.matrix_size - 1) / (2.0 * m_pi);
 			pulse_solver_window->mode_result_str = modal_solver.mode_result_str;
 
 			// Modal analysis is complete (check whether frequency response analysis is complete or not)
