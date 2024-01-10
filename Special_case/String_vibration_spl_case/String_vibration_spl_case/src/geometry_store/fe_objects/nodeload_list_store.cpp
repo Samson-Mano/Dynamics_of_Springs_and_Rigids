@@ -50,9 +50,13 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 	if (node_start_id<0 || node_start_id >(number_of_nodes - 1))
 		return;
 
-	// Check 3 before adding (Node end is within the node range or not)
-	if (node_end_id<0 || node_end_id >(number_of_nodes - 1))
-		return;
+	if (interpolation_type != 3)
+	{
+		// Ignore single node application (Only start node matters)
+		// Check 3 before adding (Node end is within the node range or not)
+		if (node_end_id<0 || node_end_id >(number_of_nodes - 1))
+			return;
+	}
 
 	// Check 4 if there is any load value or not
 	if (std::abs(load_value) < epsilon)
@@ -285,6 +289,7 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 		temp_loadMap.push_back(temp_load);
 
 	}
+	
 
 	int temp_load_setids = get_unique_load_id(all_load_setids);
 

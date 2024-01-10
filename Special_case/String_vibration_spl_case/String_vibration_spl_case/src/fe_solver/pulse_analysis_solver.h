@@ -111,6 +111,14 @@ private:
 		const double& modal_force_endtime);
 
 
+	double get_total_harmonic_soln(const double& time_t,
+		const double& modal_mass,
+		const double& modal_stiff,
+		const double& modal_force_ampl,
+		const double& modal_force_starttime,
+		const double& modal_force_endtime);
+
+
 	void map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
 		pulse_elementline_list_store& pulse_result_lineelements,
 		const int& number_of_time_steps,

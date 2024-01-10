@@ -777,7 +777,7 @@ void pulse_analysis_solver::get_steady_state_triangular_pulse_soln(double& stead
 				double k_fact = ((2.0 * modal_force_ampl) / modal_stiff);
 				double m_factor = (1 / (t_d * modal_omega_n));
 				double factor1 = 2.0 * std::sin(modal_omega_n * (t_at - (0.5 * t_d)));
-				double factor2 = std::sin(modal_omega_n * (t_at - (0.5 * t_d)));
+				double factor2 = std::sin(modal_omega_n * (t_at -  t_d));
 
 				steady_state_displ_resp = k_fact *(m_factor * (factor1 - factor2 - std::sin(modal_omega_n * t_at)));
 			

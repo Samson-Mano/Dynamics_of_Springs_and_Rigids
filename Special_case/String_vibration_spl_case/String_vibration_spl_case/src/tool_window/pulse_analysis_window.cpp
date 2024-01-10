@@ -23,7 +23,7 @@ void pulse_analysis_window::init()
 	pulse_option_str.push_back("Rectangular pulse");
 	pulse_option_str.push_back("Triangular pulse");
 	pulse_option_str.push_back("Step force with finite rise");
-
+	pulse_option_str.push_back("Harmonic/ Periodic excitation");
 
 	stopwatch.start();
 	mode_result_str.clear(); // Remove the mode result list
