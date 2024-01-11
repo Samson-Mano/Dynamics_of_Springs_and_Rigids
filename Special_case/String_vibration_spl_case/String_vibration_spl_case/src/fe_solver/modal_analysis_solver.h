@@ -89,7 +89,18 @@ private:
 		const material_data& mat_data);
 
 
+	void modal_analysis_model_circular1(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		const material_data& mat_data);
+
+
 	void map_modal_analysis_linear_results(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		modal_nodes_list_store& modal_result_nodes,
+		modal_elementline_list_store& modal_result_lineelements);
+
+
+	void map_modal_analysis_circular_results(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements);
