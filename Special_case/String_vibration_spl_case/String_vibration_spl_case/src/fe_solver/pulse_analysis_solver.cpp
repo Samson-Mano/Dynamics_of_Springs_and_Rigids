@@ -256,6 +256,11 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			}
 			else if (this->model_type == 3)
 			{
+				// Circular string Free - Free
+				glm::vec2 normal_dir = glm::normalize(nd_m.second.node_pt);
+
+				// get the appropriate modal displacement of this particular node
+				node_displ = static_cast<float>(global_displ_ampl_respMatrix.coeff(node_id-1)) * glm::vec2(normal_dir.x, -1.0 * normal_dir.y);
 
 			}
 
@@ -336,6 +341,8 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 {
 	// Modal reduction of global initial displacement
 	// Modal vector transformation 
+	modal_reducedInitialDisplacementMatrix.setZero();
+	modal_reducedInitialVelocityMatrix.setZero();
 
 	if (this->model_type == 0)
 	{
@@ -379,8 +386,23 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 	}
 	else if (this->model_type == 3)
 	{
-		// Circular (No DOF)
+		// Circular (No DOF) Free - Free
 
+		Eigen::VectorXd global_reducedInitialDisplacementMatrix(reducedDOF);
+		Eigen::VectorXd global_reducedInitialVelocityMatrix(reducedDOF);
+
+		int q = 0;
+		for (int i = 0; i < this->numDOF; i++)
+		{
+			global_reducedInitialDisplacementMatrix.coeffRef(q) =  node_inldispl.inlcondMap.at(i).y_val;
+			global_reducedInitialVelocityMatrix.coeffRef(q) =  node_inlvelo.inlcondMap.at(i).y_val;
+
+			q++;
+		}
+
+		// Apply modal Transformation
+		modal_reducedInitialDisplacementMatrix = eigen_vectors_matrix_inverse * global_reducedInitialDisplacementMatrix;
+		modal_reducedInitialVelocityMatrix = eigen_vectors_matrix_inverse * global_reducedInitialVelocityMatrix;
 
 	}
 

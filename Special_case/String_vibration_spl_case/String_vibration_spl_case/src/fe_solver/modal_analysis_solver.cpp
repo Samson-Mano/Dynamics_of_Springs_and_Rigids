@@ -16,7 +16,7 @@ void modal_analysis_solver::clear_results()
 	// Clear the eigen values and eigen vectors
 	number_of_modes = 0;
 	node_count = 0;
-	
+
 	mode_result_str.clear();
 	is_modal_analysis_complete = false;
 }
@@ -55,12 +55,12 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 	std::cout << "Modal analysis - started" << std::endl;
 
-	
+
 	this->node_count = model_nodes.node_count;
 	this->model_type = mat_data.model_type;
 
 	// Displacement vectors matrix
-	displ_vectors_matrix.resize(node_count,node_count);
+	displ_vectors_matrix.resize(node_count, node_count);
 	displ_vectors_matrix.setZero();
 
 	this->matrix_size = 0;
@@ -74,16 +74,12 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	{
 		// Fixed - Free
 		this->matrix_size = node_count - 1;
-	}
-	else if (this->model_type == 2)
-	{
-		// Free - Free Line
-		this->matrix_size = node_count;
+
 	}
 	else if (this->model_type == 3)
 	{
 		// Circular (Free - Free)
-		this->matrix_size = node_count-1;
+		this->matrix_size = node_count;
 	}
 
 	// Clear the angular frequency matrix
@@ -185,7 +181,7 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 		output_file << eigen_vectors_matrix << std::endl;
 		output_file << std::endl;
 
-		eigen_vectors_matrix_inverse = eigen_vectors_matrix.inverse();
+		// eigen_vectors_matrix_inverse = eigen_vectors_matrix.inverse();
 
 		output_file << "Eigen vectors Inverse" << std::endl;
 		output_file << eigen_vectors_matrix_inverse << std::endl;
@@ -199,7 +195,7 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 		output_file.close();
 	}
-	
+
 
 
 
@@ -220,7 +216,7 @@ void modal_analysis_solver::modal_analysis_model_linear1(const nodes_list_store&
 	for (int i = 0; i < node_count; i++)
 	{
 		// Eigen values
-		int mode_number = i+1;
+		int mode_number = i + 1;
 
 		if (i < matrix_size)
 		{
@@ -258,7 +254,7 @@ void modal_analysis_solver::modal_analysis_model_linear1(const nodes_list_store&
 
 			if (i < matrix_size && j < (matrix_size + 1))
 			{
-				eigen_vectors_matrix.coeffRef(j-1, i) = t_eigen_vec;
+				eigen_vectors_matrix.coeffRef(j - 1, i) = t_eigen_vec;
 			}
 		}
 
@@ -270,18 +266,20 @@ void modal_analysis_solver::modal_analysis_model_linear1(const nodes_list_store&
 	// Create the eigen vectors inverse matrix
 	double inv_factor = 2.0 / static_cast<float>(matrix_size + 1.0);
 
-	for (int i = 0; i < matrix_size; i++)
-	{
-		for (int j = 0; j < matrix_size; j++)
-		{
-			double length_ratio = (static_cast<float>(j + 1) / static_cast<float>(node_count - 1));
-			double t_eigen_vec = std::sin((i + 1) * m_pi * length_ratio);
+	//for (int i = 0; i < matrix_size; i++)
+	//{
+	//	for (int j = 0; j < matrix_size; j++)
+	//	{
+	//		double length_ratio = (static_cast<float>(j + 1) / static_cast<float>(node_count - 1));
+	//		double t_eigen_vec = std::sin((i + 1) * m_pi * length_ratio);
 
-			eigen_vectors_matrix_inverse.coeffRef(j, i) = inv_factor * t_eigen_vec;
+	//		eigen_vectors_matrix_inverse.coeffRef(j, i) = inv_factor * t_eigen_vec;
 
-		}
-	}
+	//	}
+	//}
 
+	// Test of not using Eigen vectors inverse
+	eigen_vectors_matrix_inverse = inv_factor * eigen_vectors_matrix.transpose();
 
 }
 
@@ -300,7 +298,7 @@ void modal_analysis_solver::modal_analysis_model_linear2(const nodes_list_store&
 	{
 		// Eigen values
 
-		int mode_number = (2 * (i+1)) - 1;
+		int mode_number = (2 * (i + 1)) - 1;
 
 		if (i < matrix_size)
 		{
@@ -338,7 +336,7 @@ void modal_analysis_solver::modal_analysis_model_linear2(const nodes_list_store&
 
 			if (i < matrix_size && j < (matrix_size + 1))
 			{
-				eigen_vectors_matrix.coeffRef(j-1, i) = t_eigen_vec;
+				eigen_vectors_matrix.coeffRef(j - 1, i) = t_eigen_vec;
 			}
 		}
 
@@ -349,23 +347,31 @@ void modal_analysis_solver::modal_analysis_model_linear2(const nodes_list_store&
 	// Create the eigen vectors inverse matrix
 	double inv_factor = 2.0 / static_cast<float>(matrix_size + 0);
 
-	for (int i = 0; i < matrix_size; i++)
+	//for (int i = 0; i < matrix_size; i++)
+	//{
+	//	if (i == (matrix_size - 1))
+	//	{
+	//		inv_factor = inv_factor * 0.5;
+	//	}
+
+	//	for (int j = 0; j < matrix_size; j++)
+	//	{
+	//		double length_ratio = (static_cast<float>((j * 2)+1) / static_cast<float>(node_count - 1));
+	//		double t_eigen_vec = std::sin((i+1) * m_pi * length_ratio * 0.5);
+
+	//		eigen_vectors_matrix_inverse.coeffRef(j, i) = inv_factor * t_eigen_vec;
+
+	//	}
+	//}
+
+	eigen_vectors_matrix_inverse = inv_factor * eigen_vectors_matrix.transpose();
+
+	// Edit the last column
+	for (int j = 0; j < matrix_size; j++)
 	{
-		if (i == (matrix_size - 1))
-		{
-			inv_factor = inv_factor * 0.5;
-		}
+		eigen_vectors_matrix_inverse.coeffRef(j, (matrix_size - 1)) = 0.5 * eigen_vectors_matrix_inverse.coeffRef(j, (matrix_size - 1));
 
-		for (int j = 0; j < matrix_size; j++)
-		{
-			double length_ratio = (static_cast<float>((j * 2)+1) / static_cast<float>(node_count - 1));
-			double t_eigen_vec = std::sin((i+1) * m_pi * length_ratio * 0.5);
-
-			eigen_vectors_matrix_inverse.coeffRef(j, i) = inv_factor * t_eigen_vec;
-
-		}
 	}
-
 
 }
 
@@ -383,7 +389,7 @@ void modal_analysis_solver::modal_analysis_model_linear3(const nodes_list_store&
 	for (int i = 0; i < node_count; i++)
 	{
 		// Eigen values
-		double mode_number = (i+2);
+		double mode_number = (i + 2);
 
 		double t_eigen = (mode_number * m_pi * c_param) / line_length;
 
@@ -403,7 +409,7 @@ void modal_analysis_solver::modal_analysis_model_linear3(const nodes_list_store&
 		ss << std::fixed << std::setprecision(3) << nat_freq;
 
 		// Add to the string list
-		mode_result_str.push_back("Mode " + std::to_string(i+1) + " = " + ss.str() + " Hz");
+		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz");
 
 		// First node is free
 
@@ -411,7 +417,7 @@ void modal_analysis_solver::modal_analysis_model_linear3(const nodes_list_store&
 		{
 			double length_ratio = (static_cast<float>(j) / static_cast<float>(node_count - 1));
 			double t_eigen_vec = std::sin((mode_number * m_pi * length_ratio) + (m_pi * 0.5));
-			
+
 			displ_vectors_matrix.coeffRef(j, i) = t_eigen_vec;
 
 			eigen_vectors_matrix.coeffRef(j, i) = t_eigen_vec;
@@ -435,29 +441,29 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 
 	for (int i = 0; i < node_count; i++)
 	{
-		if (i < node_count - 1)
-		{
-			double t_eigen = (q * m_pi * c_param) / line_length;
+		//if (i < node_count - 1)
+		//{
+		double t_eigen = (q * m_pi * c_param) / line_length;
 
-			// Angular frequency wn
-			angular_freq_vector.coeffRef(i) = t_eigen;
+		// Angular frequency wn
+		angular_freq_vector.coeffRef(i) = t_eigen;
 
-			// Eigen value
-			eigen_values_vector.coeffRef(i) = (t_eigen * t_eigen);
+		// Eigen value
+		eigen_values_vector.coeffRef(i) = (t_eigen * t_eigen);
 
-			this->number_of_modes++;
+		this->number_of_modes++;
 
-			// Frequency
-			double nat_freq = t_eigen / (2.0 * m_pi);
+		// Frequency
+		double nat_freq = t_eigen / (2.0 * m_pi);
 
-			// Modal results
-			std::stringstream ss;
-			ss << std::fixed << std::setprecision(3) << nat_freq;
+		// Modal results
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(3) << nat_freq;
 
-			// Add to the string list
-			mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz");
+		// Add to the string list
+		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz");
 
-		}
+		// }
 
 		int is_odd = i % 2;
 
@@ -473,10 +479,10 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 
 				displ_vectors_matrix.coeffRef(j, i) = t_eigen_vec;
 
-				if ((i < node_count - 1) && j < (node_count - 1))
-				{
-					eigen_vectors_matrix.coeffRef(j, i) = t_eigen_vec;
-				}
+				// if ((i < node_count - 1) && j < (node_count - 1))
+				// {
+				eigen_vectors_matrix.coeffRef(j, i) = t_eigen_vec;
+				// }
 			}
 		}
 		else
@@ -491,16 +497,61 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 
 				displ_vectors_matrix.coeffRef(j, i) = t_eigen_vec;
 
-				if ((i < node_count - 1) && j < (node_count - 1))
-				{
-					eigen_vectors_matrix.coeffRef(j, i) = t_eigen_vec;
-				}
+				// if ((i < node_count - 1) && j < (node_count - 1))
+				// {
+				eigen_vectors_matrix.coeffRef(j, i) = t_eigen_vec;
+				// }
 			}
 
 			// Itereate q which is used to calculate the modal frequency 1,1,2,2,3,3,4..
 			q++;
 		}
 	}
+
+	// Modify the last column (Because all the values are zero )
+	for (int j = 0; j < node_count; j++)
+	{
+		int is_odd = j % 2;
+		if (is_odd == 0)
+		{
+			eigen_vectors_matrix.coeffRef(j, node_count - 1) = 0.0;
+		}
+		else
+		{
+			eigen_vectors_matrix.coeffRef(j, node_count - 1) = 0.0;
+		}
+	
+	}
+
+
+	//// Modify the last column (Because all the values are zero )
+	//for (int j = 0; j < node_count; j++)
+	//{
+	//	int is_odd = (node_count - 1) % 2;
+	//	double val = 0.0;
+	//	if (is_odd == 0)
+	//	{
+	//		// Cosine Mode
+	//		double angle_ratio = (static_cast<float>(j) / static_cast<float>(node_count)) * 2.0 * m_pi;
+	//		val = std::cos(q * angle_ratio);
+	//	}
+	//	else
+	//	{
+	//		// Sine Mode
+	//		double angle_ratio = (static_cast<float>(j) / static_cast<float>(node_count)) * 2.0 * m_pi;
+	//		val = std::sin(q * angle_ratio);
+
+	//	}
+	//	eigen_vectors_matrix.coeffRef(j, node_count - 1) = val;
+	//	displ_vectors_matrix.coeffRef(j, node_count - 1) = val;
+	//}
+
+	double inv_factor = 2.0 / static_cast<float>(matrix_size);
+
+	// Create the eigen vectors inverse matrix
+
+	eigen_vectors_matrix_inverse = inv_factor * eigen_vectors_matrix.transpose();
+
 
 }
 
@@ -575,7 +626,7 @@ void modal_analysis_solver::map_modal_analysis_circular_results(const nodes_list
 			glm::vec2 normal_dir = glm::normalize(node_pt);
 
 			// get the appropriate modal displacement of this particular node
-			glm::vec2 modal_displ = static_cast<float>(displ_vectors_matrix.coeff(node_id, i)) * glm::vec2(normal_dir.x,-1.0*normal_dir.y);
+			glm::vec2 modal_displ = static_cast<float>(displ_vectors_matrix.coeff(node_id, i)) * glm::vec2(normal_dir.x, -1.0 * normal_dir.y);
 
 			// add to modal result of this node
 			node_modal_displ.insert({ i,modal_displ });

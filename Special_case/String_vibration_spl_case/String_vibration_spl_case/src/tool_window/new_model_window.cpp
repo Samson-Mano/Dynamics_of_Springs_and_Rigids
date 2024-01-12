@@ -34,7 +34,7 @@ void new_model_window::render_window()
 
 	//_____________________________________________________________________________________________________________________________________________________________________
 	// Text box for input
-	static char temp_str[1024 * 16] = "NodeCount, 100\nTension, 6000\nLength, 100\nDensity, 24";
+	static char temp_str[1024 * 16] = "NodeCount, 16\nTension, 6000\nLength, 100\nDensity, 24";
 
 	ImGui::InputTextMultiline("##InputText",
 		temp_str,
