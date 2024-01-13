@@ -260,7 +260,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 				glm::vec2 normal_dir = glm::normalize(nd_m.second.node_pt);
 
 				// get the appropriate modal displacement of this particular node
-				node_displ = static_cast<float>(global_displ_ampl_respMatrix.coeff(node_id-1)) * glm::vec2(normal_dir.x, -1.0 * normal_dir.y);
+				node_displ = static_cast<float>(global_displ_ampl_respMatrix.coeff(node_id)) * glm::vec2(normal_dir.x, -1.0 * normal_dir.y);
 
 			}
 
@@ -474,7 +474,28 @@ void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_ld
 	else if (this->model_type == 3)
 	{
 		// Circular (No DOF)
+		// Fixed - Free Condition so skip the first node
+		Eigen::VectorXd global_reducedLoadMatrix(reducedDOF);
 
+		int q = 0;
+		for (int i = 0; i < this->numDOF; i++)
+		{
+			global_reducedLoadMatrix.coeffRef(q) = 0.0;
+
+			// Apply the loads which are applied to the nodes (based on the node id)
+			if (i == ld.node_id)
+			{
+				global_reducedLoadMatrix.coeffRef(q) = -1.0 * ld.load_value;
+			}
+			q++;
+		}
+		// Apply modal Transformation
+		Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
+
+		modal_reducedLoadMatrix = eigen_vectors_matrix_inverse * global_reducedLoadMatrix;
+
+		// Store the modal amplitude matrix
+		pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
 
 	}
 
@@ -820,8 +841,8 @@ void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pu
 	}
 
 	// Set the maximim displacement
-	pulse_result_nodes.max_node_displ = std::sqrt(maximum_displacement);
-	pulse_result_lineelements.max_line_displ = std::sqrt(maximum_displacement);
+	pulse_result_nodes.max_node_displ = maximum_displacement;
+	pulse_result_lineelements.max_line_displ = maximum_displacement;
 
 
 }

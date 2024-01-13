@@ -41,9 +41,13 @@ void nodeinlcond_list_store::add_inlcondition(double& inl_cond_val,int& node_sta
 	if (node_start<0 || node_start >(number_of_nodes - 1))
 		return;
 
-	// Check 3 before adding (Node end is within the node range or not)
-	if (node_end<0 || node_end >(number_of_nodes - 1))
-		return;
+	if (interpolation_type != 4)
+	{
+		// Ignore single node application (Only start node matters)
+		// Check 3 before adding (Node end is within the node range or not)
+		if (node_end<0 || node_end >(number_of_nodes - 1))
+			return;
+	}
 
 	// Check 4 if there is any initial displacement or not
 	if (std::abs(inl_cond_val) < epsilon)
@@ -165,7 +169,7 @@ void nodeinlcond_list_store::add_inlcondition(double& inl_cond_val,int& node_sta
 		pt2 = glm::vec2(inlcond_spread_length / 2.0f, inl_cond_val);
 		pt3 = glm::vec2(inlcond_spread_length, 0);
 
-		// Go through start to mid node (Positive slope)
+		// Go through start to end node
 		for (int i = node_start; i <= node_end; i++)
 		{
 			t_val = static_cast<float>(i - node_start) / static_cast<float>(node_end - node_start);
@@ -183,6 +187,23 @@ void nodeinlcond_list_store::add_inlcondition(double& inl_cond_val,int& node_sta
 
 	}
 	else if (interpolation_type == 3)
+	{
+		// Rectangular interpolation
+
+		// Go through start to end node
+		for (int i = node_start; i <= node_end; i++)
+		{
+			// Create a temporary initial displacement data
+			nodeinl_cond temp_inl_displ;
+			temp_inl_displ.node_id = i;
+			temp_inl_displ.y_val = inl_cond_val;
+
+			// Add to the vector
+			temp_inlcondMap.push_back(temp_inl_displ);
+		}
+
+	}
+	else if (interpolation_type == 4)
 	{
 		// Single Node
 		nodeinl_cond temp_inl_displ;

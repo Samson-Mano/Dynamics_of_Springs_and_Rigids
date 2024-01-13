@@ -172,6 +172,8 @@ void pulse_analysis_window::render_window()
 	//_________________________________________________________________________________________
 	// Add check boxes to show the Deformed model
 	ImGui::Checkbox("Show Model", &show_undeformed_model);
+	ImGui::Checkbox("Show Result Nodes", &show_result_nodes);
+	ImGui::Checkbox("Show Result Elements", &show_result_elements);
 
 
 	ImGui::Spacing();

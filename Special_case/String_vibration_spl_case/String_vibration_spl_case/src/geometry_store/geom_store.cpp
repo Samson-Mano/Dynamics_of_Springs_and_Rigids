@@ -777,10 +777,16 @@ void geom_store::paint_pulse_analysis_results()
 		// ______________________________________________________________________________________
 
 		// Paint the pulse lines
-		pulse_result_lineelements.paint_pulse_elementlines(pulse_solver_window->time_step);
+		if (pulse_solver_window->show_result_elements == true)
+		{
+			pulse_result_lineelements.paint_pulse_elementlines(pulse_solver_window->time_step);
+		}
 
 		// Paint the pulse nodes
-		pulse_result_nodes.paint_pulse_nodes(pulse_solver_window->time_step);
+		if (pulse_solver_window->show_result_nodes == true)
+		{
+			pulse_result_nodes.paint_pulse_nodes(pulse_solver_window->time_step);
+		}
 	}
 
 

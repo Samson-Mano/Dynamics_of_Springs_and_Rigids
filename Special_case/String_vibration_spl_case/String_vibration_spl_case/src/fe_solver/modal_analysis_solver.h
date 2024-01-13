@@ -70,7 +70,7 @@ public:
 		modal_elementline_list_store& modal_result_lineelements);
 private:
 	const double m_pi = 3.14159265358979323846;
-	bool print_matrix = true;
+	bool print_matrix = false;
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 

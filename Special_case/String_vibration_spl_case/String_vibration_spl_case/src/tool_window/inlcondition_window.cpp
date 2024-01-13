@@ -41,7 +41,8 @@ void inlcondition_window::render_window()
 		ImGui::RadioButton("Linear Displacement Interpolation", &inl_displacement_type, 0);
 		ImGui::RadioButton("Cubic Bezier Displacement Interpolation", &inl_displacement_type, 1);
 		ImGui::RadioButton("Sine Displacement Interpolation", &inl_displacement_type, 2);
-		ImGui::RadioButton("Single Node Displacement", &inl_displacement_type, 3);
+		ImGui::RadioButton("Rectangular Displacement Interpolation", &inl_displacement_type, 3);
+		ImGui::RadioButton("Single Node Displacement", &inl_displacement_type, 4);
 
 		// Text for Initial Displacement At Node
 		//_________________________________________________________________________________________
@@ -51,7 +52,7 @@ void inlcondition_window::render_window()
 		// Text for Initial Displacement End Node
 		//_________________________________________________________________________________________
 		
-		if (inl_displacement_type != 3)
+		if (inl_displacement_type != 4)
 		{
 			get_Initial_Displacement_End_Node();
 		}
@@ -87,7 +88,8 @@ void inlcondition_window::render_window()
 		ImGui::RadioButton("Linear Velocity Interpolation", &inl_velocity_type, 0);
 		ImGui::RadioButton("Cubic Bezier Velocity Interpolation", &inl_velocity_type, 1);
 		ImGui::RadioButton("Sine Velocity Interpolation", &inl_velocity_type, 2);
-		ImGui::RadioButton("Single Node Velocity", &inl_velocity_type, 3);
+		ImGui::RadioButton("Rectangular Velocity Interpolation", &inl_velocity_type, 3);
+		ImGui::RadioButton("Single Node Velocity", &inl_velocity_type, 4);
 
 		// Text for Initial Velocity At Node
 		//_________________________________________________________________________________________
@@ -97,7 +99,7 @@ void inlcondition_window::render_window()
 		// Text for Initial Velocity End Node
 		//_________________________________________________________________________________________
 		
-		if (inl_velocity_type != 3)
+		if (inl_velocity_type != 4)
 		{
 			get_Initial_Velocity_End_Node();
 		}

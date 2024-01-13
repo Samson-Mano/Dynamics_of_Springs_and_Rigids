@@ -32,6 +32,8 @@ public:
 
 	// analysis results
 	bool show_undeformed_model = true; // show undeformed model 
+	bool show_result_nodes = true; // show result nodes
+	bool show_result_elements = true; // show result elements
 
 	double deformation_scale_max = 10.0;
 

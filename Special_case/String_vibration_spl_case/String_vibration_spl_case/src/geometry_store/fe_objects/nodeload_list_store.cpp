@@ -50,7 +50,7 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 	if (node_start_id<0 || node_start_id >(number_of_nodes - 1))
 		return;
 
-	if (interpolation_type != 3)
+	if (interpolation_type != 4)
 	{
 		// Ignore single node application (Only start node matters)
 		// Check 3 before adding (Node end is within the node range or not)
@@ -238,7 +238,7 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 
 		int mid_node_id = ((node_start_id + node_end_id) / 2);
 
-		// Go through start to mid node (Positive slope)
+		// Go through start to end node 
 		for (int i = node_start_id; i <= node_end_id; i++)
 		{
 			t_val = static_cast<float>(i - node_start_id) / static_cast<float>(node_end_id - node_start_id);
@@ -273,6 +273,35 @@ void nodeload_list_store::add_loads(nodes_list_store& model_nodes, double& load_
 
 	}
 	else if (interpolation_type == 3)
+	{
+		// Rectangular interpolation
+		int mid_node_id = ((node_start_id + node_end_id) / 2);
+
+		// Go through start to end node 
+		for (int i = node_start_id; i <= node_end_id; i++)
+		{
+			// Create a temporary load data
+			load_data temp_load;
+			temp_load.load_id = 0; //NULL Load id
+			temp_load.node_id = i; // id of the line its applied to
+			temp_load.load_loc = model_nodes.nodeMap[i].node_pt; // Load location
+			temp_load.load_start_time = load_start_time; // Load start time
+			temp_load.load_end_time = load_end_time; // Load end time
+			temp_load.load_value = load_value; // Load value
+			temp_load.load_angle = get_load_angle(model_nodes.nodeMap[i].node_pt); // Load angle
+			temp_load.show_load_label = false;
+
+			if (i == mid_node_id)
+			{
+				temp_load.show_load_label = true;
+			}
+
+			// Add to the vector
+			temp_loadMap.push_back(temp_load);
+		}
+
+	}
+	else if (interpolation_type == 4)
 	{
 		// Create a temporary load data
 		load_data temp_load;

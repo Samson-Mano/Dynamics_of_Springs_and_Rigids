@@ -50,7 +50,8 @@ void node_load_window::render_window()
 	ImGui::RadioButton("Linear Load Interpolation", &node_load_type, 0);
 	ImGui::RadioButton("Cubic Bezier Load Interpolation", &node_load_type, 1);
 	ImGui::RadioButton("Sine Load Interpolation", &node_load_type, 2);
-	ImGui::RadioButton("Single Node Load", &node_load_type, 3);
+	ImGui::RadioButton("Rectangular Load Interpolation", &node_load_type, 3);
+	ImGui::RadioButton("Single Node Load", &node_load_type, 4);
 
 	ImGui::Spacing();
 
@@ -63,7 +64,7 @@ void node_load_window::render_window()
 	//_________________________________________________________________________________________
 	// Get the load end node
 
-	if (node_load_type != 3)
+	if (node_load_type != 4)
 	{
 		get_load_End_Node();
 	}
