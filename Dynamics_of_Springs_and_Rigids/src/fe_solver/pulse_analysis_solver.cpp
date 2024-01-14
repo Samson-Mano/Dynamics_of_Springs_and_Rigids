@@ -212,6 +212,19 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 						pulse_load.load_end_time);
 
 				}
+				else if (selected_pulse_option == 4)
+				{
+					// Harmonic Excitation
+
+					get_total_harmonic_soln(at_force_displ_resp,
+						time_t,
+						modal_solver.reduced_modalMass(i),
+						modal_solver.reduced_modalStiff(i),
+						pulse_load.modal_reducedLoadamplMatrix(i),
+						pulse_load.load_start_time,
+						pulse_load.load_end_time);
+
+				}
 
 				displ_resp_force = displ_resp_force + at_force_displ_resp;
 			}
@@ -836,6 +849,47 @@ void pulse_analysis_solver::get_steady_state_stepforce_finiterise_soln(double& s
 }
 
 
+void pulse_analysis_solver::get_total_harmonic_soln(double& steady_state_displ_resp,
+	const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_force_ampl,
+	const double& modal_force_starttime,
+	const double& modal_force_endtime)
+{
+	// Return the Total solution (Transient + steady state) for the Harmonic excitation
+		// Return the steady state solution for the Step Force with Finite Rise
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+	double modal_omega_f = m_pi / (2.0 * (modal_force_endtime - modal_force_starttime));
+
+	double transient_displ_resp;
+	steady_state_displ_resp = 0.0;
+
+	if (std::abs(modal_omega_f - modal_omega_n) < epsilon)
+	{
+		// Resonance case
+		transient_displ_resp = 0.0;
+
+		double force_factor = (modal_force_ampl / (2.0 * modal_stiff));
+
+		steady_state_displ_resp = force_factor * ((modal_omega_n * time_t * std::cos(modal_omega_n * time_t)) - std::sin(modal_omega_n * time_t));
+	}
+	else
+	{
+		// Regular case
+		double force_factor = (modal_force_ampl / modal_stiff);
+		double freq_ratio = modal_omega_f / modal_omega_n;
+		double freq_factor = (1.0 - (freq_ratio * freq_ratio));
+
+
+		transient_displ_resp = -1.0 * force_factor * (freq_ratio / freq_factor) * std::sin(modal_omega_n * time_t);
+
+		steady_state_displ_resp = force_factor * (1.0 / freq_factor) * std::sin(modal_omega_f * time_t);
+
+	}
+}
+
+
 void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
 	pulse_elementline_list_store& pulse_result_lineelements,
 	const int& number_of_time_steps,
@@ -901,7 +955,7 @@ void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pu
 	}
 
 	// Set the maximim displacement
-	pulse_result_nodes.max_node_displ = std::sqrt(maximum_displacement);
-	pulse_result_lineelements.max_line_displ = std::sqrt(maximum_displacement);
+	pulse_result_nodes.max_node_displ = maximum_displacement;
+	pulse_result_lineelements.max_line_displ = maximum_displacement;
 
 }
