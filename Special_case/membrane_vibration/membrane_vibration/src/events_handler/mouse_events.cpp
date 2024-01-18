@@ -55,12 +55,35 @@ void mouse_events::pan_operation(glm::vec2& current_translataion)
 	geom->update_model_pan(total_translation);
 }
 
+
 void mouse_events::pan_operation_ends()
 {
 	// Pan operation complete
 	prev_translation = total_translation;
 	is_pan = false;
 	//std::cout << "Pan Operation End" << std::endl;
+}
+
+void mouse_events::rotation_operation_start(glm::vec2& loc)
+{
+	// Rotate operation start
+	is_rotate = true;
+	// Note the click point when the rotate operation start
+	click_pt = loc;
+}
+
+void mouse_events::rotation_operation(glm::vec2& current_rotation)
+{
+	// Rotate operation in progress
+	total_rotation = prev_rotation + current_rotation;
+}
+
+
+void mouse_events::rotation_operation_ends()
+{
+	// Rotate operation complete
+	prev_rotation = total_rotation;
+	is_rotate = false;
 }
 
 void mouse_events::select_operation_start(glm::vec2& loc, bool is_rightbutton)

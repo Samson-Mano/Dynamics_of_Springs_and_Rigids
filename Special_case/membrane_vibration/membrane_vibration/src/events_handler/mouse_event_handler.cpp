@@ -80,7 +80,7 @@ void mouse_event_handler::handleMouseButton(int button, int action, int mods, do
 			if (isCtrlDown == true)
 			{
 				glm::vec2 loc = glm::vec2(xpos, ypos);
-				// mouse_evnt.rotation_operation_start(loc);
+				mouse_evnt.rotation_operation_start(loc);
 			}
 
 			if (isShiftDown == true)
@@ -93,7 +93,7 @@ void mouse_event_handler::handleMouseButton(int button, int action, int mods, do
 		else if (action == GLFW_RELEASE)
 		{
 			// Left Mouse up
-			// mouse_evnt.rotation_operation_ends();
+			mouse_evnt.rotation_operation_ends();
 
 			// Calculate mouse move distance
 			double deltaX = xpos - last_pt.x;
