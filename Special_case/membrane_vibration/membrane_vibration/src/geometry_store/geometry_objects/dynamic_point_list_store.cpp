@@ -26,7 +26,7 @@ void dynamic_point_list_store::init(geom_parameters* geom_param_ptr)
 	dyn_pointMap.clear();
 }
 
-void dynamic_point_list_store::add_point(int& point_id, glm::vec2& point_loc, std::vector<glm::vec2>& point_offset, std::vector<glm::vec3>& point_color)
+void dynamic_point_list_store::add_point(int& point_id, glm::vec3& point_loc, std::vector<glm::vec3>& point_offset, std::vector<glm::vec3>& point_color)
 {
 	dynamic_point_store dyn_temp_pt;
 	dyn_temp_pt.point_id = point_id;

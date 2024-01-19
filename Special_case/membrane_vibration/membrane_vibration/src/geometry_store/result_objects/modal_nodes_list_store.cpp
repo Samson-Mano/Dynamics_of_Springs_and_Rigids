@@ -34,7 +34,7 @@ void modal_nodes_list_store::clear_data()
 	modal_nodeMap.clear();
 }
 
-void modal_nodes_list_store::add_result_node(int& node_id, glm::vec2& node_pt, std::unordered_map<int, glm::vec2> node_modal_displ)
+void modal_nodes_list_store::add_result_node(int& node_id, glm::vec3& node_pt, std::unordered_map<int, glm::vec3> node_modal_displ)
 {
 	// Add result nodes
 	modal_node_store temp_node;
@@ -70,7 +70,7 @@ void modal_nodes_list_store::set_buffer(int selected_mode)
 	{
 		modal_node_store nd = nd_m.second;
 
-		glm::vec2 pt_displ = glm::vec2(nd.node_modal_displ[selected_mode].x, nd.node_modal_displ[selected_mode].y);
+		glm::vec3 pt_displ = glm::vec3(nd.node_modal_displ[selected_mode].x, nd.node_modal_displ[selected_mode].y,0.0);
 
 		// Find the displacment value
 		double pt_displ_value = std::sqrt(std::pow(nd.node_modal_displ[selected_mode].x, 2) +

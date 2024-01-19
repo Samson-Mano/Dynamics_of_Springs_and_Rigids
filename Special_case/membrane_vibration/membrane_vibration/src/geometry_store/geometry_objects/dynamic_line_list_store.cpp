@@ -27,8 +27,8 @@ void dynamic_line_list_store::init(geom_parameters* geom_param_ptr)
 }
 
 void dynamic_line_list_store::add_line(int& line_id, 
-	glm::vec2& line_startpt_loc, glm::vec2& line_endpt_loc,
-	std::vector<glm::vec2>& line_startpt_offset, std::vector<glm::vec2>& line_endpt_offset,
+	glm::vec3& line_startpt_loc, glm::vec3& line_endpt_loc,
+	std::vector<glm::vec3>& line_startpt_offset, std::vector<glm::vec3>& line_endpt_offset,
 	std::vector<glm::vec3>& line_startpt_color, std::vector<glm::vec3>& line_endpt_color)
 {
 	// Create a temporary points

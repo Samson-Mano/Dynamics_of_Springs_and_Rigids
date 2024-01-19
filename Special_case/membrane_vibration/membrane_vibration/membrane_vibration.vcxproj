@@ -278,6 +278,10 @@
     <ClInclude Include="src\tool_window\pulse_analysis_window.h" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="circle_mesh.txt" />
+    <Text Include="rect1_mesh.txt" />
+    <Text Include="rect2_mesh.txt" />
+    <Text Include="rect3_mesh.txt" />
     <Text Include="src\junk\junk_code.txt" />
     <Text Include="src\junk\lagrange_MPC_solver.txt" />
   </ItemGroup>

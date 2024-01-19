@@ -15,8 +15,8 @@ struct pulse_elementline_store
 	std::vector<double> endpt_displ_magnitude; // Pt2 displacmenet magnitude at time t
 
 	// Line normalized displacement vector
-	std::vector<glm::vec2> startpt_normalized_displ;
-	std::vector<glm::vec2> endpt_normalized_displ;
+	std::vector<glm::vec3> startpt_normalized_displ;
+	std::vector<glm::vec3> endpt_normalized_displ;
 };
 
 

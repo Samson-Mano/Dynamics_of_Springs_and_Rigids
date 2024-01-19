@@ -10,7 +10,7 @@
 struct node_store
 {
 	int node_id = 0;
-	glm::vec2 node_pt = glm::vec2(0);
+	glm::vec3 node_pt = glm::vec3(0);
 	glm::vec3 node_color = glm::vec3(0);
 };
 
@@ -25,15 +25,12 @@ public:
 	nodes_list_store();
 	~nodes_list_store();
 	void init(geom_parameters* geom_param_ptr);
-	void add_node(int& node_id, glm::vec2& node_pt);
+	void add_node(int& node_id, glm::vec3& node_pt);
 	void add_selection_nodes(const std::vector<int>& selected_node_ids);
 	void set_buffer();
 	void paint_model_nodes();
-	// void paint_label_node_ids();
-	// void paint_label_node_coords();
 	void paint_selected_model_nodes();
 
-	int is_node_hit(glm::vec2& loc);
 	std::vector<int> is_node_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2);
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 
@@ -42,6 +39,5 @@ private:
 
 	point_list_store node_points;
 	point_list_store selected_node_points;
-	// label_list_store node_id_labels;
-	// label_list_store node_coord_labels;
+
 };

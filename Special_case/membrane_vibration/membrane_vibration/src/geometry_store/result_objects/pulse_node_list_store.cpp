@@ -35,7 +35,7 @@ void pulse_node_list_store::clear_data()
 	max_node_displ = 0.0; // Maximum nodal displacement
 }
 
-void pulse_node_list_store::add_result_node(int& node_id, glm::vec2& node_pt,
+void pulse_node_list_store::add_result_node(int& node_id, glm::vec3& node_pt,
 	pulse_node_result node_pulse_result, const int& number_of_time_steps)
 {
 	// Add the result nodes
@@ -68,7 +68,7 @@ void pulse_node_list_store::set_buffer()
 	{
 		pulse_node_store nd = nd_m.second; // get the node data
 
-		std::vector<glm::vec2> point_offset; // point offset
+		std::vector<glm::vec3> point_offset; // point offset
 		std::vector<glm::vec3> point_color; // point color
 
 		for (int i = 0; i < static_cast<int>(nd.node_pulse_result.displ_magnitude.size()); i++)
@@ -81,7 +81,7 @@ void pulse_node_list_store::set_buffer()
 			double dist_ratio = pt_displ / max_node_displ;
 
 			// Create the point offset
-			glm::vec2 temp_point_offset = static_cast<float>(dist_ratio) * nd.node_pulse_result.normalized_displ[i];
+			glm::vec3 temp_point_offset = static_cast<float>(dist_ratio) * nd.node_pulse_result.normalized_displ[i];
 
 			point_offset.push_back(temp_point_offset);
 

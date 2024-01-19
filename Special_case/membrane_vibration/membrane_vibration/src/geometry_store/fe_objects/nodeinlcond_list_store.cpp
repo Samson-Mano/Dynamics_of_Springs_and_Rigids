@@ -272,10 +272,10 @@ void nodeinlcond_list_store::create_inlcondition_pts(nodes_list_store& model_nod
 	}
 
 
-	glm::vec2 node_pt_offset = glm::vec2(0);
+	glm::vec3 node_pt_offset = glm::vec3(0);
 
 	int node_id = 0;
-	glm::vec2 inl_cond_node_pt = glm::vec2(0.0, 0.0);
+	glm::vec3 inl_cond_node_pt = glm::vec3(0.0, 0.0,0.0);
 
 	for (auto& node_m : model_nodes.nodeMap)
 	{
@@ -378,8 +378,8 @@ void nodeinlcond_list_store::delete_all_inlcondition(nodes_list_store& model_nod
 
 	// Set the zero displacement
 	int node_id = 0;
-	glm::vec2 node_pt = glm::vec2(0.0, 0.0);
-	glm::vec2 node_pt_offset = glm::vec2(0);
+	glm::vec3 node_pt = glm::vec3(0.0, 0.0,0.0);
+	glm::vec3 node_pt_offset = glm::vec3(0);
 
 	for (auto& node_m : model_nodes.nodeMap)
 	{
@@ -467,19 +467,19 @@ glm::vec2 nodeinlcond_list_store::half_sine_interpolation(glm::vec2 pt1, glm::ve
 	return glm::vec2(x, y);
 }
 
-glm::vec2 nodeinlcond_list_store::get_inlcondition_offset(glm::vec2& node_pt, double y_val)
+glm::vec3 nodeinlcond_list_store::get_inlcondition_offset(glm::vec3& node_pt, double y_val)
 {
 	// return the node offset based on the initial condition value
 	if (model_type == 0 || model_type == 1 || model_type == 2)
 	{
 		// Line
-		return (glm::vec2(node_pt.x, node_pt.y + (this->model_total_length * y_val * 0.1)));
+		return (glm::vec3(node_pt.x, node_pt.y + (this->model_total_length * y_val * 0.1),0.0));
 	}
 	else if (model_type == 3)
 	{
 		// Circular
 
-		glm::vec2 node_pt_unit = glm::normalize(node_pt);
+		glm::vec3 node_pt_unit = glm::normalize(node_pt);
 		float length = glm::length(node_pt) + (this->model_total_length * y_val * 0.1);
 
 		return (length * node_pt_unit);

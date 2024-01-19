@@ -26,8 +26,8 @@ void line_list_store::init(geom_parameters* geom_param_ptr)
 	lineMap.clear();
 }
 
-void line_list_store::add_line(int& line_id, glm::vec2& line_startpt_loc, glm::vec2& line_endpt_loc,
-	glm::vec2 line_startpt_offset, glm::vec2 line_endpt_offset,
+void line_list_store::add_line(int& line_id, glm::vec3& line_startpt_loc, glm::vec3& line_endpt_loc,
+	glm::vec3 line_startpt_offset, glm::vec3 line_endpt_offset,
 	glm::vec3& line_startpt_color, glm::vec3& line_endpt_color, bool is_offset)
 {
 	// Create a temporary points

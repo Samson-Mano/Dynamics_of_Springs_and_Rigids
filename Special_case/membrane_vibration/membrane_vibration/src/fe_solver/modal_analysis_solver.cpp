@@ -568,19 +568,19 @@ void modal_analysis_solver::map_modal_analysis_linear_results(const nodes_list_s
 		int node_id = nd_m.first;
 
 		// Modal analysis results
-		std::unordered_map<int, glm::vec2> node_modal_displ;
+		std::unordered_map<int, glm::vec3> node_modal_displ;
 
 		for (int i = 0; i < number_of_modes; i++)
 		{
 			// get the appropriate modal displacement of this particular node
-			glm::vec2 modal_displ = glm::vec2(0.0, displ_vectors_matrix.coeff(node_id, i));
+			glm::vec3 modal_displ = glm::vec3(0.0,0.0, displ_vectors_matrix.coeff(node_id, i));
 
 			// add to modal result of this node
 			node_modal_displ.insert({ i,modal_displ });
 		}
 
 		// Create the modal analysis result node
-		glm::vec2 node_pt = nd_m.second.node_pt;
+		glm::vec3 node_pt = nd_m.second.node_pt;
 		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ);
 	}
 
@@ -615,18 +615,18 @@ void modal_analysis_solver::map_modal_analysis_circular_results(const nodes_list
 	for (auto& nd_m : model_nodes.nodeMap)
 	{
 		int node_id = nd_m.first;
-		glm::vec2 node_pt = nd_m.second.node_pt;
+		glm::vec3 node_pt = nd_m.second.node_pt;
 
 		// Modal analysis results
-		std::unordered_map<int, glm::vec2> node_modal_displ;
+		std::unordered_map<int, glm::vec3> node_modal_displ;
 
 		for (int i = 0; i < number_of_modes; i++)
 		{
 
-			glm::vec2 normal_dir = glm::normalize(node_pt);
+			glm::vec3 normal_dir = glm::normalize(node_pt);
 
 			// get the appropriate modal displacement of this particular node
-			glm::vec2 modal_displ = static_cast<float>(displ_vectors_matrix.coeff(node_id, i)) * glm::vec2(normal_dir.x, -1.0 * normal_dir.y);
+			glm::vec3 modal_displ = static_cast<float>(displ_vectors_matrix.coeff(node_id, i)) * glm::vec3(normal_dir.x, -1.0 * normal_dir.y,0.0);
 
 			// add to modal result of this node
 			node_modal_displ.insert({ i,modal_displ });

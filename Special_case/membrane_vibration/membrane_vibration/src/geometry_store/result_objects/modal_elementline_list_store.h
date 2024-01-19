@@ -7,12 +7,12 @@ struct modal_line_points
 {
 	int split_line_id = 0; // line id of the individual hermitian interpolation line 
 	// Point coordinate
-	glm::vec2 pt1 = glm::vec2(0);
-	glm::vec2 pt2 = glm::vec2(0);
+	glm::vec3 pt1 = glm::vec3(0);
+	glm::vec3 pt2 = glm::vec3(0);
 
 	// Point displacements
-	std::unordered_map<int, glm::vec2> pt1_modal_displ;
-	std::unordered_map<int, glm::vec2> pt2_modal_displ;
+	std::unordered_map<int, glm::vec3> pt1_modal_displ;
+	std::unordered_map<int, glm::vec3> pt2_modal_displ;
 };
 
 

@@ -31,13 +31,13 @@ void geom_parameters::init()
 	//geom_colors.line_color = glm::vec3(1.0f, 0.54901f, 0.6f); // Dark Orange
 
 	geom_colors.node_color = glm::vec3(0.8f, 0.2f, 0.2f); // Light Red
-	geom_colors.rigid_line_color = glm::vec3(0.25f, 0.88f, 0.82f); // Purple  0.7f, 0.3f, 0.7f
-	geom_colors.spring_line_color = glm::vec3(0.1f, 0.1f, 0.8f); // Dark Blue 
+	geom_colors.line_color = glm::vec3(1.0f, 0.54901f, 0.6f); // Dark Orange
 	geom_colors.line_length_color = glm::vec3(1.0f, 0.54901f, 0.6f); //  Dark Orange
 
 	geom_colors.ptmass_color = glm::vec3(0.2f, 0.7f, 0.2f); // Green
 	geom_colors.constraint_color = glm::vec3(0.5f, 0.5f, 0.5f); // Gray
 	geom_colors.load_color = glm::vec3(0.6f, 0.0f, 0.6f);
+	geom_colors.triangle_color = glm::vec3(0.90196f, 0.90196f, 0.98039f); // Lavender
 
 	geom_colors.background_color = glm::vec3(0.95f, 0.95f, 0.95f); // Light gray
 	geom_colors.selection_color = glm::vec3(0.862745f, 0.078431f, 0.23529f); // Crimson

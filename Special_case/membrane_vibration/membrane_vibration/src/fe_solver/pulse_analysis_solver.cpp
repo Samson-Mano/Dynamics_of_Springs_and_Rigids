@@ -236,14 +236,14 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			int node_id = nd_m.second.node_id;
 
 			// Node displacement response
-			glm::vec2 node_displ = glm::vec2(0);
+			glm::vec3 node_displ = glm::vec3(0);
 
 			if (this->model_type == 0)
 			{
 				// Fixed  - Fixed Condition so skip the first and last node
 				if (node_id != 0 && node_id != (numDOF - 1))
 				{
-					node_displ = glm::vec2(0.0, global_displ_ampl_respMatrix.coeff(node_id - 1));
+					node_displ = glm::vec3(0.0,0.0, global_displ_ampl_respMatrix.coeff(node_id - 1));
 				}
 			}
 			else if (this->model_type == 1)
@@ -251,22 +251,22 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 				// Fixed - Free Condition so skip the first node
 				if (node_id != 0)
 				{
-					node_displ = glm::vec2(0.0, global_displ_ampl_respMatrix.coeff(node_id - 1));
+					node_displ = glm::vec3(0.0,0.0, global_displ_ampl_respMatrix.coeff(node_id - 1));
 				}
 			}
 			else if (this->model_type == 3)
 			{
 				// Circular string Free - Free
-				glm::vec2 normal_dir = glm::normalize(nd_m.second.node_pt);
+				glm::vec3 normal_dir = glm::normalize(nd_m.second.node_pt);
 
 				// get the appropriate modal displacement of this particular node
-				node_displ = static_cast<float>(global_displ_ampl_respMatrix.coeff(node_id)) * glm::vec2(normal_dir.x, -1.0 * normal_dir.y);
+				node_displ = static_cast<float>(global_displ_ampl_respMatrix.coeff(node_id)) * glm::vec3(normal_dir.x, -1.0 * normal_dir.y,0.0);
 
 			}
 
 			// Node displacement magnitude
 			double displ_magnitude = static_cast<float>(glm::length(node_displ));
-			glm::vec2 normalized_node_displ = glm::vec2(0.0, -1.0);
+			glm::vec3 normalized_node_displ = glm::vec3(0.0,0.0, -1.0);
 
 			if (displ_magnitude > epsilon)
 			{

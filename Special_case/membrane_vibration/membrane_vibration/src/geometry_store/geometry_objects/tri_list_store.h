@@ -7,14 +7,14 @@ struct tri_store
 	int tri_id = 0;
 
 	// Location
-	glm::vec2 tript1_loc = glm::vec2(0);
-	glm::vec2 tript2_loc = glm::vec2(0);
-	glm::vec2 tript3_loc = glm::vec2(0);
+	glm::vec3 tript1_loc = glm::vec3(0);
+	glm::vec3 tript2_loc = glm::vec3(0);
+	glm::vec3 tript3_loc = glm::vec3(0);
 
 	// offset
-	glm::vec2 tript1_offset = glm::vec2(0);
-	glm::vec2 tript2_offset = glm::vec2(0);
-	glm::vec2 tript3_offset = glm::vec2(0);
+	glm::vec3 tript1_offset = glm::vec3(0);
+	glm::vec3 tript2_offset = glm::vec3(0);
+	glm::vec3 tript3_offset = glm::vec3(0);
 
 	// color
 	glm::vec3 tript1_color = glm::vec3(0);
@@ -36,8 +36,8 @@ public:
 	~tri_list_store();
 
 	void init(geom_parameters* geom_param_ptr);
-	void add_tri(int& tri_id, const glm::vec2& tript1_loc, const glm::vec2& tript2_loc, const glm::vec2& tript3_loc,
-		glm::vec2 tript1_offset, glm::vec2 tript2_offset, glm::vec2 tript3_offset,
+	void add_tri(int& tri_id, const glm::vec3& tript1_loc, const glm::vec3& tript2_loc, const glm::vec3& tript3_loc,
+		glm::vec3 tript1_offset, glm::vec3 tript2_offset, glm::vec3 tript3_offset,
 		glm::vec3& tript1_color, glm::vec3& tript2_color, glm::vec3& tript3_color, bool is_offset);
 	void set_buffer();
 	void paint_triangles();

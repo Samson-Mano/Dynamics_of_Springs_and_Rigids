@@ -58,8 +58,8 @@ void pulse_elementline_list_store::add_pulse_elementline(int& line_id, pulse_nod
 
 	//__________________________ Get the node points
 	glm::vec3 temp_color = glm::vec3(0);
-	glm::vec2 start_node_pt = (*startNode).node_pt;
-	glm::vec2 end_node_pt = (*endNode).node_pt;
+	glm::vec3 start_node_pt = (*startNode).node_pt;
+	glm::vec3 end_node_pt = (*endNode).node_pt;
 
 	// Find the maximum - minimum line length
 	double element_length = geom_parameters::get_line_length(start_node_pt, end_node_pt);

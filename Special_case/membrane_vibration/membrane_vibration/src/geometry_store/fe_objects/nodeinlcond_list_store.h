@@ -37,7 +37,7 @@ private:
 	glm::vec2 cubic_bezier_interpolation(glm::vec2 pt1, glm::vec2 pt2, glm::vec2 pt3, glm::vec2 pt4, double t_val);
 	glm::vec2 half_sine_interpolation(glm::vec2 pt1, glm::vec2 pt2, glm::vec2 pt3, double t_val);
 	void create_inlcondition_pts(nodes_list_store& model_nodes);
-	glm::vec2 get_inlcondition_offset(glm::vec2& node_pt, double y_val);
+	glm::vec3 get_inlcondition_offset(glm::vec3& node_pt, double y_val);
 
 };
 

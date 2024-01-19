@@ -58,8 +58,8 @@ void modal_elementline_list_store::add_modal_elementline(int& line_id, modal_nod
 std::vector<modal_line_points> modal_elementline_list_store::set_line_bar_interpolation(const int& interpolation_count, modal_node_store* startNode, modal_node_store* endNode)
 {
 	// get the start and end point
-	glm::vec2 start_node_pt = (*startNode).node_pt;
-	glm::vec2 end_node_pt = (*endNode).node_pt;
+	glm::vec3 start_node_pt = (*startNode).node_pt;
+	glm::vec3 end_node_pt = (*endNode).node_pt;
 
 	// Prepare the transformation matrix
 		// Compute the differences in x and y coordinates
@@ -85,35 +85,38 @@ std::vector<modal_line_points> modal_elementline_list_store::set_line_bar_interp
 		// get the end points of the split line pt1
 		double t_ratio1 = static_cast<double>(i) / static_cast<double>(interpolation_count);
 
-		glm::vec2 pt1 = glm::vec2(start_node_pt.x * (1 - t_ratio1) + end_node_pt.x * t_ratio1,
-			start_node_pt.y * (1 - t_ratio1) + end_node_pt.y * t_ratio1);
+		glm::vec3 pt1 = glm::vec3(start_node_pt.x * (1 - t_ratio1) + end_node_pt.x * t_ratio1,
+			start_node_pt.y * (1 - t_ratio1) + end_node_pt.y * t_ratio1,
+			start_node_pt.z * (1 - t_ratio1) + end_node_pt.z * t_ratio1);
 
 		// get the end points of the split line pt2
 		double t_ratio2 = static_cast<double>(i + 1) / static_cast<double>(interpolation_count);
 
-		glm::vec2 pt2 = glm::vec2(start_node_pt.x * (1 - t_ratio2) + end_node_pt.x * t_ratio2,
-			start_node_pt.y * (1 - t_ratio2) + end_node_pt.y * t_ratio2);
+		glm::vec3 pt2 = glm::vec3(start_node_pt.x * (1 - t_ratio2) + end_node_pt.x * t_ratio2,
+			start_node_pt.y * (1 - t_ratio2) + end_node_pt.y * t_ratio2,
+			start_node_pt.z * (1 - t_ratio2) + end_node_pt.z * t_ratio2);
 
 		//_____________________________________________________________________________________________
 		int num_of_modes = static_cast<int>((*startNode).node_modal_displ.size());
 
 		// Find the pt modal displacement for every individual mode
-		std::unordered_map<int, glm::vec2> pt1_modal_displ;
-		std::unordered_map<int, glm::vec2> pt2_modal_displ;
+		std::unordered_map<int, glm::vec3> pt1_modal_displ;
+		std::unordered_map<int, glm::vec3> pt2_modal_displ;
 
 		// get the end displacements of every individual nodes
 		for (int j = 0; j < num_of_modes; j++)
 		{
 			// Get the displacement at start point
-			glm::vec2 start_node_displ = (*startNode).node_modal_displ[j];
-			glm::vec2 end_node_displ = (*endNode).node_modal_displ[j];
+			glm::vec3 start_node_displ = (*startNode).node_modal_displ[j];
+			glm::vec3 end_node_displ = (*endNode).node_modal_displ[j];
 
 			// Start point displacement at local axis
-			glm::vec2 local_displ_start_node = glm::vec2(((start_node_displ.x * Lcos) + (start_node_displ.y * Msin)),
+			glm::vec3 local_displ_start_node = glm::vec3(((start_node_displ.x * Lcos) + (start_node_displ.y * Msin)),
+				((start_node_displ.x * (-1 * Msin)) + (start_node_displ.y * Lcos)),
 				((start_node_displ.x * (-1 * Msin)) + (start_node_displ.y * Lcos)));
 
 			// End point displacement at local axis
-			glm::vec2 local_displ_end_node = glm::vec2(((end_node_displ.x * Lcos) + (end_node_displ.y * Msin)),
+			glm::vec3 local_displ_end_node = glm::vec3(((end_node_displ.x * Lcos) + (end_node_displ.y * Msin)),
 				((end_node_displ.x * (-1 * Msin)) + (end_node_displ.y * Lcos)));
 
 			//_____________________________________________________________________________________________

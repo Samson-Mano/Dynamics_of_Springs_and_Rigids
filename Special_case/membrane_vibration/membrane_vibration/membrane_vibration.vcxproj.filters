@@ -367,5 +367,9 @@
   <ItemGroup>
     <Text Include="src\junk\junk_code.txt" />
     <Text Include="src\junk\lagrange_MPC_solver.txt" />
+    <Text Include="rect3_mesh.txt" />
+    <Text Include="rect2_mesh.txt" />
+    <Text Include="rect1_mesh.txt" />
+    <Text Include="circle_mesh.txt" />
   </ItemGroup>
 </Project>

@@ -132,98 +132,10 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	}
 
 
-	// Model input
-	int material_id = 0;
-	int line_id = 0;
-	double dl = 0.0;
-	glm::vec2 node_pt = glm::vec2(0);
 	//Node Point list
 	std::vector<glm::vec2> node_pts_list;
 
-	if (model_type == 0 || model_type == 1 || model_type == 2)
-	{
-		// Line (Fixed - Fixed)
-		i = 0;
-		dl = mat_data.line_length / static_cast<double>(node_count);
-
-		// Add first node
-		node_pt = glm::vec2(i * dl, 0);
-		this->model_nodes.add_node(i, node_pt);
-		node_pts_list.push_back(node_pt);
-
-		// Add other nodes
-		for (i = 1; i < node_count; i++)
-		{
-			// Node point
-			node_pt = glm::vec2(i * dl, 0);
-			this->model_nodes.add_node(i, node_pt);
-			node_pts_list.push_back(node_pt);
-
-			// Add element
-			line_id = i - 1;
-			this->model_lineelements.add_elementline(line_id, &this->model_nodes.nodeMap[i - 1], &this->model_nodes.nodeMap[i], material_id);
-		}
-
-		// Add end constraint
-		int constraint_type = 0;
-		double constraint_angle = 90;
-
-		if (model_type == 0 || model_type == 1)
-		{
-			// Fixed Node Start
-			i = 0;
-			this->node_constraints.add_constraint(i, this->model_nodes.nodeMap[i].node_pt, constraint_type, constraint_angle);
-		}
-
-		if (model_type == 0)
-		{
-			// Fixed Node End
-			i = node_count - 1;
-			this->node_constraints.add_constraint(i, this->model_nodes.nodeMap[i].node_pt, constraint_type, constraint_angle);
-		}
-
-		// Set the initial condition
-		this->node_inldispl.set_zero_condition(model_nodes, mat_data.line_length, 0, model_type);
-		this->node_inlvelo.set_zero_condition(model_nodes, mat_data.line_length, 1, model_type);
-		this->node_loads.set_zero_condition(mat_data.line_length, node_count, model_type);
-	}
-	else if (model_type == 3)
-	{
-		// Circular 
-		// Add the nodes
-		i = 0;
-		dl = (static_cast<float>(i) / static_cast<float>(node_count)) * 2.0 * m_pi; // Angle (Radian) 
-
-		// Add first node
-		node_pt = glm::vec2(mat_data.line_length * std::cos(dl), mat_data.line_length * std::sin(dl));
-		this->model_nodes.add_node(i, node_pt);
-		node_pts_list.push_back(node_pt);
-
-		for (i = 1; i < node_count; i++)
-		{
-			dl = (static_cast<float>(i) / static_cast<float>(node_count)) * 2.0 * m_pi; // Angle (Radian) 
-
-			// Node point
-			node_pt = glm::vec2(mat_data.line_length * std::cos(dl), mat_data.line_length * std::sin(dl));
-			this->model_nodes.add_node(i, node_pt);
-			node_pts_list.push_back(node_pt);
-
-			// Add element
-			line_id = i - 1;
-			this->model_lineelements.add_elementline(line_id, &this->model_nodes.nodeMap[i - 1], &this->model_nodes.nodeMap[i], material_id);
-		}
-
-
-		// Add final element
-		line_id = i - 1;
-		this->model_lineelements.add_elementline(line_id, &this->model_nodes.nodeMap[i - 1], &this->model_nodes.nodeMap[0], material_id);
-
-		// Set the initial condition
-		this->node_inldispl.set_zero_condition(model_nodes, mat_data.line_length, 0, model_type);
-		this->node_inlvelo.set_zero_condition(model_nodes, mat_data.line_length, 1, model_type);
-		this->node_loads.set_zero_condition(mat_data.line_length, node_count, model_type);
-	}
-
+	
 
 	// Input read failed??
 	if (model_nodes.node_count < 2 || model_lineelements.elementline_count < 1)
