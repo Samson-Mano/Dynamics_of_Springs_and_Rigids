@@ -113,27 +113,27 @@ std::vector<modal_line_points> modal_elementline_list_store::set_line_bar_interp
 			// Start point displacement at local axis
 			glm::vec3 local_displ_start_node = glm::vec3(((start_node_displ.x * Lcos) + (start_node_displ.y * Msin)),
 				((start_node_displ.x * (-1 * Msin)) + (start_node_displ.y * Lcos)),
-				((start_node_displ.x * (-1 * Msin)) + (start_node_displ.y * Lcos)));
+				0.0);
 
 			// End point displacement at local axis
 			glm::vec3 local_displ_end_node = glm::vec3(((end_node_displ.x * Lcos) + (end_node_displ.y * Msin)),
-				((end_node_displ.x * (-1 * Msin)) + (end_node_displ.y * Lcos)));
+				((end_node_displ.x * (-1 * Msin)) + (end_node_displ.y * Lcos)),0.0);
 
 			//_____________________________________________________________________________________________
 			// Find the interpolation of the displacements at pt1
-			glm::vec2 local_displ_pt1 = glm::vec2(linear_bar_element_interpolation(local_displ_start_node.x, local_displ_end_node.x, t_ratio1),
-				linear_bar_element_interpolation(local_displ_start_node.y, local_displ_end_node.y, t_ratio1));
+			glm::vec3 local_displ_pt1 = glm::vec3(linear_bar_element_interpolation(local_displ_start_node.x, local_displ_end_node.x, t_ratio1),
+				linear_bar_element_interpolation(local_displ_start_node.y, local_displ_end_node.y, t_ratio1),0.0);
 
 			// Find the interpolation of the displacements at pt2
-			glm::vec2 local_displ_pt2 = glm::vec2(linear_bar_element_interpolation(local_displ_start_node.x, local_displ_end_node.x, t_ratio2),
-				linear_bar_element_interpolation(local_displ_start_node.y, local_displ_end_node.y, t_ratio2));
+			glm::vec3 local_displ_pt2 = glm::vec3(linear_bar_element_interpolation(local_displ_start_node.x, local_displ_end_node.x, t_ratio2),
+				linear_bar_element_interpolation(local_displ_start_node.y, local_displ_end_node.y, t_ratio2),0.0);
 
 			// Transform from local to global
-			glm::vec2 global_displ_pt1 = glm::vec2(((local_displ_pt1.x * Lcos) + (local_displ_pt1.y * (-1 * Msin))),
-				((local_displ_pt1.x * Msin) + (local_displ_pt1.y * Lcos)));
+			glm::vec3 global_displ_pt1 = glm::vec3(((local_displ_pt1.x * Lcos) + (local_displ_pt1.y * (-1 * Msin))),
+				((local_displ_pt1.x * Msin) + (local_displ_pt1.y * Lcos)),0.0);
 
-			glm::vec2 global_displ_pt2 = glm::vec2(((local_displ_pt2.x * Lcos) + (local_displ_pt2.y * (-1 * Msin))),
-				((local_displ_pt2.x * Msin) + (local_displ_pt2.y * Lcos)));
+			glm::vec3 global_displ_pt2 = glm::vec3(((local_displ_pt2.x * Lcos) + (local_displ_pt2.y * (-1 * Msin))),
+				((local_displ_pt2.x * Msin) + (local_displ_pt2.y * Lcos)),0.0);
 
 			//__________________________________________________________________________________________________
 			// Add to the list
@@ -195,8 +195,8 @@ void modal_elementline_list_store::set_buffer(int selected_mode)
 			// Add each individual segment of main line to list
 			// Pt1
 			// Scale the displacement with maximum displacement
-			glm::vec2 pt1_displ = glm::vec2(h_lines.pt1_modal_displ[selected_mode].x / mode_max_displ,
-				h_lines.pt1_modal_displ[selected_mode].y / mode_max_displ);
+			glm::vec3 pt1_displ = glm::vec3(h_lines.pt1_modal_displ[selected_mode].x / mode_max_displ,
+				h_lines.pt1_modal_displ[selected_mode].y / mode_max_displ,0.0);
 
 			// Find the displacment value
 			double pt1_displ_value = std::sqrt(std::pow(h_lines.pt1_modal_displ[selected_mode].x, 2) +
@@ -210,8 +210,8 @@ void modal_elementline_list_store::set_buffer(int selected_mode)
 			//___________________________________________________________________________________________________
 			// Pt2
 			// Scale the displacement with maximum displacement
-			glm::vec2 pt2_displ = glm::vec2(h_lines.pt2_modal_displ[selected_mode].x / mode_max_displ,
-				h_lines.pt2_modal_displ[selected_mode].y / mode_max_displ);
+			glm::vec3 pt2_displ = glm::vec3(h_lines.pt2_modal_displ[selected_mode].x / mode_max_displ,
+				h_lines.pt2_modal_displ[selected_mode].y / mode_max_displ,0.0);
 
 			// Find the displacment value
 			double pt2_displ_value = std::sqrt(std::pow(h_lines.pt2_modal_displ[selected_mode].x, 2) +

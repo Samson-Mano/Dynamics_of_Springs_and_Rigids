@@ -6,7 +6,7 @@ struct load_data
 	int load_id = 0; // Load id
 	int load_setid = 0; // Load set id
 	int node_id = 0; // id of the node its applied to
-	glm::vec2 load_loc = glm::vec2(0); // Load location
+	glm::vec3 load_loc = glm::vec3(0); // Load location
 	double load_start_time = 0.0; // Load start time
 	double load_end_time = 0.0; // Load end time
 	double load_value = 0.0; // Load value

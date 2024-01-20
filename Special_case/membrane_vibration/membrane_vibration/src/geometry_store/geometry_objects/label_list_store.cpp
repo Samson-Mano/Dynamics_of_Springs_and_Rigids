@@ -29,7 +29,7 @@ void label_list_store::init(geom_parameters* geom_param_ptr)
 	total_char_count = 0;
 }
 
-void label_list_store::add_text(std::string& label, glm::vec2& label_loc, glm::vec2 label_offset,
+void label_list_store::add_text(std::string& label, glm::vec3& label_loc, glm::vec3 label_offset,
 	glm::vec3& label_color, double label_angle, bool above_point, bool is_offset)
 {
 	// Create a temporary element
@@ -177,7 +177,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 	glm::vec3 lb_color = lb.label_color;
 
 	// Store the x,y location
-	glm::vec2 loc = lb.label_loc;
+	glm::vec3 loc = lb.label_loc;
 	float x = loc.x - (total_label_width * 0.5f);
 
 	// Whether paint above the location or not
@@ -191,7 +191,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 		y = loc.y - (total_label_height + (total_label_height * 0.5f));
 	}
 
-	glm::vec2 rotated_pt;
+	glm::vec3 rotated_pt;
 
 	for (int i = 0; lb.label[i] != '\0'; ++i)
 	{
@@ -210,7 +210,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 
 		// Point 1
 		// Vertices [0,0] // 0th point
-		rotated_pt = rotate_pt(loc, glm::vec2(xpos, ypos + h), lb.label_angle);
+		rotated_pt = rotate_pt(loc, glm::vec3(xpos, ypos + h,0.0), lb.label_angle);
 
 		vertices[vertex_index + 0] = rotated_pt.x;
 		vertices[vertex_index + 1] = rotated_pt.y;
@@ -242,7 +242,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 
 		// Point 2
 		// Vertices [0,1] // 1th point
-		rotated_pt = rotate_pt(loc, glm::vec2(xpos, ypos), lb.label_angle);
+		rotated_pt = rotate_pt(loc, glm::vec3(xpos, ypos,0.0), lb.label_angle);
 
 		vertices[vertex_index + 0] = rotated_pt.x;
 		vertices[vertex_index + 1] = rotated_pt.y;
@@ -274,7 +274,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 
 		// Point 3
 		// Vertices [1,1] // 2th point
-		rotated_pt = rotate_pt(loc, glm::vec2(xpos + w, ypos), lb.label_angle);
+		rotated_pt = rotate_pt(loc, glm::vec3(xpos + w, ypos,0.0), lb.label_angle);
 
 		vertices[vertex_index + 0] = rotated_pt.x;
 		vertices[vertex_index + 1] = rotated_pt.y;
@@ -306,7 +306,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 
 		// Point 4
 		// Vertices [1,0] // 3th point
-		rotated_pt = rotate_pt(loc, glm::vec2(xpos + w, ypos + h), lb.label_angle);
+		rotated_pt = rotate_pt(loc, glm::vec3(xpos + w, ypos + h,0.0), lb.label_angle);
 
 		vertices[vertex_index + 0] = rotated_pt.x;
 		vertices[vertex_index + 1] = rotated_pt.y;
@@ -358,7 +358,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 	}
 }
 
-glm::vec2 label_list_store::rotate_pt(glm::vec2& rotate_about, glm::vec2 pt, double& rotation_angle)
+glm::vec3 label_list_store::rotate_pt(glm::vec3& rotate_about, glm::vec3 pt, double& rotation_angle)
 {
 	// Return the rotation point
 	glm::vec2 translated_pt = pt - rotate_about;
@@ -379,8 +379,8 @@ glm::vec2 label_list_store::rotate_pt(glm::vec2& rotate_about, glm::vec2 pt, dou
 	double sin_theta = sin(radians);
 
 	// Rotated point of the corners
-	glm::vec2 rotated_pt = glm::vec2((translated_pt.x * cos_theta) - (translated_pt.y * sin_theta),
-		(translated_pt.x * sin_theta) + (translated_pt.y * cos_theta));
+	glm::vec3 rotated_pt = glm::vec3((translated_pt.x * cos_theta) - (translated_pt.y * sin_theta),
+		(translated_pt.x * sin_theta) + (translated_pt.y * cos_theta),0.0);
 
 	return (rotated_pt + rotate_about);
 }

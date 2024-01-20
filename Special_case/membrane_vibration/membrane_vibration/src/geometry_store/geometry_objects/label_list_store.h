@@ -10,8 +10,8 @@ struct label_text
 {
 	// Store the individual label
 	std::string label = "";
-	glm::vec2 label_loc = glm::vec2(0);
-	glm::vec2 label_offset = glm::vec2(0);
+	glm::vec3 label_loc = glm::vec3(0);
+	glm::vec3 label_offset = glm::vec3(0);
 	glm::vec3 label_color = glm::vec3(0);
 	double label_angle = 0.0;
 	bool label_above_loc = false;
@@ -30,7 +30,7 @@ public:
 	label_list_store();
 	~label_list_store();
 	void init(geom_parameters* geom_param_ptr);
-	void add_text(std::string& label, glm::vec2& label_loc, glm::vec2 label_offset, glm::vec3& label_color,
+	void add_text(std::string& label, glm::vec3& label_loc, glm::vec3 label_offset, glm::vec3& label_color,
 		double label_angle, bool above_point, bool is_offset);
 	void set_buffer();
 	void paint_text();
@@ -43,6 +43,6 @@ private:
 
 	void get_label_buffer(label_text& lb, float* vertices,
 		unsigned int& vertex_index, unsigned int* indices, unsigned int& indices_index);
-	glm::vec2 rotate_pt(glm::vec2& rotate_about, glm::vec2 pt, double& rotation_angle);
+	glm::vec3 rotate_pt(glm::vec3& rotate_about, glm::vec3 pt, double& rotation_angle);
 };
 

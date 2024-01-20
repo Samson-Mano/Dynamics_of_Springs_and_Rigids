@@ -99,8 +99,8 @@ void pulse_elementline_list_store::set_buffer()
 	{
 		pulse_elementline_store  rline = line_m.second;
 
-			std::vector<glm::vec2> line_startpt_offset; // list of start points offset
-			std::vector<glm::vec2> line_endpt_offset; // list of end points offset
+			std::vector<glm::vec3> line_startpt_offset; // list of start points offset
+			std::vector<glm::vec3> line_endpt_offset; // list of end points offset
 
 			std::vector<glm::vec3> line_startpt_color; // list of start point color
 			std::vector<glm::vec3> line_endpt_color; // list of end point color
@@ -116,7 +116,7 @@ void pulse_elementline_list_store::set_buffer()
 				// Distance ratio1  Scale the displacement with maximum displacement
 				double dist_ratio1 = pt_displ1 / max_line_displ;
 
-				glm::vec2 pt1_offset = static_cast<float>(dist_ratio1) * pt1;
+				glm::vec3 pt1_offset = static_cast<float>(dist_ratio1) * pt1;
 
 				// Add to the list
 				line_startpt_offset.push_back(pt1_offset);
@@ -140,7 +140,7 @@ void pulse_elementline_list_store::set_buffer()
 				// Distance ratio1  Scale the displacement with maximum displacement
 				double dist_ratio2 = pt_displ2 / max_line_displ;
 
-				glm::vec2 pt2_offset = static_cast<float>(dist_ratio2) * pt2;
+				glm::vec3 pt2_offset = static_cast<float>(dist_ratio2) * pt2;
 
 				// Add to the list
 				line_endpt_offset.push_back(pt2_offset);

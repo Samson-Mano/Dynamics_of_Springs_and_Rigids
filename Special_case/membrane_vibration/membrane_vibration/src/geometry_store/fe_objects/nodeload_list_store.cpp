@@ -395,7 +395,7 @@ void nodeload_list_store::set_buffer()
 				is_load_val_above = true;
 			}
 
-			load_value_labels.add_text(temp_str, load.load_loc, glm::vec2(0), temp_color, load_angle_rad, is_load_val_above, false);
+			load_value_labels.add_text(temp_str, load.load_loc, glm::vec3(0), temp_color, load_angle_rad, is_load_val_above, false);
 		}
 	}
 

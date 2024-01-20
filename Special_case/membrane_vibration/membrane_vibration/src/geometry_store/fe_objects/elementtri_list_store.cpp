@@ -47,14 +47,14 @@ void elementtri_list_store::add_elementtriangle(int& tri_id, node_store* nd1, no
 	elementtri_count++;
 
 	//__________________________ Add the Triangle
-	glm::vec2 node_pt1 = (*nd1).node_pt;
-	glm::vec2 node_pt2 = (*nd2).node_pt;
-	glm::vec2 node_pt3 = (*nd3).node_pt;
+	glm::vec3 node_pt1 = (*nd1).node_pt;
+	glm::vec3 node_pt2 = (*nd2).node_pt;
+	glm::vec3 node_pt3 = (*nd3).node_pt;
 
 	glm::vec3 temp_tri_color = geom_param_ptr->geom_colors.triangle_color;
 	// Main triangle
 	element_tris.add_tri(tri_id, node_pt1, node_pt2, node_pt3,
-		glm::vec2(0), glm::vec2(0), glm::vec2(0),
+		glm::vec3(0), glm::vec3(0), glm::vec3(0),
 		temp_tri_color, temp_tri_color, temp_tri_color, false);
 
 	// Main triangle as shrunk
@@ -62,15 +62,15 @@ void elementtri_list_store::add_elementtriangle(int& tri_id, node_store* nd1, no
 	double midpt_y = (node_pt1.y + node_pt2.y + node_pt3.y) / 3.0f;
 	double shrink_factor = geom_param_ptr->traingle_shrunk_factor;
 
-	glm::vec2 shrunk_node_pt1 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt1.x * shrink_factor)),
-		(midpt_y * (1 - shrink_factor) + (node_pt1.y * shrink_factor)));
-	glm::vec2 shrunk_node_pt2 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt2.x * shrink_factor)),
-		(midpt_y * (1 - shrink_factor) + (node_pt2.y * shrink_factor)));
-	glm::vec2 shrunk_node_pt3 = glm::vec2((midpt_x * (1 - shrink_factor) + (node_pt3.x * shrink_factor)),
-		(midpt_y * (1 - shrink_factor) + (node_pt3.y * shrink_factor)));
+	glm::vec3 shrunk_node_pt1 = glm::vec3((midpt_x * (1 - shrink_factor) + (node_pt1.x * shrink_factor)),
+		(midpt_y * (1 - shrink_factor) + (node_pt1.y * shrink_factor)),0.0);
+	glm::vec3 shrunk_node_pt2 = glm::vec3((midpt_x * (1 - shrink_factor) + (node_pt2.x * shrink_factor)),
+		(midpt_y * (1 - shrink_factor) + (node_pt2.y * shrink_factor)),0.0);
+	glm::vec3 shrunk_node_pt3 = glm::vec3((midpt_x * (1 - shrink_factor) + (node_pt3.x * shrink_factor)),
+		(midpt_y * (1 - shrink_factor) + (node_pt3.y * shrink_factor)),0.0);
 
 	element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-		glm::vec2(0), glm::vec2(0), glm::vec2(0),
+		glm::vec3(0), glm::vec3(0), glm::vec3(0),
 		temp_tri_color, temp_tri_color, temp_tri_color, false);
 
 }
@@ -86,21 +86,22 @@ void elementtri_list_store::add_selection_triangles(const std::vector<int>& sele
 	for (const auto& it : selected_element_ids)
 	{
 		int tri_id = elementtriMap[it].tri_id;
-		glm::vec2 node_pt1 = elementtriMap[it].nd1->node_pt; // Node pt 1
-		glm::vec2 node_pt2 = elementtriMap[it].nd2->node_pt; // Node pt 2
-		glm::vec2 node_pt3 = elementtriMap[it].nd3->node_pt; // Node pt 3
+		glm::vec3 node_pt1 = elementtriMap[it].nd1->node_pt; // Node pt 1
+		glm::vec3 node_pt2 = elementtriMap[it].nd2->node_pt; // Node pt 2
+		glm::vec3 node_pt3 = elementtriMap[it].nd3->node_pt; // Node pt 3
 
 
-		glm::vec2 midpt = glm::vec2((node_pt1.x + node_pt2.x + node_pt3.x) / 3.0f, // mid pt x
-			(node_pt1.y + node_pt2.y + node_pt3.y) / 3.0f); // mid pt y
+		glm::vec3 midpt = glm::vec3((node_pt1.x + node_pt2.x + node_pt3.x) / 3.0f, // mid pt x
+			(node_pt1.y + node_pt2.y + node_pt3.y) / 3.0f,  // mid pt y
+			(node_pt1.z + node_pt2.z + node_pt3.z) / 3.0f); // mid pt z
 		double shrink_factor = geom_param_ptr->traingle_shrunk_factor;
 
-		glm::vec2 shrunk_node_pt1 = geom_parameters::linear_interpolation(midpt, node_pt1, shrink_factor);
-		glm::vec2 shrunk_node_pt2 = geom_parameters::linear_interpolation(midpt, node_pt2, shrink_factor);
-		glm::vec2 shrunk_node_pt3 = geom_parameters::linear_interpolation(midpt, node_pt3, shrink_factor);
+		glm::vec3 shrunk_node_pt1 = glm::vec3( geom_parameters::linear_interpolation(midpt, node_pt1, shrink_factor),0.0);
+		glm::vec3 shrunk_node_pt2 = glm::vec3(geom_parameters::linear_interpolation(midpt, node_pt2, shrink_factor),0.0);
+		glm::vec3 shrunk_node_pt3 = glm::vec3(geom_parameters::linear_interpolation(midpt, node_pt3, shrink_factor),0.0);
 
 		selected_element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-			glm::vec2(0), glm::vec2(0), glm::vec2(0),
+			glm::vec3(0), glm::vec3(0), glm::vec3(0),
 			temp_color, temp_color, temp_color, false);
 	}
 
@@ -174,13 +175,13 @@ void elementtri_list_store::update_material_id_labels()
 		glm::vec2 nd_pt3 = elementtri.nd3->node_pt;
 
 		// Calculate the midpoint of the triangle
-		glm::vec2 tri_mid_pt = glm::vec2((nd_pt1.x + nd_pt2.x + nd_pt3.x) * 0.33333f,
-			(nd_pt1.y + nd_pt2.y + nd_pt3.y) * 0.33333f);
+		glm::vec3 tri_mid_pt = glm::vec3((nd_pt1.x + nd_pt2.x + nd_pt3.x) * 0.33333f,
+			(nd_pt1.y + nd_pt2.y + nd_pt3.y) * 0.33333f,0.0);
 
 		// Add the material ID
 		temp_color = geom_parameters::get_standard_color(elementtri.material_id);
 		temp_str = " M = " + std::to_string(elementtri.material_id);
-		element_materialid.add_text(temp_str, tri_mid_pt, glm::vec2(0), temp_color, 0, true, false);
+		element_materialid.add_text(temp_str, tri_mid_pt, glm::vec3(0), temp_color, 0, true, false);
 	}
 
 	// Set the buffer for the labels
