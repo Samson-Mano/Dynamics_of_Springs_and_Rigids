@@ -26,9 +26,8 @@ void options_window::init()
 	is_show_modelnodecoords = true; // Show model node co-ordinates
 
 	// Model elements
+	is_show_modeledeges = true; // Show model edges
 	is_show_modelelements = true; // Show model elements
-	is_show_modelelementids = true; // Show model element ids
-	is_show_modelelementlengths = true; // show model element lengths
 
 	is_show_window = false;
 }
@@ -61,10 +60,7 @@ void options_window::render_window()
 	// Model elements
 	ImGui::Text("Element options");
 	ImGui::Checkbox("Show Elements", &is_show_modelelements);
-	ImGui::Checkbox("Show Element IDs", &is_show_modelelementids);
-	ImGui::Checkbox("Show Element Lengths", &is_show_modelelementlengths);
-
-
+	ImGui::Checkbox("Show Edgess", &is_show_modeledeges);
 
 	ImGui::Spacing();
 	ImGui::Spacing();

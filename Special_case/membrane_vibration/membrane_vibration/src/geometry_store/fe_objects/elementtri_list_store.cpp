@@ -58,16 +58,14 @@ void elementtri_list_store::add_elementtriangle(int& tri_id, node_store* nd1, no
 		temp_tri_color, temp_tri_color, temp_tri_color, false);
 
 	// Main triangle as shrunk
-	double midpt_x = (node_pt1.x + node_pt2.x + node_pt3.x) / 3.0f;
-	double midpt_y = (node_pt1.y + node_pt2.y + node_pt3.y) / 3.0f;
+	glm::vec3 midpt = glm::vec3((node_pt1.x + node_pt2.x + node_pt3.x) / 3.0f, // mid pt x
+		(node_pt1.y + node_pt2.y + node_pt3.y) / 3.0f,  // mid pt y
+		(node_pt1.z + node_pt2.z + node_pt3.z) / 3.0f); // mid pt z
 	double shrink_factor = geom_param_ptr->traingle_shrunk_factor;
 
-	glm::vec3 shrunk_node_pt1 = glm::vec3((midpt_x * (1 - shrink_factor) + (node_pt1.x * shrink_factor)),
-		(midpt_y * (1 - shrink_factor) + (node_pt1.y * shrink_factor)),0.0);
-	glm::vec3 shrunk_node_pt2 = glm::vec3((midpt_x * (1 - shrink_factor) + (node_pt2.x * shrink_factor)),
-		(midpt_y * (1 - shrink_factor) + (node_pt2.y * shrink_factor)),0.0);
-	glm::vec3 shrunk_node_pt3 = glm::vec3((midpt_x * (1 - shrink_factor) + (node_pt3.x * shrink_factor)),
-		(midpt_y * (1 - shrink_factor) + (node_pt3.y * shrink_factor)),0.0);
+	glm::vec3 shrunk_node_pt1 = geom_parameters::linear_interpolation3d(midpt, node_pt1, shrink_factor);
+	glm::vec3 shrunk_node_pt2 = geom_parameters::linear_interpolation3d(midpt, node_pt1, shrink_factor);
+	glm::vec3 shrunk_node_pt3 = geom_parameters::linear_interpolation3d(midpt, node_pt1, shrink_factor);
 
 	element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
 		glm::vec3(0), glm::vec3(0), glm::vec3(0),
@@ -96,9 +94,9 @@ void elementtri_list_store::add_selection_triangles(const std::vector<int>& sele
 			(node_pt1.z + node_pt2.z + node_pt3.z) / 3.0f); // mid pt z
 		double shrink_factor = geom_param_ptr->traingle_shrunk_factor;
 
-		glm::vec3 shrunk_node_pt1 = glm::vec3( geom_parameters::linear_interpolation(midpt, node_pt1, shrink_factor),0.0);
-		glm::vec3 shrunk_node_pt2 = glm::vec3(geom_parameters::linear_interpolation(midpt, node_pt2, shrink_factor),0.0);
-		glm::vec3 shrunk_node_pt3 = glm::vec3(geom_parameters::linear_interpolation(midpt, node_pt3, shrink_factor),0.0);
+		glm::vec3 shrunk_node_pt1 = geom_parameters::linear_interpolation3d(midpt, node_pt1, shrink_factor);
+		glm::vec3 shrunk_node_pt2 = geom_parameters::linear_interpolation3d(midpt, node_pt2, shrink_factor);
+		glm::vec3 shrunk_node_pt3 = geom_parameters::linear_interpolation3d(midpt, node_pt3, shrink_factor);
 
 		selected_element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
 			glm::vec3(0), glm::vec3(0), glm::vec3(0),
@@ -110,82 +108,11 @@ void elementtri_list_store::add_selection_triangles(const std::vector<int>& sele
 
 }
 
-void elementtri_list_store::update_material(const std::vector<int> selected_element_tri, const int& material_id)
-{
-	// Update the material ID
-	for (const int& it : selected_element_tri)
-	{
-		elementtriMap[it].material_id = material_id;
-	}
-
-	// Update the material ID label
-	update_material_id_labels();
-}
-
-
-void elementtri_list_store::execute_delete_material(const int& del_material_id)
-{
-	// Update delete material
-	bool is_del_material_found = false; // Flag to check whether material id deleted
-
-	// Delete the material
-	for (const auto& tri : elementtriMap)
-	{
-		int id = tri.first; // get the id
-		if (elementtriMap[id].material_id == del_material_id)
-		{
-			// Delete material is removed and the material ID of that element to 0
-			elementtriMap[id].material_id = 0;
-			is_del_material_found = true;
-		}
-	}
-
-	// Update the material ID label
-	if (is_del_material_found == true)
-	{
-		update_material_id_labels();
-	}
-
-}
-
 void elementtri_list_store::set_buffer()
 {
 	// Set the buffers for the Model
 	element_tris.set_buffer();
 	element_tris_shrunk.set_buffer();
-	update_material_id_labels();
-}
-
-void elementtri_list_store::update_material_id_labels()
-{
-	// Clear the labels
-	element_materialid.clear_labels();
-
-	// Update the material id labels
-	glm::vec3 temp_color;
-	std::string temp_str = "";
-
-	for (auto it = elementtriMap.begin(); it != elementtriMap.end(); ++it)
-	{
-		elementtri_store elementtri = it->second;
-
-		// Get the triangle node points
-		glm::vec2 nd_pt1 = elementtri.nd1->node_pt;
-		glm::vec2 nd_pt2 = elementtri.nd2->node_pt;
-		glm::vec2 nd_pt3 = elementtri.nd3->node_pt;
-
-		// Calculate the midpoint of the triangle
-		glm::vec3 tri_mid_pt = glm::vec3((nd_pt1.x + nd_pt2.x + nd_pt3.x) * 0.33333f,
-			(nd_pt1.y + nd_pt2.y + nd_pt3.y) * 0.33333f,0.0);
-
-		// Add the material ID
-		temp_color = geom_parameters::get_standard_color(elementtri.material_id);
-		temp_str = " M = " + std::to_string(elementtri.material_id);
-		element_materialid.add_text(temp_str, tri_mid_pt, glm::vec3(0), temp_color, 0, true, false);
-	}
-
-	// Set the buffer for the labels
-	element_materialid.set_buffer();
 }
 
 void elementtri_list_store::paint_elementtriangles()
@@ -274,7 +201,8 @@ std::vector<int> elementtri_list_store::is_tri_selected(const glm::vec2& corner_
 
 }
 
-void elementtri_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void elementtri_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Update model openGL uniforms
 	element_tris.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);

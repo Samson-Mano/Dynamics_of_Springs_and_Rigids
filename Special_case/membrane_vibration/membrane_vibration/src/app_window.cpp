@@ -151,8 +151,8 @@ void app_window::app_render()
 
 	// Set the point size and line width
 	// Set the point size
-	glPointSize(6.2f);
-	glLineWidth(3.1f);
+	glPointSize(geom.geom_param.point_size);
+	glLineWidth(geom.geom_param.line_width);
 
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))

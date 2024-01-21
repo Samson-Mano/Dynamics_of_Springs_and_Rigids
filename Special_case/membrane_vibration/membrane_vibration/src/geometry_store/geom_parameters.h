@@ -75,19 +75,11 @@ public:
 	const float node_circle_radii = 0.005f;
 
 	// Geometry size
-	const float point_size = 3.0f;
-	const float selected_point_size = 6.0f;
-	const float line_width = 2.1f;
-	const float selected_line_width = 4.2f;
+	const float point_size = 2.4f;
+	const float selected_point_size = 4.4f;
+	const float line_width = 1.1f;
+	const float selected_line_width = 2.1f;
 	
-	// element width
-	const float spring_element_width = 2.4f;
-	const float rigid_element_width = 0.6f;
-
-	// Spring turns
-	const double spring_turn_min = 10.0;
-	const double spring_turn_max = 20.0;
-
 	// Precision for various values
 	const int length_precision = 2;
 	const int coord_precision = 2;
@@ -106,10 +98,10 @@ public:
 	int window_width = 0;
 	int window_height = 0;
 
-	glm::vec2 min_b = glm::vec2(0); // (min_x, min_y)
-	glm::vec2 max_b = glm::vec2(0); // (max_x, max_y)
-	glm::vec2 geom_bound = glm::vec2(0); // Bound magnitude
-	glm::vec2 center = glm::vec2(0); // center of the geometry
+	glm::vec3 min_b = glm::vec3(0); // (min_x, min_y)
+	glm::vec3 max_b = glm::vec3(0); // (max_x, max_y)
+	glm::vec3 geom_bound = glm::vec3(0); // Bound magnitude
+	glm::vec3 center = glm::vec3(0); // center of the geometry
 	glm::mat4 modelMatrix = glm::mat4(0); // Geometry model matrix
 	double geom_scale = 0.0; // Scale of the geometry
 	double geom_transparency = 1.0; // Value to control the geometry transparency
@@ -118,6 +110,7 @@ public:
 
 	// Screen transformations
 	glm::mat4 panTranslation = glm::mat4(0); // Pan translataion
+	glm::mat4 rotateTranslation = glm::mat4(1.0); // Rotate translation
 	double zoom_scale = 0.0; // Zoom scale
 
 	// Standard colors
@@ -137,9 +130,11 @@ public:
 
 	static glm::vec2 linear_interpolation(const glm::vec2& pt1, const glm::vec2& pt2, const double& param_t);
 
-	static	glm::vec2 findGeometricCenter(const std::vector<glm::vec2>& all_pts);
+	static glm::vec3 linear_interpolation3d(const glm::vec3& pt1, const glm::vec3& pt2, const double& param_t);
 
-	static std::pair<glm::vec2, glm::vec2> findMinMaxXY(const std::vector<glm::vec2>& all_pts);
+	static	glm::vec3 findGeometricCenter(const std::vector<glm::vec3>& all_pts);
+
+	static std::pair<glm::vec3, glm::vec3> findMinMaxXY(const std::vector<glm::vec3>& all_pts);
 
 	static glm::vec3 getHeatMapColor(float value);
 

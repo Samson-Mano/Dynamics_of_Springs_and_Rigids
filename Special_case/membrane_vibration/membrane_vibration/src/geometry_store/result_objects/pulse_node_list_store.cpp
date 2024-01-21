@@ -107,7 +107,8 @@ void pulse_node_list_store::paint_pulse_nodes(const int& dyn_index)
 	pulse_node_points.paint_points(dyn_index);
 }
 
-void pulse_node_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void pulse_node_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation, 
+	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Pulse node points update geometry 
 	pulse_node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);

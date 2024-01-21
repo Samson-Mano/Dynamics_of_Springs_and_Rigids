@@ -21,9 +21,8 @@ public:
 	bool is_show_modelnodecoords = true; // Show model node co-ordinates
 
 	// Model elements
-	bool is_show_modelelements = true; // Show model elements
-	bool is_show_modelelementids = true; // Show model element ids
-	bool is_show_modelelementlengths = true; // show model element lengths
+	bool is_show_modeledeges = true; // Show model edges
+	bool is_show_modelelements = true; // show model elements
 
 	// Window
 	bool is_show_window = false;

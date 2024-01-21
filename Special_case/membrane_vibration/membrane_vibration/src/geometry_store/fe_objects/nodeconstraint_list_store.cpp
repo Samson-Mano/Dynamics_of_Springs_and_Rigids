@@ -137,7 +137,8 @@ void nodeconstraint_list_store::paint_constraints()
 	constraint_texture.UnBind();
 }
 
-void nodeconstraint_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void nodeconstraint_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	if (set_modelmatrix == true)
 	{

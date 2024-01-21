@@ -64,6 +64,8 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	// Initialize the model items
 	this->model_nodes.init(&geom_param);
 	this->model_lineelements.init(&geom_param);
+	this->model_trielements.init(&geom_param);
+	this->model_quadelements.init(&geom_param);
 
 	// Node constraints
 	this->node_constraints.init(&geom_param);
@@ -102,21 +104,12 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 			fields.push_back(field);
 		}
 
-		if (fields[0] == "NodeCount")
-		{
-			// Node count
-			node_count = std::stoi(fields[1]);
-		}
-		else if (fields[0] == "Tension")
+
+		if (fields[0] == "Tension")
 		{
 			// Tension
 			this->mat_data.line_tension = std::stod(fields[1]);
 
-		}
-		else if (fields[0] == "Length")
-		{
-			// Length
-			this->mat_data.line_length = std::stod(fields[1]);
 		}
 		else if (fields[0] == "Density")
 		{
@@ -132,8 +125,146 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	}
 
 
+	// read the model
+	//___________________________________________________________________________
+
+	std::ifstream model_file;
+
+	// Print current working directory
+	std::filesystem::path current_path = std::filesystem::current_path();
+	std::cout << "Current working directory: " << current_path << std::endl;
+
+
+	if (this->mat_data.model_type == 0)
+	{
+		// Circular
+		model_file =std::ifstream("circle_mesh.txt", std::ifstream::in);
+	}
+	else if (this->mat_data.model_type == 1)
+	{
+		// Rectange 1:1
+		model_file = std::ifstream("rect1_mesh.txt", std::ifstream::in);
+	}
+	else if (this->mat_data.model_type == 2)
+	{
+		// Rectangle 1:2
+		model_file = std::ifstream("rect2_mesh.txt", std::ifstream::in);
+	}
+	else if (this->mat_data.model_type == 3)
+	{
+		// Rectangle 1:3
+		model_file = std::ifstream("rect3_mesh.txt", std::ifstream::in);
+	}
+
+
+	
+	// Read the Raw Data
+	// Read the entire file into a string
+	std::string file_contents((std::istreambuf_iterator<char>(model_file)),
+		std::istreambuf_iterator<char>());
+
+	// Split the string into lines
+	std::istringstream iss(file_contents);
+	std::string line;
+	std::vector<std::string> lines;
+	while (std::getline(iss, line))
+	{
+		lines.push_back(line);
+	}
+
+	//________________________________________ Create the model
+
 	//Node Point list
-	std::vector<glm::vec2> node_pts_list;
+	std::vector<glm::vec3> node_pts_list;
+	j = 0;
+	// Process the lines
+	while (j < lines.size())
+	{
+		std::string line = lines[j];
+		std::string type = line.substr(0, 4);  // Extract the first 4 characters of the line
+
+		// Split the line into comma-separated fields
+		std::istringstream iss(line);
+		std::string field;
+		std::vector<std::string> fields;
+		while (std::getline(iss, field, ','))
+		{
+			fields.push_back(field);
+		}
+
+		if (type == "node")
+		{
+			// Read the nodes
+			int node_id = std::stoi(fields[1]); // node ID
+			float x = std::stof(fields[2]); // Node coordinate x
+			float y = std::stof(fields[3]); // Node coordinate y
+			float z = std::stof(fields[4]); // Node coordinate z
+
+			// Add to node Map
+			glm::vec3 node_pt = glm::vec3(x, y, z);
+
+			// Add to the node pt list
+			node_pts_list.push_back(node_pt);
+
+			model_nodes.add_node(node_id, node_pt);
+		}
+		else if (type == "quad")
+		{
+			int quad_id = std::stoi(fields[1]); // Quad ID
+			int nd1 = std::stoi(fields[2]); // quad node 1
+			int nd2 = std::stoi(fields[3]); // quad node 2
+			int nd3 = std::stoi(fields[4]); // quad node 3
+			int nd4 = std::stoi(fields[5]); // quad node 4
+
+			// Add to Quad Map (Note that Nodes needed to be added before the start of line addition !!!!)
+			this->model_quadelements.add_elementquadrilateral(quad_id, &model_nodes.nodeMap[nd1], &model_nodes.nodeMap[nd2],
+				&model_nodes.nodeMap[nd3], &model_nodes.nodeMap[nd4]);
+
+			// Edge 1
+			int line_id = this->model_lineelements.elementline_count;
+			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd1], &model_nodes.nodeMap[nd2]);
+
+			// Edge 2
+			line_id = this->model_lineelements.elementline_count;
+			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd2], &model_nodes.nodeMap[nd3]);
+
+			// Edge 3
+			line_id = this->model_lineelements.elementline_count;
+			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd3], &model_nodes.nodeMap[nd4]);
+
+			// Edge 2
+			line_id = this->model_lineelements.elementline_count;
+			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd4], &model_nodes.nodeMap[nd1]);
+
+		}
+		else if (type == "tria")
+		{
+			int tri_id = std::stoi(fields[1]); // Tri ID
+			int nd1 = std::stoi(fields[2]); // quad node 1
+			int nd2 = std::stoi(fields[3]); // quad node 2
+			int nd3 = std::stoi(fields[4]); // quad node 3
+
+			// Add to Tri Map (Note that Nodes needed to be added before the start of line addition !!!!)
+			this->model_trielements.add_elementtriangle(tri_id, &model_nodes.nodeMap[nd1], &model_nodes.nodeMap[nd2],
+								&model_nodes.nodeMap[nd3]);
+
+			// Edge 1
+			int line_id = this->model_lineelements.elementline_count;
+			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd1], &model_nodes.nodeMap[nd2]);
+
+			// Edge 2
+			line_id = this->model_lineelements.elementline_count;
+			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd2], &model_nodes.nodeMap[nd3]);
+
+			// Edge 3
+			line_id = this->model_lineelements.elementline_count;
+			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd3], &model_nodes.nodeMap[nd1]);
+
+		}
+		
+		// Iterate line
+		j++;
+	}
 
 	
 
@@ -149,7 +280,7 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	is_geometry_set = true;
 
 	// Set the boundary of the geometry
-	std::pair<glm::vec2, glm::vec2> result = geom_parameters::findMinMaxXY(node_pts_list);
+	std::pair<glm::vec3, glm::vec3> result = geom_parameters::findMinMaxXY(node_pts_list);
 	this->geom_param.min_b = result.first;
 	this->geom_param.max_b = result.second;
 	this->geom_param.geom_bound = geom_param.max_b - geom_param.min_b;
@@ -164,6 +295,8 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	// Set the geometry buffers
 	this->model_nodes.set_buffer();
 	this->model_lineelements.set_buffer();
+	this->model_trielements.set_buffer();
+	this->model_quadelements.set_buffer();
 
 	// Set the constraints buffer
 	this->node_constraints.set_buffer();
@@ -217,18 +350,19 @@ void geom_store::update_model_matrix()
 	geom_param.modelMatrix = g_transl * glm::scale(glm::mat4(1.0f), glm::vec3(static_cast<float>(geom_param.geom_scale)));
 
 	// Update the model matrix
-	model_nodes.update_geometry_matrices(true, false, false, true, false);
-	model_lineelements.update_geometry_matrices(true, false, false, true, false);
-	node_constraints.update_geometry_matrices(true, false, false, true, false);
-	node_loads.update_geometry_matrices(true, false, false, true, false);
-	node_inldispl.update_geometry_matrices(true, false, false, true, false);
-	node_inlvelo.update_geometry_matrices(true, false, false, true, false);
+	model_nodes.update_geometry_matrices(true, false, false, false, true, false);
+	model_lineelements.update_geometry_matrices(true, false, false, false, true, false);
+	model_quadelements.update_geometry_matrices(true, false, false, false, true, false);
+	node_constraints.update_geometry_matrices(true, false, false, false, true, false);
+	node_loads.update_geometry_matrices(true, false, false, false, true, false);
+	node_inldispl.update_geometry_matrices(true, false, false, false, true, false);
+	node_inlvelo.update_geometry_matrices(true, false, false, false, true, false);
 
 	// Update the modal analysis result matrix
-	modal_result_nodes.update_geometry_matrices(true, false, false, false, false);
-	modal_result_lineelements.update_geometry_matrices(true, false, false, false, false);
-	pulse_result_nodes.update_geometry_matrices(true, false, false, false, false);
-	pulse_result_lineelements.update_geometry_matrices(true, false, false, false, false);
+	modal_result_nodes.update_geometry_matrices(true, false, false, false, false, false);
+	modal_result_lineelements.update_geometry_matrices(true, false, false, false, false, false);
+	pulse_result_nodes.update_geometry_matrices(true, false, false, false, false, false);
+	pulse_result_lineelements.update_geometry_matrices(true, false, false, false, false, false);
 
 }
 
@@ -244,18 +378,19 @@ void geom_store::update_model_zoomfit()
 	geom_param.zoom_scale = 1.0f;
 
 	// Update the zoom scale and pan translation
-	model_nodes.update_geometry_matrices(false, true, true, false, false);
-	model_lineelements.update_geometry_matrices(false, true, true, false, false);
-	node_constraints.update_geometry_matrices(false, true, true, false, false);
-	node_loads.update_geometry_matrices(false, true, true, false, false);
-	node_inldispl.update_geometry_matrices(false, true, true, false, false);
-	node_inlvelo.update_geometry_matrices(false, true, true, false, false);
+	model_nodes.update_geometry_matrices(false, true, false, true, false, false);
+	model_lineelements.update_geometry_matrices(false, true, false, true, false, false);
+	model_quadelements.update_geometry_matrices(false, true, false, true, false, false);
+	node_constraints.update_geometry_matrices(false, true, false, true, false, false);
+	node_loads.update_geometry_matrices(false, true, false, true, false, false);
+	node_inldispl.update_geometry_matrices(false, true, false, true, false, false);
+	node_inlvelo.update_geometry_matrices(false, true, false, true, false, false);
 
 	// Update the modal analysis result matrix
-	modal_result_nodes.update_geometry_matrices(false, true, true, false, false);
-	modal_result_lineelements.update_geometry_matrices(false, true, true, false, false);
-	pulse_result_nodes.update_geometry_matrices(false, true, true, false, false);
-	pulse_result_lineelements.update_geometry_matrices(false, true, true, false, false);
+	modal_result_nodes.update_geometry_matrices(false, true, false, true, false, false);
+	modal_result_lineelements.update_geometry_matrices(false, true, false, true, false, false);
+	pulse_result_nodes.update_geometry_matrices(false, true, false, true, false, false);
+	pulse_result_lineelements.update_geometry_matrices(false, true, false, true, false, false);
 
 }
 
@@ -271,20 +406,30 @@ void geom_store::update_model_pan(glm::vec2& transl)
 	geom_param.panTranslation[1][3] = transl.y;
 
 	// Update the pan translation
-	model_nodes.update_geometry_matrices(false, true, false, false, false);
-	model_lineelements.update_geometry_matrices(false, true, false, false, false);
-	node_constraints.update_geometry_matrices(false, true, false, false, false);
-	node_loads.update_geometry_matrices(false, true, false, false, false);
-	node_inldispl.update_geometry_matrices(false, true, false, false, false);
-	node_inlvelo.update_geometry_matrices(false, true, false, false, false);
+	model_nodes.update_geometry_matrices(false, true,false, false, false, false);
+	model_lineelements.update_geometry_matrices(false, true, false, false, false, false);
+	model_quadelements.update_geometry_matrices(false, true, false, false, false, false);
+	node_constraints.update_geometry_matrices(false, true, false, false, false, false);
+	node_loads.update_geometry_matrices(false, true, false, false, false, false);
+	node_inldispl.update_geometry_matrices(false, true, false, false, false, false);
+	node_inlvelo.update_geometry_matrices(false, true, false, false, false, false);
 
 	// Update the modal analysis result matrix
-	modal_result_nodes.update_geometry_matrices(false, true, false, false, false);
-	modal_result_lineelements.update_geometry_matrices(false, true, false, false, false);
-	pulse_result_nodes.update_geometry_matrices(false, true, false, false, false);
-	pulse_result_lineelements.update_geometry_matrices(false, true, false, false, false);
+	modal_result_nodes.update_geometry_matrices(false, true, false, false, false, false);
+	modal_result_lineelements.update_geometry_matrices(false, true, false, false, false, false);
+	pulse_result_nodes.update_geometry_matrices(false, true, false, false, false, false);
+	pulse_result_lineelements.update_geometry_matrices(false, true, false, false, false, false);
 
 }
+
+void geom_store::update_model_rotate(glm::vec2& transl)
+{
+	if (is_geometry_set == false)
+		return;
+
+
+}
+
 
 void geom_store::update_model_zoom(double& z_scale)
 {
@@ -295,18 +440,19 @@ void geom_store::update_model_zoom(double& z_scale)
 	geom_param.zoom_scale = z_scale;
 
 	// Update the Zoom
-	model_nodes.update_geometry_matrices(false, false, true, false, false);
-	model_lineelements.update_geometry_matrices(false, false, true, false, false);
-	node_constraints.update_geometry_matrices(false, false, true, false, false);
-	node_loads.update_geometry_matrices(false, false, true, false, false);
-	node_inldispl.update_geometry_matrices(false, false, true, false, false);
-	node_inlvelo.update_geometry_matrices(false, false, true, false, false);
+	model_nodes.update_geometry_matrices(false, false, false, true, false, false);
+	model_lineelements.update_geometry_matrices(false, false, false, true, false, false);
+	model_quadelements.update_geometry_matrices(false, false, false, true, false, false);
+	node_constraints.update_geometry_matrices(false, false, false, true, false, false);
+	node_loads.update_geometry_matrices(false, false, false, true, false, false);
+	node_inldispl.update_geometry_matrices(false, false, false, true, false, false);
+	node_inlvelo.update_geometry_matrices(false, false, false, true, false, false);
 
 	// Update the modal analysis result matrix
-	modal_result_nodes.update_geometry_matrices(false, false, true, false, false);
-	modal_result_lineelements.update_geometry_matrices(false, false, true, false, false);
-	pulse_result_nodes.update_geometry_matrices(false, false, true, false, false);
-	pulse_result_lineelements.update_geometry_matrices(false, false, true, false, false);
+	modal_result_nodes.update_geometry_matrices(false, false, false, true, false, false);
+	modal_result_lineelements.update_geometry_matrices(false, false, false, true, false, false);
+	pulse_result_nodes.update_geometry_matrices(false, false, false, true, false, false);
+	pulse_result_lineelements.update_geometry_matrices(false, false, false, true, false, false);
 
 }
 
@@ -327,12 +473,13 @@ void geom_store::update_model_transperency(bool is_transparent)
 	}
 
 	// Update the model transparency
-	model_nodes.update_geometry_matrices(false, false, false, true, false);
-	model_lineelements.update_geometry_matrices(false, false, false, true, false);
-	node_constraints.update_geometry_matrices(false, false, false, true, false);
-	node_loads.update_geometry_matrices(false, false, false, true, false);
-	node_inldispl.update_geometry_matrices(false, false, false, true, false);
-	node_inlvelo.update_geometry_matrices(false, false, false, true, false);
+	model_nodes.update_geometry_matrices(false, false, false, false, true, false);
+	model_lineelements.update_geometry_matrices(false, false, false, false, true, false);
+	model_quadelements.update_geometry_matrices(false, false, false, false, true, false);
+	node_constraints.update_geometry_matrices(false, false, false, false, true, false);
+	node_loads.update_geometry_matrices(false, false, false, false, true, false);
+	node_inldispl.update_geometry_matrices(false, false, false, false, true, false);
+	node_inlvelo.update_geometry_matrices(false, false, false, false, true, false);
 
 	// Donot update result elements transparency
 
@@ -409,6 +556,13 @@ void geom_store::paint_model()
 	if (op_window->is_show_modelelements == true)
 	{
 		// Show the model elements
+		
+		model_quadelements.paint_elementquadrilaterals();
+	}
+
+	if (op_window->is_show_modeledeges == true)
+	{
+		// Show the model edges
 		model_lineelements.paint_elementlines();
 	}
 
@@ -581,8 +735,8 @@ void geom_store::paint_modal_analysis_results()
 		geom_param.defl_scale = modal_solver_window->deformation_scale;
 
 		// Update the deflection scale
-		modal_result_lineelements.update_geometry_matrices(false, false, false, false, true);
-		modal_result_nodes.update_geometry_matrices(false, false, false, false, true);
+		modal_result_lineelements.update_geometry_matrices(false, false, false, false, false, true);
+		modal_result_nodes.update_geometry_matrices(false, false, false, false, false, true);
 		// ______________________________________________________________________________________
 		// Paint the modal lines
 		modal_result_lineelements.paint_modal_elementlines();
@@ -684,8 +838,8 @@ void geom_store::paint_pulse_analysis_results()
 		geom_param.defl_scale = pulse_solver_window->deformation_scale_max;
 
 		// Update the deflection scale
-		pulse_result_lineelements.update_geometry_matrices(false, false, false, false, true);
-		pulse_result_nodes.update_geometry_matrices(false, false, false, false, true);
+		pulse_result_lineelements.update_geometry_matrices(false, false, false, false, false, true);
+		pulse_result_nodes.update_geometry_matrices(false, false, false, false, false, true);
 		// ______________________________________________________________________________________
 
 		// Paint the pulse lines

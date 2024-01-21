@@ -172,7 +172,8 @@ void pulse_elementline_list_store::paint_pulse_elementlines(const int& dyn_index
 	pulse_element_lines.paint_lines(dyn_index);
 }
 
-void pulse_elementline_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void pulse_elementline_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Result line update geometry 
 	pulse_element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation,

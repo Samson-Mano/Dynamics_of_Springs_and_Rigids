@@ -21,6 +21,8 @@
 // FE Objects
 #include "fe_objects/nodes_list_store.h"
 #include "fe_objects/elementline_list_store.h"
+#include "fe_objects/elementtri_list_store.h"
+#include "fe_objects/elementquad_list_store.h"
 #include "fe_objects/nodeconstraint_list_store.h"
 #include "fe_objects/nodeload_list_store.h"
 #include "fe_objects/nodeinlcond_list_store.h"
@@ -65,6 +67,7 @@ public:
 	void update_model_matrix();
 	void update_model_zoomfit();
 	void update_model_pan(glm::vec2& transl);
+	void update_model_rotate(glm::vec2& transl);
 	void update_model_zoom(double& z_scale);
 	void update_model_transperency(bool is_transparent);
 
@@ -80,6 +83,8 @@ private:
 	// Geometry objects
 	nodes_list_store model_nodes;
 	elementline_list_store model_lineelements;
+	elementtri_list_store model_trielements;
+	elementquad_list_store model_quadelements;
 
 	// Material data
 	material_data mat_data;

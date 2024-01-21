@@ -23,21 +23,36 @@ void elementline_list_store::init(geom_parameters* geom_param_ptr)
 	elementlineMap.clear();
 }
 
-void elementline_list_store::add_elementline(int& line_id, node_store* startNode, node_store* endNode, int& material_id)
+void elementline_list_store::add_elementline(int& line_id, node_store* startNode, node_store* endNode)
 {
 	// Add the line to the list
 	elementline_store temp_line;
 	temp_line.line_id = line_id;
 	temp_line.startNode = startNode;
 	temp_line.endNode = endNode;
-	temp_line.material_id = material_id;
 
-	// Check whether the node_id is already there
+	// Check whether the line_id is already there
 	if (elementlineMap.find(line_id) != elementlineMap.end())
 	{
 		// Element ID already exist (do not add)
 		return;
 	}
+
+	// Check whether the element already exists
+	for (auto& ln_m : elementlineMap)
+	{
+		elementline_store ln = ln_m.second;
+
+		if ((ln.startNode->node_id == startNode->node_id &&
+			ln.endNode->node_id == endNode->node_id) ||
+			(ln.startNode->node_id == endNode->node_id &&
+				ln.endNode->node_id == startNode->node_id))
+		{
+			// Element already exists
+			return;
+		}
+	}
+
 
 	// Insert to the lines
 	elementlineMap.insert({ line_id, temp_line });
@@ -67,7 +82,8 @@ void elementline_list_store::paint_elementlines()
 }
 
 
-void elementline_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void elementline_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Update model openGL uniforms
 	element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);

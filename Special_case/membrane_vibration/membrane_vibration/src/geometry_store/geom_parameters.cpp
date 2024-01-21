@@ -104,6 +104,14 @@ glm::vec2 geom_parameters::linear_interpolation(const glm::vec2& pt1, const glm:
 
 }
 
+glm::vec3 geom_parameters::linear_interpolation3d(const glm::vec3& pt1, const glm::vec3& pt2, const double& param_t)
+{
+	return glm::vec3(pt1.x * (1.0 - param_t) + (pt2.x * param_t),
+					 pt1.y * (1.0 - param_t) + (pt2.y * param_t),
+					 pt1.z * (1.0 - param_t) + (pt2.z * param_t));
+
+}
+
 void geom_parameters::copyNodenumberlistToCharArray(const std::vector<int>& vec, char* charArray, size_t bufferSize)
 {
 	// Use std::ostringstream to build the comma-separated string
@@ -153,11 +161,11 @@ glm::vec3 geom_parameters::get_standard_color(int color_index)
 }
 
 
-glm::vec2 geom_parameters::findGeometricCenter(const std::vector<glm::vec2>& all_pts)
+glm::vec3 geom_parameters::findGeometricCenter(const std::vector<glm::vec3>& all_pts)
 {
 	// Function returns the geometric center of the nodes
 		// Initialize the sum with zero
-	glm::vec2 sum(0);
+	glm::vec3 sum(0);
 
 	// Sum the points
 	for (const auto& pt : all_pts)
@@ -168,22 +176,23 @@ glm::vec2 geom_parameters::findGeometricCenter(const std::vector<glm::vec2>& all
 }
 
 
-std::pair<glm::vec2, glm::vec2> geom_parameters::findMinMaxXY(const std::vector<glm::vec2>& all_pts)
+std::pair<glm::vec3, glm::vec3> geom_parameters::findMinMaxXY(const std::vector<glm::vec3>& all_pts)
 {
 	if (static_cast<int>(all_pts.size()) < 1)
 	{
 		// Null input
-		return {glm::vec2(0),glm::vec2(0)};
+		return {glm::vec3(0),glm::vec3(0)};
 	}
 
 	// Initialize min and max values to first node in map
-	glm::vec2 firstNode = all_pts[0];
-	glm::vec2 minXY = glm::vec2(firstNode.x, firstNode.y);
-	glm::vec2 maxXY = minXY;
+	glm::vec3 firstNode = all_pts[0];
+	glm::vec3 minXY = glm::vec3(firstNode.x, firstNode.y,firstNode.z);
+	glm::vec3 maxXY = minXY;
 
 	// Loop through all nodes in map and update min and max values
 	for (const auto& pt : all_pts)
 	{
+		// Minimum
 		if (pt.x < minXY.x)
 		{
 			minXY.x = pt.x;
@@ -192,6 +201,12 @@ std::pair<glm::vec2, glm::vec2> geom_parameters::findMinMaxXY(const std::vector<
 		{
 			minXY.y = pt.y;
 		}
+		if (pt.z < minXY.z)
+		{
+			minXY.z = pt.z;
+		}
+
+		// Maximum
 		if (pt.x > maxXY.x)
 		{
 			maxXY.x = pt.x;
@@ -199,6 +214,10 @@ std::pair<glm::vec2, glm::vec2> geom_parameters::findMinMaxXY(const std::vector<
 		if (pt.y > maxXY.y)
 		{
 			maxXY.y = pt.y;
+		}
+		if (pt.z > maxXY.z)
+		{
+			maxXY.z = pt.z;
 		}
 	}
 

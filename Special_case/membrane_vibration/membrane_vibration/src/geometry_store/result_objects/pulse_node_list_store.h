@@ -36,7 +36,8 @@ public:
 	void add_result_node(int& node_id, glm::vec3& node_pt, pulse_node_result node_pulse_result, const int& number_of_time_steps);
 	void set_buffer();
 	void paint_pulse_nodes(const int& dyn_index);
-	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
+	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation, 
+		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 
 private:
 	geom_parameters* geom_param_ptr = nullptr;

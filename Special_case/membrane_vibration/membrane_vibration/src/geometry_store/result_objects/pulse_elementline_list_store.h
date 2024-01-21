@@ -36,7 +36,7 @@ public:
 	void add_pulse_elementline(int& line_id, pulse_node_store* startNode, pulse_node_store* endNode);
 	void set_buffer();
 	void paint_pulse_elementlines(const int& dyn_index);
-	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation,
+	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
 		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 
 private:

@@ -5,7 +5,6 @@
 struct elementline_store
 {
 	int line_id = 0; // ID of the line
-	int material_id = 0; // Material ID of the line member
 	node_store* startNode = nullptr; // start node
 	node_store* endNode = nullptr; // end node
 };
@@ -20,11 +19,12 @@ public:
 	elementline_list_store();
 	~elementline_list_store();
 	void init(geom_parameters* geom_param_ptr);
-	void add_elementline(int& line_id, node_store* startNode, node_store* endNode, int& material_id);
+	void add_elementline(int& line_id, node_store* startNode, node_store* endNode);
 	void set_buffer();
 	void paint_elementlines();
 
-	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
+	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 
 private:
 	geom_parameters* geom_param_ptr = nullptr;
