@@ -109,8 +109,8 @@ public:
 	double defl_scale = 0.0f; // Value of deflection scale
 
 	// Screen transformations
-	glm::mat4 panTranslation = glm::mat4(0); // Pan translataion
-	glm::mat4 rotateTranslation = glm::mat4(1.0); // Rotate translation
+	glm::mat4 panTranslation = glm::mat4(1.0f); // Pan translataion
+	glm::mat4 rotateTranslation = glm::mat4(1.0f); // Rotate translation
 	double zoom_scale = 0.0; // Zoom scale
 
 	// Standard colors

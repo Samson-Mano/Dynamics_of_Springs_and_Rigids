@@ -138,7 +138,7 @@ void nodes_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_p
 	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Update model openGL uniforms
-	node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	selected_node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	selected_node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
 
 }

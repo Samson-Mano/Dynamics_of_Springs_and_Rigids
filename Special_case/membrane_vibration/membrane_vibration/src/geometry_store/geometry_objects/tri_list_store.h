@@ -42,7 +42,8 @@ public:
 	void set_buffer();
 	void paint_triangles();
 	void clear_triangles();
-	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
+	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 private:
 	gBuffers tri_buffer;
 	Shader tri_shader;

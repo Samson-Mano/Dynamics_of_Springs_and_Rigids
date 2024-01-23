@@ -98,7 +98,8 @@ void point_list_store::clear_points()
 	pointMap.clear();
 }
 
-void point_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void point_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	if (set_modelmatrix == true)
 	{
@@ -113,6 +114,12 @@ void point_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pan
 	{
 		// set the pan translation
 		point_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
+	}
+
+	if (set_rotatetranslation == true)
+	{
+		// set the rotate translation
+		// point_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
 	}
 
 	if (set_zoomtranslation == true)

@@ -113,7 +113,8 @@ void line_list_store::clear_lines()
 	lineMap.clear();
 }
 
-void line_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void line_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	if (set_modelmatrix == true)
 	{
@@ -130,7 +131,13 @@ void line_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pant
 		line_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
 	}
 
-	if (set_zoomtranslation == true)
+	if (set_rotatetranslation == true)
+	{
+		// set the rotate translation
+		// line_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
+	}
+
+		if (set_zoomtranslation == true)
 	{
 		// set the zoom translation
 		line_shader.setUniform("zoomscale", static_cast<float>(geom_param_ptr->zoom_scale));

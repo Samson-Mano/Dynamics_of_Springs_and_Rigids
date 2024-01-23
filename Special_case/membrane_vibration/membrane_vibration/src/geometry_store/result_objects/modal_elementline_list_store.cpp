@@ -240,5 +240,5 @@ void modal_elementline_list_store::paint_modal_elementlines()
 void modal_elementline_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
 	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
-	modal_element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	modal_element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation,set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
 }

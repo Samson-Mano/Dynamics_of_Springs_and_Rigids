@@ -427,6 +427,24 @@ void geom_store::update_model_rotate(glm::vec2& transl)
 	if (is_geometry_set == false)
 		return;
 
+	// Rotate the geometry
+  
+
+
+		// Update the rotate translation
+	model_nodes.update_geometry_matrices(false, false, true, false, false, false);
+	model_lineelements.update_geometry_matrices(false, false, true, false, false, false);
+	model_quadelements.update_geometry_matrices(false, false, true, false, false, false);
+	node_constraints.update_geometry_matrices(false, false, true, false, false, false);
+	node_loads.update_geometry_matrices(false, false, true, false, false, false);
+	node_inldispl.update_geometry_matrices(false, false, true, false, false, false);
+	node_inlvelo.update_geometry_matrices(false, false, true, false, false, false);
+
+	// Update the modal analysis result matrix
+	modal_result_nodes.update_geometry_matrices(false, false, true, false, false, false);
+	modal_result_lineelements.update_geometry_matrices(false, false, true, false, false, false);
+	pulse_result_nodes.update_geometry_matrices(false, false, true, false, false, false);
+	pulse_result_lineelements.update_geometry_matrices(false, false, true, false, false, false);
 
 }
 

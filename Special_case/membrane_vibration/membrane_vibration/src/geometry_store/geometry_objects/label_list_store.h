@@ -35,7 +35,7 @@ public:
 	void set_buffer();
 	void paint_text();
 	void clear_labels();
-	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation,
+	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
 		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 private:
 	gBuffers label_buffers;

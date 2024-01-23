@@ -155,6 +155,12 @@ void nodeconstraint_list_store::update_geometry_matrices(bool set_modelmatrix, b
 		constraint_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
 	}
 
+	if (set_rotatetranslation == true)
+	{
+		// set the rotate translation
+		// constraint_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
+	}
+
 	if (set_zoomtranslation == true)
 	{
 		// set the zoom translation

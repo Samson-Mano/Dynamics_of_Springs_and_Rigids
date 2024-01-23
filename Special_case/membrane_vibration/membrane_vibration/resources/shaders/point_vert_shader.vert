@@ -2,6 +2,7 @@
 
 uniform mat4 modelMatrix;
 uniform mat4 panTranslation;
+uniform mat4 rotateTranslation;
 uniform float zoomscale;
 
 uniform float normalized_deflscale; // Sine cycle from animation (-1 to 1)

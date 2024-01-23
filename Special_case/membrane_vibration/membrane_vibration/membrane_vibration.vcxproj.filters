@@ -168,6 +168,9 @@
     <ClCompile Include="src\geometry_store\fe_objects\elementquad_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\events_handler\arcball_transformation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\dlls\freetype.dll" />
@@ -367,6 +370,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\fe_objects\elementquad_list_store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\events_handler\arcball_transformation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

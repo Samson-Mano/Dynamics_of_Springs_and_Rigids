@@ -456,7 +456,7 @@ void nodeload_list_store::update_geometry_matrices(bool set_modelmatrix, bool se
 	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Update the load value label uniforms
-	load_value_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	load_value_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
 
 	if (set_modelmatrix == true)
 	{
@@ -471,6 +471,12 @@ void nodeload_list_store::update_geometry_matrices(bool set_modelmatrix, bool se
 	{
 		// set the pan translation
 		load_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
+	}
+
+	if (set_rotatetranslation == true)
+	{
+		// set the rotate translation
+		// load_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
 	}
 
 	if (set_zoomtranslation == true)

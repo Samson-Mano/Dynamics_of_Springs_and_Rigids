@@ -33,7 +33,8 @@ public:
 	void set_buffer();
 	void paint_lines();
 	void clear_lines();
-	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
+	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 private:
 	gBuffers line_buffer;
 	Shader line_shader;
