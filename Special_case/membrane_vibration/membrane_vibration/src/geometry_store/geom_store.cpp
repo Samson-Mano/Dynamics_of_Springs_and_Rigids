@@ -68,7 +68,6 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	this->model_quadelements.init(&geom_param);
 
 	// Node constraints
-	this->node_constraints.init(&geom_param);
 	this->node_loads.init(&geom_param);
 	this->node_inldispl.init(&geom_param);
 	this->node_inlvelo.init(&geom_param);
@@ -299,7 +298,6 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	this->model_quadelements.set_buffer();
 
 	// Set the constraints buffer
-	this->node_constraints.set_buffer();
 	this->node_loads.set_buffer();
 	this->node_inldispl.set_buffer();
 	this->node_inlvelo.set_buffer();
@@ -336,6 +334,8 @@ void geom_store::update_model_matrix()
 	double normalized_screen_width = 1.8f * (static_cast<double>(geom_param.window_width) / static_cast<double>(max_dim));
 	double normalized_screen_height = 1.8f * (static_cast<double>(geom_param.window_height) / static_cast<double>(max_dim));
 
+	geom_param.rotateTranslation = glm::mat4_cast(geom_param.default_transl);
+
 
 	geom_param.geom_scale = std::min(normalized_screen_width / geom_param.geom_bound.x,
 		normalized_screen_height / geom_param.geom_bound.y);
@@ -353,7 +353,6 @@ void geom_store::update_model_matrix()
 	model_nodes.update_geometry_matrices(true, false, false, false, true, false);
 	model_lineelements.update_geometry_matrices(true, false, false, false, true, false);
 	model_quadelements.update_geometry_matrices(true, false, false, false, true, false);
-	node_constraints.update_geometry_matrices(true, false, false, false, true, false);
 	node_loads.update_geometry_matrices(true, false, false, false, true, false);
 	node_inldispl.update_geometry_matrices(true, false, false, false, true, false);
 	node_inlvelo.update_geometry_matrices(true, false, false, false, true, false);
@@ -374,17 +373,19 @@ void geom_store::update_model_zoomfit()
 	// Set the pan translation matrix
 	geom_param.panTranslation = glm::mat4(1.0f);
 
+	// Rotation Matrix
+	// geom_param.rotateTranslation = glm::mat4( glm::mat4_cast(0.4402697668541200f, 0.8215545196058330f, 0.2968766167094340f, -0.2075451231915790f));
+
 	// Set the zoom scale
 	geom_param.zoom_scale = 1.0f;
 
 	// Update the zoom scale and pan translation
-	model_nodes.update_geometry_matrices(false, true, false, true, false, false);
-	model_lineelements.update_geometry_matrices(false, true, false, true, false, false);
-	model_quadelements.update_geometry_matrices(false, true, false, true, false, false);
-	node_constraints.update_geometry_matrices(false, true, false, true, false, false);
-	node_loads.update_geometry_matrices(false, true, false, true, false, false);
-	node_inldispl.update_geometry_matrices(false, true, false, true, false, false);
-	node_inlvelo.update_geometry_matrices(false, true, false, true, false, false);
+	model_nodes.update_geometry_matrices(false, true, true, true, false, false);
+	model_lineelements.update_geometry_matrices(false, true, true, true, false, false);
+	model_quadelements.update_geometry_matrices(false, true, true, true, false, false);
+	node_loads.update_geometry_matrices(false, true, true, true, false, false);
+	node_inldispl.update_geometry_matrices(false, true, true, true, false, false);
+	node_inlvelo.update_geometry_matrices(false, true, true, true, false, false);
 
 	// Update the modal analysis result matrix
 	modal_result_nodes.update_geometry_matrices(false, true, false, true, false, false);
@@ -409,7 +410,6 @@ void geom_store::update_model_pan(glm::vec2& transl)
 	model_nodes.update_geometry_matrices(false, true,false, false, false, false);
 	model_lineelements.update_geometry_matrices(false, true, false, false, false, false);
 	model_quadelements.update_geometry_matrices(false, true, false, false, false, false);
-	node_constraints.update_geometry_matrices(false, true, false, false, false, false);
 	node_loads.update_geometry_matrices(false, true, false, false, false, false);
 	node_inldispl.update_geometry_matrices(false, true, false, false, false, false);
 	node_inlvelo.update_geometry_matrices(false, true, false, false, false, false);
@@ -422,20 +422,18 @@ void geom_store::update_model_pan(glm::vec2& transl)
 
 }
 
-void geom_store::update_model_rotate(glm::vec2& transl)
+void geom_store::update_model_rotate(glm::mat4& rotation_m)
 {
 	if (is_geometry_set == false)
 		return;
 
 	// Rotate the geometry
-  
+	geom_param.rotateTranslation = rotation_m;
 
-
-		// Update the rotate translation
+	// Update the rotate translation
 	model_nodes.update_geometry_matrices(false, false, true, false, false, false);
 	model_lineelements.update_geometry_matrices(false, false, true, false, false, false);
 	model_quadelements.update_geometry_matrices(false, false, true, false, false, false);
-	node_constraints.update_geometry_matrices(false, false, true, false, false, false);
 	node_loads.update_geometry_matrices(false, false, true, false, false, false);
 	node_inldispl.update_geometry_matrices(false, false, true, false, false, false);
 	node_inlvelo.update_geometry_matrices(false, false, true, false, false, false);
@@ -461,7 +459,6 @@ void geom_store::update_model_zoom(double& z_scale)
 	model_nodes.update_geometry_matrices(false, false, false, true, false, false);
 	model_lineelements.update_geometry_matrices(false, false, false, true, false, false);
 	model_quadelements.update_geometry_matrices(false, false, false, true, false, false);
-	node_constraints.update_geometry_matrices(false, false, false, true, false, false);
 	node_loads.update_geometry_matrices(false, false, false, true, false, false);
 	node_inldispl.update_geometry_matrices(false, false, false, true, false, false);
 	node_inlvelo.update_geometry_matrices(false, false, false, true, false, false);
@@ -494,7 +491,6 @@ void geom_store::update_model_transperency(bool is_transparent)
 	model_nodes.update_geometry_matrices(false, false, false, false, true, false);
 	model_lineelements.update_geometry_matrices(false, false, false, false, true, false);
 	model_quadelements.update_geometry_matrices(false, false, false, false, true, false);
-	node_constraints.update_geometry_matrices(false, false, false, false, true, false);
 	node_loads.update_geometry_matrices(false, false, false, false, true, false);
 	node_inldispl.update_geometry_matrices(false, false, false, false, true, false);
 	node_inlvelo.update_geometry_matrices(false, false, false, false, true, false);
@@ -512,6 +508,21 @@ void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::ve
 	// Selection commence (mouse button release)
 	if (is_paint == false && is_select == true)
 	{
+		// Node Initial condition Window
+		if (nd_inlcond_window->is_show_window == true)
+		{
+			// Selected Node Index
+			std::vector<int> selected_node_ids = model_nodes.is_node_selected(o_pt, c_pt);
+			nd_inlcond_window->add_to_node_list(selected_node_ids, is_rightbutton);
+		}
+
+		// Node Load Window
+		if (nd_load_window->is_show_window == true)
+		{
+			// Selected Node Index
+			std::vector<int> selected_node_ids = model_nodes.is_node_selected(o_pt, c_pt);
+			nd_load_window->add_to_node_list(selected_node_ids, is_rightbutton);
+		}
 
 	}
 }
@@ -604,13 +615,6 @@ void geom_store::paint_model()
 		model_nodes.paint_model_nodes();
 	}
 
-
-	if (op_window->is_show_constraint == true)
-	{
-		// Show the node constraints
-		node_constraints.paint_constraints();
-	}
-
 	if (op_window->is_show_loads == true)
 	{
 		// Show the node Loads
@@ -626,74 +630,13 @@ void geom_store::paint_model()
 	if (nd_inlcond_window->is_show_window == true)
 	{
 		// Initial condition window open
-		if (nd_inlcond_window->execute_apply_displ == true)
-		{
-			// Apply initial Displacement
-			node_inldispl.add_inlcondition(nd_inlcond_window->inl_displacement,
-				nd_inlcond_window->inl_displacement_start,
-				nd_inlcond_window->inl_displacement_end,
-				nd_inlcond_window->inl_displacement_type,
-				model_nodes);
-
-			nd_inlcond_window->execute_apply_displ = false;
-		}
-
-		if (nd_inlcond_window->execute_remove_displ == true)
-		{
-			// Delete initial Displacement
-			node_inldispl.delete_all_inlcondition(model_nodes);
-
-			nd_inlcond_window->execute_remove_displ = false;
-		}
-
-
-		if (nd_inlcond_window->execute_apply_velo == true)
-		{
-			// Apply initial Velocity
-			node_inlvelo.add_inlcondition(nd_inlcond_window->inl_velocity,
-				nd_inlcond_window->inl_velocity_start,
-				nd_inlcond_window->inl_velocity_end,
-				nd_inlcond_window->inl_velocity_type,
-				model_nodes);
-
-			nd_inlcond_window->execute_apply_velo = false;
-		}
-
-		if (nd_inlcond_window->execute_remove_velo == true)
-		{
-			// Delete initial Velocity
-			node_inlvelo.delete_all_inlcondition(model_nodes);
-
-			nd_inlcond_window->execute_remove_velo = false;
-		}
-
+		paint_node_inlcond_operation();
 	}
 
 	if (nd_load_window->is_show_window == true)
 	{
 		// Node load window is open
-		if (nd_load_window->execute_apply_load == true)
-		{
-
-			// Apply nodal load
-			node_loads.add_loads(model_nodes,
-				nd_load_window->load_start_time,
-				nd_load_window->load_end_time,
-				nd_load_window->load_amplitude,
-				nd_load_window->node_load_start,
-				nd_load_window->node_load_end,
-				nd_load_window->node_load_type);
-
-			nd_load_window->execute_apply_load = false;
-		}
-
-		if (nd_load_window->execute_remove_load == true)
-		{
-			// Delete nodal load
-			node_loads.delete_all_loads();
-
-			nd_load_window->execute_remove_load = false;
-		}
+		paint_node_load_operation();
 	}
 
 }
@@ -795,7 +738,6 @@ void geom_store::paint_modal_analysis_results()
 		// Execute the Modal Analysis
 		modal_solver.modal_analysis_start(model_nodes,
 			model_lineelements,
-			node_constraints,
 			mat_data,
 			modal_result_nodes,
 			modal_result_lineelements);
@@ -914,7 +856,6 @@ void geom_store::paint_pulse_analysis_results()
 		// Execute the Pulse response Analysis
 		pulse_solver.pulse_analysis_start(model_nodes,
 			model_lineelements,
-			node_constraints,
 			node_loads,
 			node_inldispl,
 			node_inlvelo,
@@ -946,3 +887,136 @@ void geom_store::paint_pulse_analysis_results()
 
 }
 
+void  geom_store::paint_node_load_operation()
+{
+	// Selection rectangle
+	selection_rectangle.paint_selection_rectangle();
+
+	// Paint the selected nodes
+	if (nd_load_window->is_selected_count == true)
+	{
+		glPointSize(geom_param.selected_point_size);
+		model_nodes.paint_selected_model_nodes();
+		glPointSize(geom_param.point_size);
+	}
+
+	// Check whether the selection changed
+	if (nd_load_window->is_selection_changed == true)
+	{
+		model_nodes.add_selection_nodes(nd_load_window->selected_nodes);
+		nd_load_window->is_selection_changed = false;
+	}
+
+	// Apply the Node load
+	if (nd_load_window->apply_nodal_load == true)
+	{
+		double load_amplitude = nd_load_window->load_amplitude; // load amplitude
+		double load_start_time = nd_load_window->load_start_time; // load start time
+		double load_end_time = nd_load_window->load_end_time; // load end time
+
+		for (int& id : nd_load_window->selected_nodes)
+		{
+			// Add the loads
+			// //node_loads.add_load(id, model_nodes.nodeMap[id].node_pt,
+			// //	load_start_time, load_end_time, load_amplitude, load_angle, load_phase);
+		}
+
+		node_loads.set_buffer();
+
+		// Load application ends
+		nd_load_window->apply_nodal_load = false;
+
+		// Remove the selection
+		nd_load_window->selected_nodes.clear();
+		nd_load_window->is_selection_changed = true;
+	}
+
+	// Delete all the Node load
+	if (nd_load_window->delete_nodal_load == true)
+	{
+		for (int& id : nd_load_window->selected_nodes)
+		{
+			// Delete the loads
+			// //node_loads.delete_load(id);
+		}
+
+		node_loads.set_buffer();
+
+		// Load delete ends
+		nd_load_window->delete_nodal_load = false;
+
+		// Remove the selection
+		nd_load_window->selected_nodes.clear();
+		nd_load_window->is_selection_changed = true;
+	}
+
+}
+
+
+void geom_store::paint_node_inlcond_operation()
+{
+	// Paint the node initial condition pre processing
+		// Selection rectangle
+	selection_rectangle.paint_selection_rectangle();
+
+	// Paint the selected nodes
+	if (nd_inlcond_window->is_selected_count == true)
+	{
+		glPointSize(geom_param.selected_point_size);
+		model_nodes.paint_selected_model_nodes();
+		glPointSize(geom_param.point_size);
+	}
+
+	// Check whether the selection changed
+	if (nd_inlcond_window->is_selection_changed == true)
+	{
+		model_nodes.add_selection_nodes(nd_inlcond_window->selected_nodes);
+		nd_inlcond_window->is_selection_changed = false;
+	}
+
+	// Apply the Node Initial Condition
+	if (nd_inlcond_window->apply_nodal_inlcond == true)
+	{
+		// Intial displacement
+		double initial_displacement_x = nd_inlcond_window->initial_displacement_x; // initial displacement x
+		double initial_displacement_y = nd_inlcond_window->initial_displacement_y; // initial displacement y
+		// Initial velocity
+		double initial_velocity_x = nd_inlcond_window->initial_velocity_x; // initial velocity x
+		double initial_velocity_y = nd_inlcond_window->initial_velocity_y; // initial velocity y
+
+		for (int& id : nd_inlcond_window->selected_nodes)
+		{
+			// Add the initial condition
+			// node_inlcond.add_inlcondition(id, model_nodes.nodeMap[id].node_pt,
+			//	initial_displacement_x, initial_displacement_y, initial_velocity_x, initial_velocity_y);
+		}
+
+		// node_inlcond.set_buffer();
+
+		// initial condition application ends
+		nd_inlcond_window->apply_nodal_inlcond = false;
+
+		// Remove the selection
+		nd_inlcond_window->selected_nodes.clear();
+		nd_inlcond_window->is_selection_changed = true;
+	}
+
+	// Delete all the Node initial condition
+	if (nd_inlcond_window->delete_nodal_inlcond == true)
+	{
+		for (int& id : nd_inlcond_window->selected_nodes)
+		{
+			// Delete the initial condition
+			// node_inlcond.delete_inlcondition(id);
+		}
+
+		// node_inlcond.set_buffer();
+
+		// Initial condition delete ends
+		nd_inlcond_window->delete_nodal_inlcond = false;
+
+		// Remove the selection
+		nd_inlcond_window->selected_nodes.clear();
+		nd_inlcond_window->is_selection_changed = true;
+	}
+}

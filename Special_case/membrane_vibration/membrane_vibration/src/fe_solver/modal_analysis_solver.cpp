@@ -24,7 +24,6 @@ void modal_analysis_solver::clear_results()
 
 void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
-	const nodeconstraint_list_store& node_constraints,
 	const material_data& mat_data,
 	modal_nodes_list_store& modal_result_nodes,
 	modal_elementline_list_store& modal_result_lineelements)

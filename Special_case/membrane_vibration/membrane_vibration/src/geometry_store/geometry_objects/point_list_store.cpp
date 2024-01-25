@@ -119,7 +119,7 @@ void point_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pan
 	if (set_rotatetranslation == true)
 	{
 		// set the rotate translation
-		// point_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
+		point_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
 	}
 
 	if (set_zoomtranslation == true)

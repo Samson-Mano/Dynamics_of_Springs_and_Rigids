@@ -22,7 +22,7 @@ void main()
 	// apply zoom scaling and Rotation to model matrix
 	mat4 scalingMatrix = mat4(1.0)*zoomscale;
 	scalingMatrix[3][3] = 1.0f;
-	mat4 scaledModelMatrix = scalingMatrix * modelMatrix;
+	mat4 scaledModelMatrix = rotateTranslation * scalingMatrix * modelMatrix;
 	
 	// Declare variable to store final node center
 	vec4 finalPosition;

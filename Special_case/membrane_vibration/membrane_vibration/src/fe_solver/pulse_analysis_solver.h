@@ -36,7 +36,6 @@ public:
 	void clear_results();
 	void pulse_analysis_start(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
-		const nodeconstraint_list_store& node_constraints,
 		const nodeload_list_store& node_loads,
 		const nodeinlcond_list_store& node_inldispl,
 		const nodeinlcond_list_store& node_inlvelo,

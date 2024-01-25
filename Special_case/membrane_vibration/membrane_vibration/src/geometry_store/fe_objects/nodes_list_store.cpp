@@ -111,7 +111,8 @@ std::vector<int> nodes_list_store::is_node_selected(const glm::vec2& corner_pt1,
 	glm::mat4 scaling_matrix = glm::mat4(1.0) * static_cast<float>(geom_param_ptr->zoom_scale);
 	scaling_matrix[3][3] = 1.0f;
 
-	glm::mat4 scaledModelMatrix = scaling_matrix * geom_param_ptr->modelMatrix;
+	glm::mat4 scaledModelMatrix =geom_param_ptr->rotateTranslation *  scaling_matrix * geom_param_ptr->modelMatrix;
+
 
 	// Loop through all nodes in map
 	for (auto it = nodeMap.begin(); it != nodeMap.end(); ++it)

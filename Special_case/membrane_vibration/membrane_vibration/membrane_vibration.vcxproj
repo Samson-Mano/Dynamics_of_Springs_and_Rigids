@@ -154,7 +154,6 @@
     <ClCompile Include="src\geometry_store\fe_objects\elementline_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\elementquad_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\elementtri_list_store.cpp" />
-    <ClCompile Include="src\geometry_store\fe_objects\nodeconstraint_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\nodeinlcond_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\nodeload_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\nodes_list_store.cpp" />
@@ -236,7 +235,6 @@
     <ClInclude Include="src\geometry_store\fe_objects\elementline_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\elementquad_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\elementtri_list_store.h" />
-    <ClInclude Include="src\geometry_store\fe_objects\nodeconstraint_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\nodeinlcond_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\nodeload_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\nodes_list_store.h" />

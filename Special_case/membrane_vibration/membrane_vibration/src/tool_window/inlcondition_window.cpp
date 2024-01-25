@@ -13,10 +13,6 @@ inlcondition_window::~inlcondition_window()
 void inlcondition_window::init()
 {
 	is_show_window = false;
-	execute_apply_displ = false;
-	execute_remove_displ = false;
-	execute_apply_velo = false;
-	execute_remove_velo = false;
 }
 
 void inlcondition_window::render_window()
@@ -26,411 +22,284 @@ void inlcondition_window::render_window()
 
 	ImGui::Begin("Initial Condition");
 
-	// Create Displacement Initial Condition
-	if (ImGui::CollapsingHeader("Displacement Initial Condition", ImGuiTreeNodeFlags_DefaultOpen))
+	ImGui::Text("Initial Displacement");
+	// ________________________________________________________________________________________________________________________________
+
+	get_idisplx_value_input();
+	// ________________________________________________________________________________________________________________________________
+
+	get_idisply_value_input();
+	// ________________________________________________________________________________________________________________________________
+
+	ImGui::Spacing();
+	ImGui::Spacing();
+
+	ImGui::Text("Initial Velocity");
+
+	// ________________________________________________________________________________________________________________________________
+
+	get_ivelox_value_input();
+	// ________________________________________________________________________________________________________________________________
+
+	get_iveloy_value_input();
+	// ________________________________________________________________________________________________________________________________
+	// Selected Node list
+	ImGui::Spacing();
+
+	static char nodeNumbers[1024] = ""; // Increase the buffer size to accommodate more characters
+
+	geom_parameters::copyNodenumberlistToCharArray(selected_nodes, nodeNumbers, 1024);
+
+	ImGui::Text("Selected Nodes: ");
+	ImGui::Spacing();
+
+	// Begin a child window with ImGuiWindowFlags_HorizontalScrollbar to enable vertical scrollbar ImGuiWindowFlags_AlwaysVerticalScrollbar
+	ImGui::BeginChild("Node Numbers", ImVec2(-1.0f, ImGui::GetTextLineHeight() * 10), true);
+
+	// Assuming 'nodeNumbers' is a char array or a string
+	ImGui::TextWrapped("%s", nodeNumbers);
+
+	// End the child window
+	ImGui::EndChild();
+
+	//__________________________________________________________________________________________
+	// Apply and Delete Button
+	// Apply load button
+	if (ImGui::Button("Apply"))
 	{
-		// Inputs
-		// Text for Initial Displacement
-		//_________________________________________________________________________________________
-		
-		get_Initial_Displacement();
-
-		//_____________________________________________________________________________________________________________________________________________________________________
-		// Create four radio buttons for interpolation options
-
-		ImGui::RadioButton("Linear Displacement Interpolation", &inl_displacement_type, 0);
-		ImGui::RadioButton("Cubic Bezier Displacement Interpolation", &inl_displacement_type, 1);
-		ImGui::RadioButton("Sine Displacement Interpolation", &inl_displacement_type, 2);
-		ImGui::RadioButton("Rectangular Displacement Interpolation", &inl_displacement_type, 3);
-		ImGui::RadioButton("Single Node Displacement", &inl_displacement_type, 4);
-
-		// Text for Initial Displacement At Node
-		//_________________________________________________________________________________________
-		
-		get_Initial_Displacement_Start_Node();
-
-		// Text for Initial Displacement End Node
-		//_________________________________________________________________________________________
-		
-		if (inl_displacement_type != 4)
-		{
-			get_Initial_Displacement_End_Node();
-		}
-
-		//_____________________________________________________________________________________________________________________________________________________________________
-		ImGui::Spacing();
-		if (ImGui::Button("Displacement Add"))
-		{
-			execute_apply_displ = true;
-		}
-		ImGui::SameLine();
-		// Delete all Initial Displacement button
-		if (ImGui::Button("Displacement Delete All"))
-		{
-			execute_remove_displ = true;
-		}
+		apply_nodal_inlcond = true; // set the flag to apply the initial condition
 	}
 
-	ImGui::Spacing();
+	ImGui::SameLine();
 
-	// Create Velocity Initial Condition
-	if (ImGui::CollapsingHeader("Velocity Initial Condition", ImGuiTreeNodeFlags_DefaultOpen))
+	// Delete load button
+	if (ImGui::Button("Delete"))
 	{
-		// Inputs
-		// Text for Initial Velocity
-		//_________________________________________________________________________________________
-		
-		get_Initial_Velocity();
-
-		//_____________________________________________________________________________________________________________________________________________________________________
-
-		// Create four radio buttons for interpolation options
-		ImGui::RadioButton("Linear Velocity Interpolation", &inl_velocity_type, 0);
-		ImGui::RadioButton("Cubic Bezier Velocity Interpolation", &inl_velocity_type, 1);
-		ImGui::RadioButton("Sine Velocity Interpolation", &inl_velocity_type, 2);
-		ImGui::RadioButton("Rectangular Velocity Interpolation", &inl_velocity_type, 3);
-		ImGui::RadioButton("Single Node Velocity", &inl_velocity_type, 4);
-
-		// Text for Initial Velocity At Node
-		//_________________________________________________________________________________________
-		
-		get_Initial_Velocity_Start_Node();
-
-		// Text for Initial Velocity End Node
-		//_________________________________________________________________________________________
-		
-		if (inl_velocity_type != 4)
-		{
-			get_Initial_Velocity_End_Node();
-		}
-
-		//_____________________________________________________________________________________________________________________________________________________________________
-		ImGui::Spacing();
-		if (ImGui::Button("Velocity Add"))
-		{
-			execute_apply_velo = true;
-		}
-		ImGui::SameLine();
-		// Delete all Initial Displacement button
-		if (ImGui::Button("Velocity Delete All"))
-		{
-			execute_remove_velo = true;
-		}
+		delete_nodal_inlcond = true; // set the flag to delete the initial condition
 	}
 
-	//_____________________________________________________________________________________________________________________________________________________________________
-
-	ImGui::Spacing();
+	//__________________________________________________________________________________________
 	ImGui::Spacing();
 
-	// Add a "Close" button
+	// Close button
 	if (ImGui::Button("Close"))
 	{
-		is_show_window = false;
+		// Clear the selected nodes
+		this->selected_nodes.clear();
+		is_selected_count = false; // Number of selected nodes 0
+		is_selection_changed = false; // Set the selection changed
+
+		apply_nodal_inlcond = false;
+		delete_nodal_inlcond = false;
+		is_show_window = false; // set the flag to close the window
 	}
 
 	ImGui::End();
+}
+
+void inlcondition_window::add_to_node_list(const std::vector<int>& selected_nodes, const bool& is_right)
+{
+	if (is_right == false)
+	{
+		// Add to the selected node list
+		for (int node : selected_nodes)
+		{
+			// Check whether nodes are already in the list or not
+			if (std::find(this->selected_nodes.begin(), this->selected_nodes.end(), node) == this->selected_nodes.end())
+			{
+				// Add to selected nodes
+				this->selected_nodes.push_back(node);
+
+				// Selection changed flag
+				this->is_selection_changed = true;
+			}
+		}
+	}
+	else
+	{
+		// Remove from the selected node list
+		for (int node : selected_nodes)
+		{
+			// Erase the node which is found in the list
+			this->selected_nodes.erase(std::remove(this->selected_nodes.begin(), this->selected_nodes.end(), node),
+				this->selected_nodes.end());
+
+			// Selection changed flag
+			this->is_selection_changed = true;
+		}
+
+	}
+
+	// Number of selected nodes
+	this->is_selected_count = false;
+	if (static_cast<int>(this->selected_nodes.size()) > 0)
+	{
+		this->is_selected_count = true;
+	}
 
 }
 
-
-
-void inlcondition_window::get_Initial_Displacement()
+void inlcondition_window::get_idisplx_value_input()
 {
-	// Text for Initial Displacement
-	//_________________________________________________________________________________________
 	// Input box to give input via text
-	static bool inlDisplacement_input_mode = false;
-	static char inlDisplacement_str[16] = ""; // buffer to store input Initial Displacement string
-	static float inlDisplacement_input = static_cast<float>(inl_displacement); // buffer to store input Initial Displacement
+	static bool displx_input_mode = false;
+	static char displx_str[16] = ""; // buffer to store input Displacement X string
+	static float displx_input = 0; // buffer to store input Displacement X value
 
 	// Button to switch to input mode
-	if (!inlDisplacement_input_mode)
+	if (!displx_input_mode)
 	{
-		if (ImGui::Button("Initial Displacement"))
+		if (ImGui::Button("X Displacmenet"))
 		{
-			inlDisplacement_input_mode = true;
-			snprintf(inlDisplacement_str, 16, "%.3f", inlDisplacement_input); // set the buffer to current Initial Displacement
+			displx_input_mode = true;
+			snprintf(displx_str, 16, "%.1f", initial_displacement_x); // set the buffer to current Displacement X
 		}
 	}
 	else // input mode
 	{
-		// Text box to input Initial Displacement
+		// Text box to input value
 		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##InputInitialDisplacement", inlDisplacement_str, IM_ARRAYSIZE(inlDisplacement_str), ImGuiInputTextFlags_CharsDecimal))
-		{
-			// convert the input string to float
-			inlDisplacement_input = static_cast<float>(atof(inlDisplacement_str));
-			// set the Initial Displacement to input value
-			inl_displacement = inlDisplacement_input;
-		}
-
-		// Button to switch back to slider mode
-		ImGui::SameLine();
-		if (ImGui::Button("OK"))
-		{
-			inlDisplacement_input_mode = false;
-		}
-	}
-
-	// Text for Initial Displacement
-	ImGui::SameLine();
-	ImGui::Text("Initial Displacement = %.3f", inl_displacement);
-
-}
-
-
-void inlcondition_window::get_Initial_Displacement_Start_Node()
-{
-	// Text for Initial Displacement At Node
-		//_________________________________________________________________________________________
-		// Input box to give input via text
-	static bool inlDisplacementStart_input_mode = false;
-	static char inlDisplacementStart_str[16] = ""; // buffer to store input Initial Displacement At Node string
-	static int inlDisplacementStart_input = static_cast<int>(inl_displacement_start); // buffer to store input Initial Displacement At Node
-
-	// Button to switch to input mode
-	if (!inlDisplacementStart_input_mode)
-	{
-		if (ImGui::Button("Initial Displacement Start Node"))
-		{
-			inlDisplacementStart_input_mode = true;
-			snprintf(inlDisplacementStart_str, 16, "%i", inlDisplacementStart_input); // set the buffer to current Initial Displacement At Node
-		}
-	}
-	else // input mode
-	{
-		// Text box to input Initial Displacement At Node
-		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##InputInitialDisplacementStartNode", inlDisplacementStart_str, IM_ARRAYSIZE(inlDisplacementStart_str), ImGuiInputTextFlags_CharsDecimal))
+		if (ImGui::InputText("##Displacement X", displx_str, IM_ARRAYSIZE(displx_str), ImGuiInputTextFlags_CharsDecimal))
 		{
 			// convert the input string to int
-			inlDisplacementStart_input = static_cast<int>(atoi(inlDisplacementStart_str));
-			// set the Initial Displacement At Node to input value
-			inl_displacement_start = inlDisplacementStart_input;
+			initial_displacement_x = atof(displx_str);
+			// set the load value to input value
+			// deformation_scale_max = defscale_input;
 		}
 
 		// Button to switch back to slider mode
 		ImGui::SameLine();
 		if (ImGui::Button("OK"))
 		{
-			inlDisplacementStart_input_mode = false;
+			displx_input_mode = false;
 		}
 	}
 
-	if (inl_displacement_start >= inl_displacement_end)
-	{
-		inl_displacement_end = inl_displacement_start + 1;
-	}
-
-	// Text for Initial Displacement At Node
+	// Text for load value
 	ImGui::SameLine();
-	ImGui::Text("Initial Displacement Start Node = %i", inl_displacement_start);
+	ImGui::Text(" %.1f", initial_displacement_x);
 
 }
 
-
-void inlcondition_window::get_Initial_Displacement_End_Node()
+void inlcondition_window::get_idisply_value_input()
 {
-	// Text for Initial Displacement End Node
-	//_________________________________________________________________________________________
 	// Input box to give input via text
-	static bool inlDisplacementEnd_input_mode = false;
-	static char inlDisplacementEnd_str[16] = ""; // buffer to store input Initial Displacement End Node string
-	static int inlDisplacementEnd_input = static_cast<int>(inl_displacement_end); // buffer to store input Initial Displacement End Node
+	static bool disply_input_mode = false;
+	static char disply_str[16] = ""; // buffer to store input Displacement Y string
+	static float disply_input = 0; // buffer to store input Displacement Y value
 
 	// Button to switch to input mode
-	if (!inlDisplacementEnd_input_mode)
+	if (!disply_input_mode)
 	{
-		if (ImGui::Button("Initial Displacement End Node"))
+		if (ImGui::Button("Y Displacement"))
 		{
-			inlDisplacementEnd_input_mode = true;
-			snprintf(inlDisplacementEnd_str, 16, "%i", inlDisplacementEnd_input); // set the buffer to current Initial Displacement End Node
+			disply_input_mode = true;
+			snprintf(disply_str, 16, "%.1f", initial_displacement_y); // set the buffer to current Displacement Y
 		}
 	}
 	else // input mode
 	{
-		// Text box to input Initial Displacement End Node
+		// Text box to input value
 		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##InputInitialDisplacementEndNode", inlDisplacementEnd_str, IM_ARRAYSIZE(inlDisplacementEnd_str), ImGuiInputTextFlags_CharsDecimal))
+		if (ImGui::InputText("##Displacement Y", disply_str, IM_ARRAYSIZE(disply_str), ImGuiInputTextFlags_CharsDecimal))
 		{
 			// convert the input string to int
-			inlDisplacementEnd_input = static_cast<int>(atoi(inlDisplacementEnd_str));
-			// set the load End Node to input value
-			if (inlDisplacementEnd_input > inl_displacement_start)
-			{
-				// set the Initial Displacement End Node to input value
-				inl_displacement_end = inlDisplacementEnd_input;
-			}
-			else
-			{
-				inlDisplacementEnd_input = static_cast<float>(inl_displacement_end);
-			}
+			initial_displacement_y = atof(disply_str);
+			// set the load value to input value
+			// deformation_scale_max = defscale_input;
 		}
 
 		// Button to switch back to slider mode
 		ImGui::SameLine();
 		if (ImGui::Button("OK"))
 		{
-			inlDisplacementEnd_input_mode = false;
+			disply_input_mode = false;
 		}
 	}
 
-	// Text for Initial Displacement End Node
+	// Text for load value
 	ImGui::SameLine();
-	ImGui::Text("Initial Displacement End Node = %i", inl_displacement_end);
-
-
+	ImGui::Text(" %.1f", initial_displacement_y);
 }
 
-
-void inlcondition_window::get_Initial_Velocity()
+void inlcondition_window::get_ivelox_value_input()
 {
-	// Text for Initial Velocity
-		//_________________________________________________________________________________________
-		// Input box to give input via text
-	static bool inlVelocity_input_mode = false;
-	static char inlVelocity_str[16] = ""; // buffer to store input Initial Velocity string
-	static float inlVelocity_input = static_cast<float>(inl_velocity); // buffer to store input Initial Velocity
-
-	// Button to switch to input mode
-	if (!inlVelocity_input_mode)
-	{
-		if (ImGui::Button("Initial Velocity"))
-		{
-			inlVelocity_input_mode = true;
-			snprintf(inlVelocity_str, 16, "%.3f", inlVelocity_input); // set the buffer to current Initial Velocity
-		}
-	}
-	else // input mode
-	{
-		// Text box to input Initial Velocity
-		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##InputInitialVelocity", inlVelocity_str, IM_ARRAYSIZE(inlVelocity_str), ImGuiInputTextFlags_CharsDecimal))
-		{
-			// convert the input string to float
-			inlVelocity_input = static_cast<float>(atof(inlVelocity_str));
-			// set the Initial Velocity to input value
-			inl_velocity = inlVelocity_input;
-		}
-
-		// Button to switch back to slider mode
-		ImGui::SameLine();
-		if (ImGui::Button("OK"))
-		{
-			inlVelocity_input_mode = false;
-		}
-	}
-
-	// Text for Initial Velocity
-	ImGui::SameLine();
-	ImGui::Text("Initial Velocity = %.3f", inl_velocity);
-
-}
-
-
-
-void inlcondition_window::get_Initial_Velocity_Start_Node()
-{
-	// Text for Initial Velocity At Node
-		//_________________________________________________________________________________________
-		// Input box to give input via text
-	static bool inlVelocityStart_input_mode = false;
-	static char inlVelocityStart_str[16] = ""; // buffer to store input Initial Velocity Start Node string
-	static int inlVelocityStart_input = static_cast<int>(inl_velocity_start); // buffer to store input Initial Velocity Start Node
-
-	// Button to switch to input mode
-	if (!inlVelocityStart_input_mode)
-	{
-		if (ImGui::Button("Initial Velocity Start Node"))
-		{
-			inlVelocityStart_input_mode = true;
-			snprintf(inlVelocityStart_str, 16, "%i", inlVelocityStart_input); // set the buffer to current Initial Velocity Start Node
-		}
-	}
-	else // input mode
-	{
-		// Text box to input Initial Velocity Start Node
-		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##InputInitialVelocityAtNode", inlVelocityStart_str, IM_ARRAYSIZE(inlVelocityStart_str), ImGuiInputTextFlags_CharsDecimal))
-		{
-			// convert the input string to int
-			inlVelocityStart_input = static_cast<int>(atoi(inlVelocityStart_str));
-			// set the Initial Velocity Start Node to input value
-			inl_velocity_start = inlVelocityStart_input;
-		}
-
-		// Button to switch back to slider mode
-		ImGui::SameLine();
-		if (ImGui::Button("OK"))
-		{
-			inlVelocityStart_input_mode = false;
-		}
-	}
-
-	if (inl_velocity_start >= inl_velocity_end)
-	{
-		inl_velocity_end = inl_velocity_start + 1;
-	}
-
-	// Text for Initial Velocity At Node
-	ImGui::SameLine();
-	ImGui::Text("Initial Velocity At Node = %i", inl_velocity_start);
-
-
-}
-
-
-void inlcondition_window::get_Initial_Velocity_End_Node()
-{
-	// Text for Initial Velocity End Node
-	//_________________________________________________________________________________________
 	// Input box to give input via text
-	static bool inlVelocityEnd_input_mode = false;
-	static char inlVelocityEnd_str[16] = ""; // buffer to store input Initial Velocity End Node string
-	static int inlVelocityEnd_input = static_cast<int>(inl_velocity_end); // buffer to store input Initial Velocity End Node
+	static bool velox_input_mode = false;
+	static char velox_str[16] = ""; // buffer to store input Velocity X string
+	static float velox_input = 0; // buffer to store input Velocity X value
 
 	// Button to switch to input mode
-	if (!inlVelocityEnd_input_mode)
+	if (!velox_input_mode)
 	{
-		if (ImGui::Button("Initial Velocity End Node"))
+		if (ImGui::Button("X Velocity"))
 		{
-			inlVelocityEnd_input_mode = true;
-			snprintf(inlVelocityEnd_str, 16, "%i", inlVelocityEnd_input); // set the buffer to current Initial Velocity End Node
+			velox_input_mode = true;
+			snprintf(velox_str, 16, "%.1f", initial_velocity_x); // set the buffer to current Velocity X
 		}
 	}
 	else // input mode
 	{
-		// Text box to input Initial Velocity End Node
+		// Text box to input value
 		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##InputInitialVelocityEndNode", inlVelocityEnd_str, IM_ARRAYSIZE(inlVelocityEnd_str), ImGuiInputTextFlags_CharsDecimal))
+		if (ImGui::InputText("##Velocity X", velox_str, IM_ARRAYSIZE(velox_str), ImGuiInputTextFlags_CharsDecimal))
 		{
 			// convert the input string to int
-			inlVelocityEnd_input = static_cast<int>(atoi(inlVelocityEnd_str));
-			// set the load End Node to input value
-			if (inlVelocityEnd_input > inl_velocity_start)
-			{
-				// set the Initial Velocity End Node to input value
-				inl_velocity_end = inlVelocityEnd_input;
-			}
-			else
-			{
-				inlVelocityEnd_input = static_cast<float>(inl_velocity_end);
-			}
+			initial_velocity_x = atof(velox_str);
+			// set the load value to input value
+			// deformation_scale_max = defscale_input;
 		}
 
 		// Button to switch back to slider mode
 		ImGui::SameLine();
 		if (ImGui::Button("OK"))
 		{
-			inlVelocityEnd_input_mode = false;
+			velox_input_mode = false;
 		}
 	}
 
-	// Text for Initial Displacement End Node
+	// Text for load value
 	ImGui::SameLine();
-	ImGui::Text("Initial Velocity End Node = %i", inl_velocity_end);
-
+	ImGui::Text(" %.1f", initial_velocity_x);
 }
 
+void inlcondition_window::get_iveloy_value_input()
+{
+	// Input box to give input via text
+	static bool veloy_input_mode = false;
+	static char veloy_str[16] = ""; // buffer to store input Velocity Y string
+	static float veloy_input = 0; // buffer to store input Velocity Y value
 
+	// Button to switch to input mode
+	if (!veloy_input_mode)
+	{
+		if (ImGui::Button("Y Velocity"))
+		{
+			veloy_input_mode = true;
+			snprintf(veloy_str, 16, "%.1f", initial_velocity_y); // set the buffer to current Velocity Y
+		}
+	}
+	else // input mode
+	{
+		// Text box to input value
+		ImGui::SetNextItemWidth(60.0f);
+		if (ImGui::InputText("##Velocity Y", veloy_str, IM_ARRAYSIZE(veloy_str), ImGuiInputTextFlags_CharsDecimal))
+		{
+			// convert the input string to int
+			initial_velocity_y = atof(veloy_str);
+			// set the load value to input value
+			// deformation_scale_max = defscale_input;
+		}
+
+		// Button to switch back to slider mode
+		ImGui::SameLine();
+		if (ImGui::Button("OK"))
+		{
+			veloy_input_mode = false;
+		}
+	}
+
+	// Text for load value
+	ImGui::SameLine();
+	ImGui::Text(" %.1f", initial_velocity_y);
+}

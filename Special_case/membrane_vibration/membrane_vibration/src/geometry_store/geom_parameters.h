@@ -2,6 +2,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include <sstream>
 #include "geometry_buffers/font_atlas.h"
 
@@ -103,6 +104,8 @@ public:
 	glm::vec3 geom_bound = glm::vec3(0); // Bound magnitude
 	glm::vec3 center = glm::vec3(0); // center of the geometry
 	glm::mat4 modelMatrix = glm::mat4(0); // Geometry model matrix
+	glm::quat default_transl = glm::quat(0.4402697668541200f, 0.8215545196058330f, 0.2968766167094340f, -0.2075451231915790f); // Default translation
+
 	double geom_scale = 0.0; // Scale of the geometry
 	double geom_transparency = 1.0; // Value to control the geometry transparency
 	double normalized_defl_scale = 0.0f; // Value of deflection scale

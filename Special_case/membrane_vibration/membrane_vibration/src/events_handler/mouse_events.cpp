@@ -15,6 +15,8 @@ void mouse_events::init(geom_store& geom)
 	// Intialize the geometry and tool window pointers
 	this->geom = &geom;
 
+	// Set default 3d view
+	arcball.setDefault(1);
 
 }
 
@@ -29,6 +31,12 @@ void mouse_events::mouse_location(glm::vec2& loc)
 		// std::cout << "Pan translation "<<delta_d.x<<", " << delta_d.y << std::endl;
 		glm::vec2 current_translataion = delta_d / (std::max((geom->geom_param.window_width), (geom->geom_param.window_height)) * 0.5f);
 		pan_operation(current_translataion);
+	}
+
+	if (is_rotate == true)
+	{
+		// Rotation operation in progress
+		rotation_operation(loc);
 	}
 
 	// Select operation in progress
@@ -69,20 +77,28 @@ void mouse_events::rotation_operation_start(glm::vec2& loc)
 	// Rotate operation start
 	is_rotate = true;
 	// Note the click point when the rotate operation start
-	click_pt = loc;
+	// click_pt = loc;
+	arcball.OnMouseDown(get_rotation_screen_pt(loc));
 }
 
-void mouse_events::rotation_operation(glm::vec2& current_rotation)
+void mouse_events::rotation_operation(glm::vec2& loc)
 {
 	// Rotate operation in progress
-	total_rotation = prev_rotation + current_rotation;
+	// total_rotation = prev_rotation + current_rotation;
+	arcball.OnMouseMove(get_rotation_screen_pt(loc));
+
+
+	glm::mat4 rot_matrix = arcball.getRotationMatrix();
+	geom->update_model_rotate(rot_matrix);
 }
 
 
-void mouse_events::rotation_operation_ends()
+void mouse_events::rotation_operation_ends(glm::vec2& loc)
 {
 	// Rotate operation complete
-	prev_rotation = total_rotation;
+	// prev_rotation = total_rotation;
+
+	arcball.OnMouseUp(get_rotation_screen_pt(loc));
 	is_rotate = false;
 }
 
@@ -151,8 +167,25 @@ void mouse_events::zoom_to_fit()
 	// Zoom to fit the model
 	prev_translation = glm::vec2(0);
 	zoom_val = 1.0f;
+	// arcball.setDefault(1);
 	geom->update_model_zoomfit();
 	// std::cout << "Zoom val: " << zoom_val << std::endl;
+}
+
+void mouse_events::change_viewport()
+{
+	arcball.setDefault(viewType);
+
+	// Update rotate 
+	glm::mat4 rot_matrix = arcball.getRotationMatrix();
+	geom->update_model_rotate(rot_matrix);
+
+	// Cycle back to 1
+	viewType++;
+	if (viewType > 7)
+	{
+		viewType = 1;
+	}
 }
 
 void mouse_events::left_mouse_click(glm::vec2& loc)
@@ -262,4 +295,20 @@ glm::vec2 mouse_events::intellizoom_normalized_screen_pt(glm::vec2 loc)
 	glm::vec2 mouse_pt = (-1.0f * (loc - mid_pt)) / (static_cast<float>(min_size) * 0.5f);
 
 	return (mouse_pt - (2.0f * prev_translation)) / static_cast<float>(zoom_val);
+}
+
+
+glm::vec2 mouse_events::get_rotation_screen_pt(glm::vec2& mouse_loc)
+{
+	// Maximum of the drawing area
+	float max_drawing_size = std::max(geom->geom_param.window_width, geom->geom_param.window_height);
+
+	// Get the mid pt of the drawing area
+	glm::vec2 mid = glm::vec2(geom->geom_param.window_width * 0.5f,
+		geom->geom_param.window_height * 0.5f);
+
+	float mouse_x = 4.0 * ((mouse_loc.x - mid.x) /max_drawing_size);
+	float mouse_y = 4.0 * ((mid.y - mouse_loc.y) /max_drawing_size);
+
+	return glm::vec2(mouse_x, mouse_y);
 }

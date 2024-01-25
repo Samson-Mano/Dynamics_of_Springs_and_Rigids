@@ -42,9 +42,6 @@
     <ClCompile Include="src\geometry_store\fe_objects\elementline_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\fe_objects\nodeconstraint_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\geometry_store\fe_objects\nodeinlcond_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -232,9 +229,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\fe_objects\elementline_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\fe_objects\nodeconstraint_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\fe_objects\nodeinlcond_list_store.h">

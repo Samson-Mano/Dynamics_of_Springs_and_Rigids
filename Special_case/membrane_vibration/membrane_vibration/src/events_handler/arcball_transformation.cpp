@@ -12,42 +12,41 @@ arcball_transformation::~arcball_transformation()
 
 void arcball_transformation::OnMouseDown(glm::vec2 mousePt)
 {
+    // Get the last transformation befor starting the new rotation transformation
+    this->lastTransformation = this->rotationQuaternion;
+
+    // Start the new transformation
 	this->startVector = ProjectToSphere(mousePt, 2.0f);
 }
 
 void arcball_transformation::OnMouseMove(glm::vec2 mousePt)
 {
-    endVector = ProjectToSphere(mousePt, 2.0f);
+    this->endVector = ProjectToSphere(mousePt, 2.0f);
 
     // Compute the rotation quaternion from the start and end vectors
+    glm::vec3 perp = glm::cross(startVector, endVector);
     glm::quat q;
-    float dot = glm::dot(startVector, endVector);
 
-    if (dot > 0.99999f)
+    if (perp.length() > 0.000001f)
     {
-        // Vectors are almost parallel, no rotation is needed
-        q = glm::quat(); // Identity quaternion
-    }
-    else if (dot < -0.99999f)
-    {
-        // Vectors are almost opposite, rotate around any axis perpendicular to startVector
-        glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(1.0f, 0.0f, 0.0f), startVector));
-        q = glm::angleAxis(glm::pi<float>(), axis);
+        // Perpendicular vector as transform
+        q = glm::normalize(glm::quat(glm::dot(startVector, endVector),perp.x, perp.y, perp.z));
     }
     else
     {
-        // Compute the rotation axis and angle
-        glm::vec3 axis = glm::normalize(glm::cross(startVector, endVector));
-        float angle = glm::acos(dot);
-        q = glm::angleAxis(angle, axis);
+        // No rotation 
+        q = glm::quat(1.0f, 0.0, 0.0, 0.0);
     }
 
-    // Update the rotation quaternion
-    this->rotationQuaternion = glm::normalize(rotationQuaternion * q);
-
-    // Set the end vector as the start vector for the next mouse move
-    startVector = endVector;
+       // Update the Transformation
+    this->rotationQuaternion =  q * lastTransformation;
 }
+
+void arcball_transformation::OnMouseUp(glm::vec2 mousePt)
+{
+    // Mouse Up - Rotation ends
+}
+
 
 glm::vec3 arcball_transformation::ProjectToSphere(glm::vec2 point, float radius)
 {
@@ -56,18 +55,18 @@ glm::vec3 arcball_transformation::ProjectToSphere(glm::vec2 point, float radius)
     float y = point.y / radius;
 
     // Compute square of the length of the vector from this point to the center
-    float d = (x * x) + (y * y);
+    float quadrance = (x * x) + (y * y);
 
-    if (d > 1.0f)
+    if (quadrance > 1.0f)
     {
         // Point is outside the sphere, project onto the sphere surface
-        float s = 1.0f / (float)std::sqrt(d);
-        return glm::vec3(x * s, y * s, 0.0f);
+        float norm = 1.0f / (float)std::sqrt(quadrance);
+        return glm::vec3(x * norm, y * norm, 0.0f);
     }
     else
     {
         // Point is inside the sphere, compute z coordinate
-        float z = (float)std::sqrt(1.0f - d);
+        float z = (float)std::sqrt(1.0f - quadrance);
         return glm::vec3(x, y, z);
     }
 }
@@ -77,7 +76,7 @@ void arcball_transformation::setDefault(const int& viewType)
     if (viewType == 1)
     {
         // Isometric 1
-        this->rotationQuaternion = glm::quat(0.5000000418651581f, 0.9330127233867831f, 0.33715310920426594f, -0.23570224007473873f);
+        this->rotationQuaternion = glm::quat(0.4402697668541200f, 0.8215545196058330f, 0.2968766167094340f, -0.2075451231915790f);
     }
     else if (viewType == 2)
     {
@@ -115,12 +114,12 @@ void arcball_transformation::setDefault(const int& viewType)
         this->rotationQuaternion = glm::quat(0.5f,0.5f, -0.5f, 0.5f);
     }
 
-   //     Isometric view 1: ( 0.588156f, 0.377964f, 0.661438f, -0.225403f)
-   //     Isometric view 2 : (0.377964f, 0.661438f, 0.225403f, -0.588156f)
-   //     Isometric view 3 : (0.661438f, 0.225403f, -0.588156f, -0.377964f)
-   //     Isometric view 4 : (0.588156f, -0.377964f, -0.661438f, 0.225403f)
-   //     Isometric view 5 : (0.377964f, -0.661438f, -0.225403f, 0.588156f)
-   //     Isometric view 6 : (0.661438f, -0.225403f, 0.588156f, 0.377964f)
+   //     Isometric view 1: ( 0.5950110401958050f, 0.3823692231254420f, 0.6691471521246630f, -0.2280301033964720f)
+   //     Isometric view 2 : (0.3823692231254420f, 0.6691471521246630f, 0.2280301033964720f, -0.5950110401958050f)
+   //     Isometric view 3 : (0.6691471521f, 0.2280301034f, -0.5950110402f, -0.3823692231f)
+   //     Isometric view 4 : (0.5950110402f, -0.3823692231f, -0.6691471521f, 0.2280301034f)
+   //     Isometric view 5 : (0.3823692231f, -0.6691471521f, -0.2280301034f, 0.5950110402f)
+   //     Isometric view 6 : (0.6691471521f, -0.2280301034f, 0.5950110402f, 0.3823692231f)
 
 }
 

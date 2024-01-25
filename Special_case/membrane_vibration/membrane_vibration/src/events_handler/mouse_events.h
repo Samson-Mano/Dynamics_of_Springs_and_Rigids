@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/vec2.hpp>
+#include "arcball_transformation.h"
 #include "../geometry_store/geom_store.h"
 
 class mouse_events
@@ -31,7 +32,7 @@ public:
 
 	// Rotate operation
 	void rotation_operation_start(glm::vec2& loc);
-	void rotation_operation_ends();
+	void rotation_operation_ends(glm::vec2& loc);
 
 	// Select operation (Selection rectangle draw)
 	void select_operation_start(glm::vec2& loc, bool is_rightbutton);
@@ -39,6 +40,7 @@ public:
 
 	void zoom_operation(double& e_delta, glm::vec2& loc);
 	void zoom_to_fit();
+	void change_viewport();
 	void left_mouse_click(glm::vec2& loc);
 	void left_mouse_doubleclick(glm::vec2& loc);
 	void right_mouse_click(glm::vec2& loc);
@@ -46,7 +48,13 @@ public:
 
 	glm::vec2 intellizoom_normalized_screen_pt(glm::vec2 loc);
 private:
+	int viewType = 1;
+
 	void pan_operation(glm::vec2& current_translataion);
-	void rotation_operation(glm::vec2& current_rotation);
+	void rotation_operation(glm::vec2& loc);
 	void select_operation(glm::vec2& click_loc, glm::vec2& current_loc);
+
+	glm::vec2 get_rotation_screen_pt(glm::vec2& mouse_loc);
+
+	arcball_transformation arcball;
 };

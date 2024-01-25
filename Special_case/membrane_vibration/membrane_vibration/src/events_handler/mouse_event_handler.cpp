@@ -92,15 +92,15 @@ void mouse_event_handler::handleMouseButton(int button, int action, int mods, do
 		}
 		else if (action == GLFW_RELEASE)
 		{
-			// Left Mouse up
-			mouse_evnt.rotation_operation_ends();
-
 			// Calculate mouse move distance
 			double deltaX = xpos - last_pt.x;
 			double deltaY = ypos - last_pt.y;
 
 			// Update last position
 			last_pt = glm::vec2(xpos, ypos);
+
+			// Rotation operation ends
+			mouse_evnt.rotation_operation_ends(last_pt);
 
 			// Selection operation ends
 			mouse_evnt.select_operation_ends(last_pt);
@@ -243,6 +243,13 @@ void mouse_event_handler::handleKeyDown(int key, int scancode, int action, int m
 		// Ctrl + F combination detected 
 		// Perform zoom to fit
 		mouse_evnt.zoom_to_fit();
+	}
+
+	if (isCtrlDown && key == GLFW_KEY_1 && action == GLFW_PRESS)
+	{
+		// Ctrl + Num1 combination detected
+		// Perform change view type
+		mouse_evnt.change_viewport();
 	}
 }
 

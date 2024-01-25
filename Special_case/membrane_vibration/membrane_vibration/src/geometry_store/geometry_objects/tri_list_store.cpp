@@ -135,7 +135,7 @@ void tri_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pantr
 	if (set_rotatetranslation == true)
 	{
 		// set the rotate translation
-		// tri_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
+		tri_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
 	}
 
 	if (set_zoomtranslation == true)

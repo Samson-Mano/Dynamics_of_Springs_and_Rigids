@@ -23,7 +23,6 @@
 #include "fe_objects/elementline_list_store.h"
 #include "fe_objects/elementtri_list_store.h"
 #include "fe_objects/elementquad_list_store.h"
-#include "fe_objects/nodeconstraint_list_store.h"
 #include "fe_objects/nodeload_list_store.h"
 #include "fe_objects/nodeinlcond_list_store.h"
 
@@ -67,7 +66,7 @@ public:
 	void update_model_matrix();
 	void update_model_zoomfit();
 	void update_model_pan(glm::vec2& transl);
-	void update_model_rotate(glm::vec2& transl);
+	void update_model_rotate(glm::mat4& rotation_m);
 	void update_model_zoom(double& z_scale);
 	void update_model_transperency(bool is_transparent);
 
@@ -90,7 +89,6 @@ private:
 	material_data mat_data;
 
 	// Node initial condition, loads & Constraints
-	nodeconstraint_list_store node_constraints;
 	nodeload_list_store node_loads;
 	nodeinlcond_list_store node_inldispl;
 	nodeinlcond_list_store node_inlvelo;
@@ -123,6 +121,7 @@ private:
 	//_____________________________________________________________________________________
 	void paint_modal_analysis_results(); // Paint the modal analysis results
 	void paint_pulse_analysis_results(); // Paint the pulse analysis results
-
+	void paint_node_load_operation(); // Paint the node load window
+	void paint_node_inlcond_operation(); // Paint the node initial condition window
 };
 

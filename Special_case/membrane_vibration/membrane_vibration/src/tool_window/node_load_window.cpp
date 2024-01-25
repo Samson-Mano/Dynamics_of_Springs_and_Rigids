@@ -12,9 +12,8 @@ node_load_window::~node_load_window()
 
 void node_load_window::init()
 {
-	is_show_window = false;
-	execute_apply_load = false;
-	execute_remove_load = false;
+	// Initialize
+
 }
 
 void node_load_window::render_window()
@@ -40,41 +39,35 @@ void node_load_window::render_window()
 	get_load_endtime_input();
 
 	// Display the Load frequency
-	ImGui::Text("Load frequency = %.3f Hz",	1.0f / (load_end_time - load_start_time));
-
-	ImGui::Spacing();
-
-	//_____________________________________________________________________________________________________________________________________________________________________
-	// Create four radio buttons for interpolation options
-
-	ImGui::RadioButton("Linear Load Interpolation", &node_load_type, 0);
-	ImGui::RadioButton("Cubic Bezier Load Interpolation", &node_load_type, 1);
-	ImGui::RadioButton("Sine Load Interpolation", &node_load_type, 2);
-	ImGui::RadioButton("Rectangular Load Interpolation", &node_load_type, 3);
-	ImGui::RadioButton("Single Node Load", &node_load_type, 4);
-
-	ImGui::Spacing();
-
+	ImGui::Text("Load frequency = %.3f Hz", 1.0f / (load_end_time - load_start_time));
 
 	//_________________________________________________________________________________________
-	// Get the load start node
 
-	get_load_Start_Node();
+	// Selected Node list
+	ImGui::Spacing();
 
-	//_________________________________________________________________________________________
-	// Get the load end node
+	static char nodeNumbers[1024] = ""; // Increase the buffer size to accommodate more characters
 
-	if (node_load_type != 4)
-	{
-		get_load_End_Node();
-	}
+	geom_parameters::copyNodenumberlistToCharArray(selected_nodes, nodeNumbers, 1024);
+
+	ImGui::Text("Selected Nodes: ");
+	ImGui::Spacing();
+
+	// Begin a child window with ImGuiWindowFlags_HorizontalScrollbar to enable vertical scrollbar ImGuiWindowFlags_AlwaysVerticalScrollbar
+	ImGui::BeginChild("Node Numbers", ImVec2(-1.0f, ImGui::GetTextLineHeight() * 10), true);
+
+	// Assuming 'nodeNumbers' is a char array or a string
+	ImGui::TextWrapped("%s", nodeNumbers);
+
+	// End the child window
+	ImGui::EndChild();
 
 	//__________________________________________________________________________________________
 	// Apply and Delete Button
 	// Apply load button
 	if (ImGui::Button("Apply"))
 	{
-		execute_apply_load = true; // set the flag to apply to the load
+		apply_nodal_load = true; // set the flag to apply to the load
 	}
 
 	ImGui::SameLine();
@@ -82,7 +75,7 @@ void node_load_window::render_window()
 	// Delete load button
 	if (ImGui::Button("Delete"))
 	{
-		execute_remove_load = true; // set the flag to apply to the load
+		delete_nodal_load = true; // set the flag to apply to the load
 	}
 
 	//__________________________________________________________________________________________
@@ -91,9 +84,14 @@ void node_load_window::render_window()
 	// Close button
 	if (ImGui::Button("Close"))
 	{
-		is_show_window = false;
-		execute_apply_load = false;
-		execute_remove_load = false;
+		// Clear the selected nodes
+		this->selected_nodes.clear();
+		is_selected_count = false; // Number of selected nodes 0
+		is_selection_changed = false; // Set the selection changed
+
+		apply_nodal_load = false;
+		delete_nodal_load = false;
+		is_show_window = false; // set the flag to close the window
 	}
 
 	//__________________________________________________________________________________________
@@ -235,108 +233,44 @@ void node_load_window::get_load_endtime_input()
 	ImGui::Text("End Time = %.3f", loadendtime_input);
 }
 
-
-
-void node_load_window::get_load_Start_Node()
+void node_load_window::add_to_node_list(const std::vector<int>& selected_nodes, const bool& is_right)
 {
-	// Text for Load At Start Node
-		//_________________________________________________________________________________________
-		// Input box to give input via text
-	static bool nodeLoadStartnode_input_mode = false;
-	static char nodeLoadStartnode_str[16] = ""; // buffer to store input Load At Node string
-	static int nodeLoadStartnode_input = static_cast<int>(node_load_start); // buffer to store input Load At Node
-
-	// Button to switch to input mode
-	if (!nodeLoadStartnode_input_mode)
+	if (is_right == false)
 	{
-		if (ImGui::Button("Load Start Node"))
+		// Add to the selected node list
+		for (int node : selected_nodes)
 		{
-			nodeLoadStartnode_input_mode = true;
-			snprintf(nodeLoadStartnode_str, 16, "%i", nodeLoadStartnode_input); // set the buffer to current Load At Node
-		}
-	}
-	else // input mode
-	{
-		// Text box to input Load At Node
-		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##InputLoadStartNode", nodeLoadStartnode_str, IM_ARRAYSIZE(nodeLoadStartnode_str), ImGuiInputTextFlags_CharsDecimal))
-		{
-			// convert the input string to int
-			nodeLoadStartnode_input = static_cast<int>(atoi(nodeLoadStartnode_str));
-			// set the Load At Node to input value
-			node_load_start = nodeLoadStartnode_input;
-		}
-
-		// Button to switch back to slider mode
-		ImGui::SameLine();
-		if (ImGui::Button("OK"))
-		{
-			nodeLoadStartnode_input_mode = false;
-		}
-	}
-
-	if (node_load_start >= node_load_end)
-	{
-		node_load_end = node_load_start + 1;
-	}
-
-	// Text for Load At Node
-	ImGui::SameLine();
-	ImGui::Text("Nodal Load Start Node = %i", node_load_start);
-
-}
-
-
-void node_load_window::get_load_End_Node()
-{
-	// Text for Load At End Node
-	//_________________________________________________________________________________________
-	// Input box to give input via text
-	static bool nodeLoadEndnode_input_mode = false;
-	static char nodeLoadEndnode_str[16] = ""; // buffer to store input Load End Node string
-	static int nodeLoadEndnode_input = static_cast<int>(node_load_end); // buffer to store input Load End Node
-
-	// Button to switch to input mode
-	if (!nodeLoadEndnode_input_mode)
-	{
-		if (ImGui::Button("Load End Node"))
-		{
-			nodeLoadEndnode_input_mode = true;
-			snprintf(nodeLoadEndnode_str, 16, "%i", nodeLoadEndnode_input); // set the buffer to current Load End Node
-		}
-	}
-	else // input mode
-	{
-		// Text box to input Load End Node
-		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##InputLoadEndNode", nodeLoadEndnode_str, IM_ARRAYSIZE(nodeLoadEndnode_str), ImGuiInputTextFlags_CharsDecimal))
-		{
-			// convert the input string to int
-			nodeLoadEndnode_input = static_cast<int>(atoi(nodeLoadEndnode_str));
-			// set the load End Node to input value
-			if (nodeLoadEndnode_input > node_load_start)
+			// Check whether nodes are already in the list or not
+			if (std::find(this->selected_nodes.begin(), this->selected_nodes.end(), node) == this->selected_nodes.end())
 			{
-				// set the Load End Node to input value
-				node_load_end = nodeLoadEndnode_input;
-			}
-			else
-			{
-				nodeLoadEndnode_input = static_cast<float>(node_load_end);
-			}
+				// Add to selected nodes
+				this->selected_nodes.push_back(node);
 
-		}
-
-		// Button to switch back to slider mode
-		ImGui::SameLine();
-		if (ImGui::Button("OK"))
-		{
-			nodeLoadEndnode_input_mode = false;
+				// Selection changed flag
+				this->is_selection_changed = true;
+			}
 		}
 	}
+	else
+	{
+		// Remove from the selected node list
+		for (int node : selected_nodes)
+		{
+			// Erase the node which is found in the list
+			this->selected_nodes.erase(std::remove(this->selected_nodes.begin(), this->selected_nodes.end(), node),
+				this->selected_nodes.end());
 
-	// Text for Load End Node
-	ImGui::SameLine();
-	ImGui::Text("Nodal Load End Node = %i", node_load_end);
+			// Selection changed flag
+			this->is_selection_changed = true;
+		}
 
+	}
+
+	// Number of selected nodes
+	this->is_selected_count = false;
+	if (static_cast<int>(this->selected_nodes.size()) > 0)
+	{
+		this->is_selected_count = true;
+	}
 
 }
