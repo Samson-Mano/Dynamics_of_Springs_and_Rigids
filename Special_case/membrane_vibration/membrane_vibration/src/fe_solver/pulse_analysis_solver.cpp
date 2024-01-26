@@ -101,7 +101,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			this->eigen_vectors_matrix_inverse);
 
 		// Set the time data to the pulse loads
-		pulse_ld.load_id = ld.load_setid;
+		// pulse_ld.load_id = ld.load_setid;
 		pulse_ld.load_start_time = ld.load_start_time;
 		pulse_ld.load_end_time = ld.load_end_time;
 
@@ -352,8 +352,8 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 		int q = 0;
 		for (int i = 1; i < this->numDOF - 1; i++)
 		{
-			global_reducedInitialDisplacementMatrix.coeffRef(q) = -1.0*node_inldispl.inlcondMap.at(i).y_val;
-			global_reducedInitialVelocityMatrix.coeffRef(q) = -1.0 * node_inlvelo.inlcondMap.at(i).y_val;
+			global_reducedInitialDisplacementMatrix.coeffRef(q) = -1.0*node_inldispl.inlcondMap.at(i).inl_amplitude_z;
+			global_reducedInitialVelocityMatrix.coeffRef(q) = -1.0 * node_inlvelo.inlcondMap.at(i).inl_amplitude_z;
 
 			q++;
 		}
@@ -372,8 +372,8 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 		int q = 0;
 		for (int i = 1; i < this->numDOF; i++)
 		{
-			global_reducedInitialDisplacementMatrix.coeffRef(q) = -1.0 * node_inldispl.inlcondMap.at(i).y_val;
-			global_reducedInitialVelocityMatrix.coeffRef(q) = -1.0 * node_inlvelo.inlcondMap.at(i).y_val;
+			global_reducedInitialDisplacementMatrix.coeffRef(q) = -1.0 * node_inldispl.inlcondMap.at(i).inl_amplitude_z;
+			global_reducedInitialVelocityMatrix.coeffRef(q) = -1.0 * node_inlvelo.inlcondMap.at(i).inl_amplitude_z;
 
 			q++;
 		}
@@ -393,8 +393,8 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 		int q = 0;
 		for (int i = 0; i < this->numDOF; i++)
 		{
-			global_reducedInitialDisplacementMatrix.coeffRef(q) =  node_inldispl.inlcondMap.at(i).y_val;
-			global_reducedInitialVelocityMatrix.coeffRef(q) =  node_inlvelo.inlcondMap.at(i).y_val;
+			global_reducedInitialDisplacementMatrix.coeffRef(q) =  node_inldispl.inlcondMap.at(i).inl_amplitude_z;
+			global_reducedInitialVelocityMatrix.coeffRef(q) =  node_inlvelo.inlcondMap.at(i).inl_amplitude_z;
 
 			q++;
 		}

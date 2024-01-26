@@ -64,8 +64,8 @@ void tri_list_store::add_tri(int& tri_id, const glm::vec3& tript1_loc, const glm
 
 void tri_list_store::set_buffer()
 {
-	// Define the tri vertices of the model for a node (2 position, 2 defl, 3 color  & 1 is_offset) 
-	const unsigned int tri_vertex_count = 8 * 3 * tri_count;
+	// Define the tri vertices of the model for a node (3 position, 3 defl, 3 color  & 1 is_offset) 
+	const unsigned int tri_vertex_count = 10 * 3 * tri_count;
 	float* tri_vertices = new float[tri_vertex_count];
 
 	unsigned int tri_indices_count = 3 * tri_count; // 3 indices to form a triangle
@@ -82,8 +82,8 @@ void tri_list_store::set_buffer()
 	}
 
 	VertexBufferLayout tri_pt_layout;
-	tri_pt_layout.AddFloat(2);  // Node center
-	tri_pt_layout.AddFloat(2);  // Node offset
+	tri_pt_layout.AddFloat(3);  // Node center
+	tri_pt_layout.AddFloat(3);  // Node offset
 	tri_pt_layout.AddFloat(3);  // Node Color
 	tri_pt_layout.AddFloat(1);  // bool to track offset applied or not
 
@@ -165,64 +165,70 @@ void tri_list_store::get_line_buffer(tri_store& tri, float* tri_vertices, unsign
 	// Point location
 	tri_vertices[tri_v_index + 0] = tri.tript1_loc.x;
 	tri_vertices[tri_v_index + 1] = tri.tript1_loc.y;
+	tri_vertices[tri_v_index + 2] = tri.tript1_loc.z;
 
 	// Point offset
-	tri_vertices[tri_v_index + 2] = tri.tript1_offset.x;
-	tri_vertices[tri_v_index + 3] = tri.tript1_offset.y;
+	tri_vertices[tri_v_index + 3] = tri.tript1_offset.x;
+	tri_vertices[tri_v_index + 4] = tri.tript1_offset.y;
+	tri_vertices[tri_v_index + 5] = tri.tript1_offset.z;
 
 	// Point color
-	tri_vertices[tri_v_index + 4] = tri.tript1_color.x;
-	tri_vertices[tri_v_index + 5] = tri.tript1_color.y;
-	tri_vertices[tri_v_index + 6] = tri.tript1_color.z;
+	tri_vertices[tri_v_index + 6] = tri.tript1_color.x;
+	tri_vertices[tri_v_index + 7] = tri.tript1_color.y;
+	tri_vertices[tri_v_index + 8] = tri.tript1_color.z;
 
 	// Point offset bool
 	// Add the bool value (as an integer) to the array
-	tri_vertices[tri_v_index + 7] = static_cast<float>(tri.is_offset);
+	tri_vertices[tri_v_index + 9] = static_cast<float>(tri.is_offset);
 
 	// Iterate
-	tri_v_index = tri_v_index + 8;
+	tri_v_index = tri_v_index + 10;
 
 	// Point 2
 	// Point location
 	tri_vertices[tri_v_index + 0] = tri.tript2_loc.x;
 	tri_vertices[tri_v_index + 1] = tri.tript2_loc.y;
+	tri_vertices[tri_v_index + 2] = tri.tript2_loc.z;
 
 	// Point offset
-	tri_vertices[tri_v_index + 2] = tri.tript2_offset.x;
-	tri_vertices[tri_v_index + 3] = tri.tript2_offset.y;
+	tri_vertices[tri_v_index + 3] = tri.tript2_offset.x;
+	tri_vertices[tri_v_index + 4] = tri.tript2_offset.y;
+	tri_vertices[tri_v_index + 5] = tri.tript2_offset.z;
 
 	// Point color
-	tri_vertices[tri_v_index + 4] = tri.tript2_color.x;
-	tri_vertices[tri_v_index + 5] = tri.tript2_color.y;
-	tri_vertices[tri_v_index + 6] = tri.tript2_color.z;
+	tri_vertices[tri_v_index + 6] = tri.tript2_color.x;
+	tri_vertices[tri_v_index + 7] = tri.tript2_color.y;
+	tri_vertices[tri_v_index + 8] = tri.tript2_color.z;
 
 	// Point offset bool
 	// Add the bool value (as an integer) to the array
-	tri_vertices[tri_v_index + 7] = static_cast<float>(tri.is_offset);
+	tri_vertices[tri_v_index + 9] = static_cast<float>(tri.is_offset);
 
 	// Iterate
-	tri_v_index = tri_v_index + 8;
+	tri_v_index = tri_v_index + 10;
 
 	// Point 3
 	// Point location
 	tri_vertices[tri_v_index + 0] = tri.tript3_loc.x;
 	tri_vertices[tri_v_index + 1] = tri.tript3_loc.y;
+	tri_vertices[tri_v_index + 2] = tri.tript3_loc.z;
 
 	// Point offset
-	tri_vertices[tri_v_index + 2] = tri.tript3_offset.x;
-	tri_vertices[tri_v_index + 3] = tri.tript3_offset.y;
+	tri_vertices[tri_v_index + 3] = tri.tript3_offset.x;
+	tri_vertices[tri_v_index + 4] = tri.tript3_offset.y;
+	tri_vertices[tri_v_index + 5] = tri.tript3_offset.z;
 
 	// Point color
-	tri_vertices[tri_v_index + 4] = tri.tript3_color.x;
-	tri_vertices[tri_v_index + 5] = tri.tript3_color.y;
-	tri_vertices[tri_v_index + 6] = tri.tript3_color.z;
+	tri_vertices[tri_v_index + 6] = tri.tript3_color.x;
+	tri_vertices[tri_v_index + 7] = tri.tript3_color.y;
+	tri_vertices[tri_v_index + 8] = tri.tript3_color.z;
 
 	// Point offset bool
 	// Add the bool value (as an integer) to the array
-	tri_vertices[tri_v_index + 7] = static_cast<float>(tri.is_offset);
+	tri_vertices[tri_v_index + 9] = static_cast<float>(tri.is_offset);
 
 	// Iterate
-	tri_v_index = tri_v_index + 8;
+	tri_v_index = tri_v_index + 10;
 
 	//__________________________________________________________________________
 	// Add the indices

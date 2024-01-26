@@ -48,8 +48,8 @@ void point_list_store::add_point(int& point_id, glm::vec3& point_loc, glm::vec3&
 
 void point_list_store::set_buffer()
 {
-	// Define the node vertices of the model for a node (2 position, 2 defl, 3 color  & 1 defl value) 
-	const unsigned int point_vertex_count = 8 * point_count;
+	// Define the node vertices of the model for a node (3 position, 3 defl, 3 color  & 1 defl value) 
+	const unsigned int point_vertex_count = 10 * point_count;
 	float* point_vertices = new float[point_vertex_count];
 
 	unsigned int point_indices_count = 1 * point_count; // 1 indices to form a point
@@ -66,8 +66,8 @@ void point_list_store::set_buffer()
 	}
 
 	VertexBufferLayout node_layout;
-	node_layout.AddFloat(2);  // Node center
-	node_layout.AddFloat(2);  // Node offset
+	node_layout.AddFloat(3);  // Node center
+	node_layout.AddFloat(3);  // Node offset
 	node_layout.AddFloat(3);  // Node Color
 	node_layout.AddFloat(1);  // bool to track offset applied or not
 
@@ -148,22 +148,24 @@ void point_list_store::get_node_buffer(point_store& pt, float* point_vertices, u
 	// Point location
 	point_vertices[point_v_index + 0] = pt.point_loc.x;
 	point_vertices[point_v_index + 1] = pt.point_loc.y;
+	point_vertices[point_v_index + 2] = pt.point_loc.z;
 
 	// Point offset
-	point_vertices[point_v_index + 2] = pt.point_offset.x;
-	point_vertices[point_v_index + 3] = pt.point_offset.y;
+	point_vertices[point_v_index + 3] = pt.point_offset.x;
+	point_vertices[point_v_index + 4] = pt.point_offset.y;
+	point_vertices[point_v_index + 5] = pt.point_offset.z;
 
 	// Point color
-	point_vertices[point_v_index + 4] = pt.point_color.x;
-	point_vertices[point_v_index + 5] = pt.point_color.y;
-	point_vertices[point_v_index + 6] = pt.point_color.z;
+	point_vertices[point_v_index + 6] = pt.point_color.x;
+	point_vertices[point_v_index + 7] = pt.point_color.y;
+	point_vertices[point_v_index + 8] = pt.point_color.z;
 
 	// Point offset bool
 	// Add the bool value (as an integer) to the array
-	point_vertices[point_v_index + 7] = static_cast<float>(pt.is_offset);
+	point_vertices[point_v_index + 9] = static_cast<float>(pt.is_offset);
 
 	// Iterate
-	point_v_index = point_v_index + 8;
+	point_v_index = point_v_index + 10;
 
 	//__________________________________________________________________________
 	// Add the indices

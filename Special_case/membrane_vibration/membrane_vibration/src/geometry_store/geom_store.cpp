@@ -917,8 +917,8 @@ void  geom_store::paint_node_load_operation()
 		for (int& id : nd_load_window->selected_nodes)
 		{
 			// Add the loads
-			// //node_loads.add_load(id, model_nodes.nodeMap[id].node_pt,
-			// //	load_start_time, load_end_time, load_amplitude, load_angle, load_phase);
+			node_loads.add_loads(id, model_nodes.nodeMap[id].node_pt,
+								load_start_time, load_end_time, load_amplitude);
 		}
 
 		node_loads.set_buffer();
@@ -937,7 +937,7 @@ void  geom_store::paint_node_load_operation()
 		for (int& id : nd_load_window->selected_nodes)
 		{
 			// Delete the loads
-			// //node_loads.delete_load(id);
+			node_loads.delete_load(id);
 		}
 
 		node_loads.set_buffer();
@@ -978,11 +978,10 @@ void geom_store::paint_node_inlcond_operation()
 	if (nd_inlcond_window->apply_nodal_inlcond == true)
 	{
 		// Intial displacement
-		double initial_displacement_x = nd_inlcond_window->initial_displacement_x; // initial displacement x
-		double initial_displacement_y = nd_inlcond_window->initial_displacement_y; // initial displacement y
+		double initial_displacement_z = nd_inlcond_window->initial_displacement_z; // initial displacement z
+
 		// Initial velocity
-		double initial_velocity_x = nd_inlcond_window->initial_velocity_x; // initial velocity x
-		double initial_velocity_y = nd_inlcond_window->initial_velocity_y; // initial velocity y
+		double initial_velocity_z = nd_inlcond_window->initial_velocity_z; // initial velocity z
 
 		for (int& id : nd_inlcond_window->selected_nodes)
 		{

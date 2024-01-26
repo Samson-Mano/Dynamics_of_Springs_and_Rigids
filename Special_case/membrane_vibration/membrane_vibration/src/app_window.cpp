@@ -146,6 +146,9 @@ void app_window::app_render()
 	ImGuiIO& io = ImGui::GetIO();
 	imgui_font = io.Fonts->AddFontFromFileTTF("./resources/fonts/FreeSans.ttf", 18);
 
+	// Z Clamping
+	glEnable(GL_DEPTH_CLAMP);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

@@ -22,26 +22,42 @@ void inlcondition_window::render_window()
 
 	ImGui::Begin("Initial Condition");
 
-	ImGui::Text("Initial Displacement");
-	// ________________________________________________________________________________________________________________________________
 
-	get_idisplx_value_input();
-	// ________________________________________________________________________________________________________________________________
+	// Options for the Node constraint (Pin Support or Pin Roller Support)
+	if (ImGui::RadioButton("Pin Support", selected_inl_option == 0))
+	{
+		selected_inl_option = 0;
+	}
+	// ImGui::SameLine();
+	if (ImGui::RadioButton("Pin Roller Support", selected_inl_option == 1))
+	{
+		selected_inl_option = 1;
+	}
 
-	get_idisply_value_input();
+
 	// ________________________________________________________________________________________________________________________________
 
 	ImGui::Spacing();
 	ImGui::Spacing();
 
-	ImGui::Text("Initial Velocity");
+	if (selected_inl_option == 0)
+	{
+		ImGui::Text("Initial Displacement");
+		// ________________________________________________________________________________________________________________________________
 
-	// ________________________________________________________________________________________________________________________________
+		get_idisplz_value_input();
 
-	get_ivelox_value_input();
-	// ________________________________________________________________________________________________________________________________
+	}
+	else if (selected_inl_option == 1)
+	{
+		ImGui::Text("Initial Velocity");
+		// ________________________________________________________________________________________________________________________________
 
-	get_iveloy_value_input();
+		get_iveloz_value_input();
+	}
+
+
+	
 	// ________________________________________________________________________________________________________________________________
 	// Selected Node list
 	ImGui::Spacing();
@@ -139,30 +155,30 @@ void inlcondition_window::add_to_node_list(const std::vector<int>& selected_node
 
 }
 
-void inlcondition_window::get_idisplx_value_input()
+void inlcondition_window::get_idisplz_value_input()
 {
 	// Input box to give input via text
-	static bool displx_input_mode = false;
-	static char displx_str[16] = ""; // buffer to store input Displacement X string
-	static float displx_input = 0; // buffer to store input Displacement X value
+	static bool displz_input_mode = false;
+	static char displz_str[16] = ""; // buffer to store input Displacement Z string
+	static float displz_input = 0; // buffer to store input Displacement Z value
 
 	// Button to switch to input mode
-	if (!displx_input_mode)
+	if (!displz_input_mode)
 	{
-		if (ImGui::Button("X Displacmenet"))
+		if (ImGui::Button("Displacmenet"))
 		{
-			displx_input_mode = true;
-			snprintf(displx_str, 16, "%.1f", initial_displacement_x); // set the buffer to current Displacement X
+			displz_input_mode = true;
+			snprintf(displz_str, 16, "%.1f", initial_displacement_z); // set the buffer to current Displacement Z
 		}
 	}
 	else // input mode
 	{
 		// Text box to input value
 		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##Displacement X", displx_str, IM_ARRAYSIZE(displx_str), ImGuiInputTextFlags_CharsDecimal))
+		if (ImGui::InputText("##DisplacementX", displz_str, IM_ARRAYSIZE(displz_str), ImGuiInputTextFlags_CharsDecimal))
 		{
 			// convert the input string to int
-			initial_displacement_x = atof(displx_str);
+			initial_displacement_z = atof(displz_str);
 			// set the load value to input value
 			// deformation_scale_max = defscale_input;
 		}
@@ -171,40 +187,41 @@ void inlcondition_window::get_idisplx_value_input()
 		ImGui::SameLine();
 		if (ImGui::Button("OK"))
 		{
-			displx_input_mode = false;
+			displz_input_mode = false;
 		}
 	}
 
 	// Text for load value
 	ImGui::SameLine();
-	ImGui::Text(" %.1f", initial_displacement_x);
+	ImGui::Text(" %.1f", initial_displacement_z);
 
 }
 
-void inlcondition_window::get_idisply_value_input()
+
+void inlcondition_window::get_iveloz_value_input()
 {
 	// Input box to give input via text
-	static bool disply_input_mode = false;
-	static char disply_str[16] = ""; // buffer to store input Displacement Y string
-	static float disply_input = 0; // buffer to store input Displacement Y value
+	static bool veloz_input_mode = false;
+	static char veloz_str[16] = ""; // buffer to store input Velocity Z string
+	static float veloz_input = 0; // buffer to store input Velocity Z value
 
 	// Button to switch to input mode
-	if (!disply_input_mode)
+	if (!veloz_input_mode)
 	{
-		if (ImGui::Button("Y Displacement"))
+		if (ImGui::Button("Velocity"))
 		{
-			disply_input_mode = true;
-			snprintf(disply_str, 16, "%.1f", initial_displacement_y); // set the buffer to current Displacement Y
+			veloz_input_mode = true;
+			snprintf(veloz_str, 16, "%.1f", initial_velocity_z); // set the buffer to current Velocity Z
 		}
 	}
 	else // input mode
 	{
 		// Text box to input value
 		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##Displacement Y", disply_str, IM_ARRAYSIZE(disply_str), ImGuiInputTextFlags_CharsDecimal))
+		if (ImGui::InputText("##VelocityZ", veloz_str, IM_ARRAYSIZE(veloz_str), ImGuiInputTextFlags_CharsDecimal))
 		{
 			// convert the input string to int
-			initial_displacement_y = atof(disply_str);
+			initial_velocity_z = atof(veloz_str);
 			// set the load value to input value
 			// deformation_scale_max = defscale_input;
 		}
@@ -213,93 +230,11 @@ void inlcondition_window::get_idisply_value_input()
 		ImGui::SameLine();
 		if (ImGui::Button("OK"))
 		{
-			disply_input_mode = false;
+			veloz_input_mode = false;
 		}
 	}
 
 	// Text for load value
 	ImGui::SameLine();
-	ImGui::Text(" %.1f", initial_displacement_y);
-}
-
-void inlcondition_window::get_ivelox_value_input()
-{
-	// Input box to give input via text
-	static bool velox_input_mode = false;
-	static char velox_str[16] = ""; // buffer to store input Velocity X string
-	static float velox_input = 0; // buffer to store input Velocity X value
-
-	// Button to switch to input mode
-	if (!velox_input_mode)
-	{
-		if (ImGui::Button("X Velocity"))
-		{
-			velox_input_mode = true;
-			snprintf(velox_str, 16, "%.1f", initial_velocity_x); // set the buffer to current Velocity X
-		}
-	}
-	else // input mode
-	{
-		// Text box to input value
-		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##Velocity X", velox_str, IM_ARRAYSIZE(velox_str), ImGuiInputTextFlags_CharsDecimal))
-		{
-			// convert the input string to int
-			initial_velocity_x = atof(velox_str);
-			// set the load value to input value
-			// deformation_scale_max = defscale_input;
-		}
-
-		// Button to switch back to slider mode
-		ImGui::SameLine();
-		if (ImGui::Button("OK"))
-		{
-			velox_input_mode = false;
-		}
-	}
-
-	// Text for load value
-	ImGui::SameLine();
-	ImGui::Text(" %.1f", initial_velocity_x);
-}
-
-void inlcondition_window::get_iveloy_value_input()
-{
-	// Input box to give input via text
-	static bool veloy_input_mode = false;
-	static char veloy_str[16] = ""; // buffer to store input Velocity Y string
-	static float veloy_input = 0; // buffer to store input Velocity Y value
-
-	// Button to switch to input mode
-	if (!veloy_input_mode)
-	{
-		if (ImGui::Button("Y Velocity"))
-		{
-			veloy_input_mode = true;
-			snprintf(veloy_str, 16, "%.1f", initial_velocity_y); // set the buffer to current Velocity Y
-		}
-	}
-	else // input mode
-	{
-		// Text box to input value
-		ImGui::SetNextItemWidth(60.0f);
-		if (ImGui::InputText("##Velocity Y", veloy_str, IM_ARRAYSIZE(veloy_str), ImGuiInputTextFlags_CharsDecimal))
-		{
-			// convert the input string to int
-			initial_velocity_y = atof(veloy_str);
-			// set the load value to input value
-			// deformation_scale_max = defscale_input;
-		}
-
-		// Button to switch back to slider mode
-		ImGui::SameLine();
-		if (ImGui::Button("OK"))
-		{
-			veloy_input_mode = false;
-		}
-	}
-
-	// Text for load value
-	ImGui::SameLine();
-	ImGui::Text(" %.1f", initial_velocity_y);
+	ImGui::Text(" %.1f", initial_velocity_z);
 }
