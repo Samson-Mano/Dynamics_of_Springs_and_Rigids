@@ -17,18 +17,19 @@ void nodeinlcond_list_store::init(geom_parameters* geom_param_ptr)
 
 	// Set the geometry parameter for the points
 	inlcond_points.init(geom_param_ptr);
-	inl_condition_labels.init(geom_param_ptr);
+	inlcond_lines.init(geom_param_ptr);
+	// inl_condition_labels.init(geom_param_ptr);
 
 }
 
-void nodeinlcond_list_store::set_zero_condition(int inl_cond_type,const int& model_type)
+void nodeinlcond_list_store::set_zero_condition(int inlcond_type,const int& model_type)
 {
-	this->inl_cond_type = inl_cond_type; // Initial condition type 0 - Displacement, 1 - Velocity
+	this->inlcond_type = inlcond_type; // Initial condition type 0 - Displacement, 1 - Velocity
 	this->model_type = model_type; // Model type 0, 1 Line, 2,3 Circle
 
 }
 
-void nodeinlcond_list_store::add_inlcondition(int& node_id, glm::vec2& inlcond_loc, double& inl_amplitude_z)
+void nodeinlcond_list_store::add_inlcondition(int& node_id, glm::vec3& inlcond_loc, double& inl_amplitude_z)
 {
 	// Add the initial condition to the particular node
 	nodeinl_condition_data temp_inl_condition_data;
@@ -79,20 +80,99 @@ void nodeinlcond_list_store::delete_inlcondition(int& node_id)
 
 void nodeinlcond_list_store::set_buffer()
 {
+
+	// Reset the points based on the addition of new inl condition points
+	inlcond_points.clear_points();
+	inlcond_lines.clear_lines();
+
+	// Set the initial condition amplitude max
+	// initial condition amplitude Max
+	inlcond_max = 0.0;
+
+	// Find the initial condition amplitude maximum
+	for (auto& inlcond_m : inlcondMap)
+	{
+		nodeinl_condition_data inlcond = inlcond_m.second;
+
+		if (inlcond_max < std::abs(inlcond.inl_amplitude_z))
+		{
+			inlcond_max = std::abs(inlcond.inl_amplitude_z);
+		}
+	}
+
+	//if (inlcond_max == 0)
+	//{
+	//	// No initial condition value found
+	//	return;
+	//}
+
+	// get the color
+	glm::vec3 temp_color = glm::vec3(0);
+
+	if (inlcond_type == 0)
+	{
+		// Initial Displacement
+		temp_color = geom_param_ptr->geom_colors.inlcond_displ_color;
+	}
+	else if (inlcond_type == 1)
+	{
+		// Initial Velocity
+		temp_color = geom_param_ptr->geom_colors.inlcond_velo_color;
+	}
+
+	//_________________________________________________________
+	// Create the points
+	int pt_id = 0;
+	int ln_id = 0;
+	glm::vec3 temp_offset = glm::vec3(0);
+
+	for (auto& inlcond_m : inlcondMap)
+	{
+		nodeinl_condition_data inlcond = inlcond_m.second;
+
+		// get the sign of initial condition amplitude
+		// int inlcond_sign = inlcond.inl_amplitude_z > 0 ? 1 : -1;
+
+		// initial condition point amplitude
+		double pt_amplitude = -10.0f * (inlcond.inl_amplitude_z / inlcond_max)*(geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale));
+
+		// initial condition point
+		glm::vec3 inlcond_pt_start = glm::vec3(inlcond.inlcond_loc.x, inlcond.inlcond_loc.y, inlcond.inlcond_loc.z);
+		glm::vec3 inlcond_pt_end = glm::vec3(inlcond.inlcond_loc.x, inlcond.inlcond_loc.y, inlcond.inlcond_loc.z + pt_amplitude);
+
+		// Add the end point
+		inlcond_points.add_point(pt_id, inlcond_pt_start, temp_offset, temp_color, false);
+
+		pt_id++;
+
+		// Add the end point
+		inlcond_points.add_point(pt_id, inlcond_pt_end, temp_offset, temp_color, false);
+
+		pt_id++;
+
+		// Add the initial condition line
+		inlcond_lines.add_line(ln_id, inlcond_pt_start, inlcond_pt_end, temp_offset, temp_offset, temp_color, temp_color, false);
+
+		ln_id++;
+	}
+
+
 	inlcond_points.set_buffer();
-	inl_condition_labels.set_buffer();
+	inlcond_lines.set_buffer();
+	// inl_condition_labels.set_buffer();
 }
 
 void nodeinlcond_list_store::paint_inlcond()
 {
 	// Paint the initial displacement points
 	inlcond_points.paint_points();
+	inlcond_lines.paint_lines();
 }
 
 void nodeinlcond_list_store::paint_inlcond_label()
 {
 	// Paint the peak displacement label
-	inl_condition_labels.paint_text();
+	// inl_condition_labels.paint_text();
 }
 
 void nodeinlcond_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
@@ -100,5 +180,6 @@ void nodeinlcond_list_store::update_geometry_matrices(bool set_modelmatrix, bool
 {
 	// Update model openGL uniforms
 	inlcond_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	inl_condition_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	inlcond_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	// inl_condition_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
 }

@@ -42,8 +42,8 @@ void geom_parameters::init()
 	geom_colors.background_color = glm::vec3(0.95f, 0.95f, 0.95f); // Light gray
 	geom_colors.selection_color = glm::vec3(0.862745f, 0.078431f, 0.23529f); // Crimson
 
-	geom_colors.inlcond_displ_color = glm::vec3(0.96f, 0.5f, 0.1f);
-	geom_colors.inlcond_velo_color = glm::vec3(0.54f, 0.06f, 0.31f);
+	geom_colors.inlcond_displ_color = glm::vec3(0.54f, 0.06f, 0.31f); 
+	geom_colors.inlcond_velo_color = glm::vec3(0.2, 0.7, 0.2); // Green
 
 
 

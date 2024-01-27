@@ -18,9 +18,9 @@ public:
 	std::vector<int> selected_nodes;
 
 	// Initial displacement
-	double initial_displacement_z = 0.0;
+	double initial_displacement_z = 1.0;
 	// Initial velocity
-	double initial_velocity_z = 0.0;
+	double initial_velocity_z = 1.0;
 
 	inlcondition_window();
 	~inlcondition_window();

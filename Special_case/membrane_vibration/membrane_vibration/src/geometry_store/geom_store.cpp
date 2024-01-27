@@ -123,6 +123,12 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 		j++;
 	}
 
+	// Set the initial condition & loads
+
+	this->node_inldispl.set_zero_condition( 0, model_type);
+	this->node_inlvelo.set_zero_condition( 1, model_type);
+	this->node_loads.set_zero_condition(model_type);
+
 
 	// read the model
 	//___________________________________________________________________________
@@ -601,11 +607,11 @@ void geom_store::paint_model()
 		// Show the node initial condition
 		// Initial Displacement
 		node_inldispl.paint_inlcond();
-		node_inldispl.paint_inlcond_label();
+		// node_inldispl.paint_inlcond_label();
 
 		// Initial Velocity
 		node_inlvelo.paint_inlcond();
-		node_inlvelo.paint_inlcond_label();
+		// node_inlvelo.paint_inlcond_label();
 
 	}
 
@@ -977,20 +983,53 @@ void geom_store::paint_node_inlcond_operation()
 	// Apply the Node Initial Condition
 	if (nd_inlcond_window->apply_nodal_inlcond == true)
 	{
-		// Intial displacement
-		double initial_displacement_z = nd_inlcond_window->initial_displacement_z; // initial displacement z
-
-		// Initial velocity
-		double initial_velocity_z = nd_inlcond_window->initial_velocity_z; // initial velocity z
-
+		
 		for (int& id : nd_inlcond_window->selected_nodes)
 		{
 			// Add the initial condition
-			// node_inlcond.add_inlcondition(id, model_nodes.nodeMap[id].node_pt,
-			//	initial_displacement_x, initial_displacement_y, initial_velocity_x, initial_velocity_y);
+			
+			if (nd_inlcond_window->selected_inl_option == 0)
+			{
+				// Intial displacement
+				double initial_displacement_z = nd_inlcond_window->initial_displacement_z; // initial displacement z
+
+				if (initial_displacement_z < 0.000001)
+				{
+					continue;
+				}
+
+				node_inldispl.add_inlcondition(id, model_nodes.nodeMap[id].node_pt, initial_displacement_z);
+
+			}
+			else if (nd_inlcond_window->selected_inl_option == 1)
+			{
+				// Initial velocity
+				double initial_velocity_z = nd_inlcond_window->initial_velocity_z; // initial velocity z
+
+				if (initial_velocity_z < 0.000001)
+				{
+					continue;
+				}
+
+				node_inlvelo.add_inlcondition(id, model_nodes.nodeMap[id].node_pt, initial_velocity_z);
+
+			}
+
 		}
 
-		// node_inlcond.set_buffer();
+
+		if (nd_inlcond_window->selected_inl_option == 0)
+		{
+			// Reset the buffer
+			node_inldispl.set_buffer();
+
+		}
+		else if (nd_inlcond_window->selected_inl_option == 1)
+		{
+			// Reset the buffer
+			node_inlvelo.set_buffer();
+
+		}
 
 		// initial condition application ends
 		nd_inlcond_window->apply_nodal_inlcond = false;
@@ -1006,10 +1045,38 @@ void geom_store::paint_node_inlcond_operation()
 		for (int& id : nd_inlcond_window->selected_nodes)
 		{
 			// Delete the initial condition
-			// node_inlcond.delete_inlcondition(id);
+
+			if (nd_inlcond_window->selected_inl_option == 0)
+			{
+				// Intial displacement
+				double initial_displacement_z = nd_inlcond_window->initial_displacement_z; // initial displacement z
+
+				node_inldispl.delete_inlcondition(id);
+
+			}
+			else if (nd_inlcond_window->selected_inl_option == 1)
+			{
+				// Initial velocity
+				double initial_velocity_z = nd_inlcond_window->initial_velocity_z; // initial velocity z
+
+				node_inlvelo.delete_inlcondition(id);
+			}
 		}
 
-		// node_inlcond.set_buffer();
+
+		if (nd_inlcond_window->selected_inl_option == 0)
+		{
+			// Reset the buffer
+			node_inldispl.set_buffer();
+
+		}
+		else if (nd_inlcond_window->selected_inl_option == 1)
+		{
+			// Reset the buffer
+			node_inlvelo.set_buffer();
+
+		}
+		
 
 		// Initial condition delete ends
 		nd_inlcond_window->delete_nodal_inlcond = false;

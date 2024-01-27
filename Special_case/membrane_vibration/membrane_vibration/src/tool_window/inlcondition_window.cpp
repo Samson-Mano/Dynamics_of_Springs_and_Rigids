@@ -23,13 +23,13 @@ void inlcondition_window::render_window()
 	ImGui::Begin("Initial Condition");
 
 
-	// Options for the Node constraint (Pin Support or Pin Roller Support)
-	if (ImGui::RadioButton("Pin Support", selected_inl_option == 0))
+	// Options for the Initial condition type (Displacement or Velocity)
+	if (ImGui::RadioButton("Set Initial Displacement", selected_inl_option == 0))
 	{
 		selected_inl_option = 0;
 	}
 	// ImGui::SameLine();
-	if (ImGui::RadioButton("Pin Roller Support", selected_inl_option == 1))
+	if (ImGui::RadioButton("Set Initial Velocity", selected_inl_option == 1))
 	{
 		selected_inl_option = 1;
 	}
