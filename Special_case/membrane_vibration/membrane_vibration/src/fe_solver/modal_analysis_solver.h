@@ -72,34 +72,38 @@ private:
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
-	void modal_analysis_model_linear1(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements, 
-		const material_data& mat_data);
-
-
-	void modal_analysis_model_linear2(const nodes_list_store& model_nodes,
+	void modal_analysis_model_circular1(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const material_data& mat_data);
-
-
-	void modal_analysis_model_linear3(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const material_data& mat_data);
-
 
 	void modal_analysis_model_circular1(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const material_data& mat_data);
 
+	void modal_analysis_model_rectangular1(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements, 
+		const material_data& mat_data);
 
-	void map_modal_analysis_linear_results(const nodes_list_store& model_nodes,
+
+	void modal_analysis_model_rectangular2(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
-		modal_nodes_list_store& modal_result_nodes,
-		modal_elementline_list_store& modal_result_lineelements);
+		const material_data& mat_data);
 
+
+	void modal_analysis_model_rectangular3(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		const material_data& mat_data);
+	
 
 	void map_modal_analysis_circular_results(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements);
+
+
+	void map_modal_analysis_rectangular_results(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		modal_nodes_list_store& modal_result_nodes,
+		modal_elementline_list_store& modal_result_lineelements);
+
 };
