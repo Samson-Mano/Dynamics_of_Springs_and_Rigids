@@ -40,6 +40,7 @@ class modal_analysis_solver
 {
 public:
 	// Result store
+	std::unordered_map<int, int> nodeid_map; // Node ID map
 	int number_of_modes = 0;
 	int node_count = 0;
 	int matrix_size = 0;
@@ -68,6 +69,7 @@ public:
 		modal_elementline_list_store& modal_result_lineelements);
 private:
 	const double m_pi = 3.14159265358979323846;
+	const double epsilon = 0.000001;
 	bool print_matrix = false;
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;

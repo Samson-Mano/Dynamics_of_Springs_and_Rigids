@@ -14,6 +14,7 @@ modal_analysis_solver::~modal_analysis_solver()
 void modal_analysis_solver::clear_results()
 {
 	// Clear the eigen values and eigen vectors
+	nodeid_map.clear(); // Node ID map
 	number_of_modes = 0;
 	node_count = 0;
 
@@ -54,6 +55,19 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 	std::cout << "Modal analysis - started" << std::endl;
 
+	// Create a node ID map (to create a nodes as ordered and numbered from 0,1,2...n)
+	int i = 0;
+	for (auto& nd : model_nodes.nodeMap)
+	{
+		nodeid_map[nd.first] = i;
+		i++;
+	}
+
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Node maping completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+
 
 	this->node_count = model_nodes.node_count;
 	this->model_type = mat_data.model_type;
@@ -67,13 +81,15 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	if (this->model_type == 0)
 	{
 		// Circular Membrane
-		// Number of fixed nodes = 128 or 256
+		// Number of fixed nodes = 128 or 256 
+		// Radius = 100
 		this->matrix_size = node_count - 128;
 	}
 	else if (this->model_type == 1)
 	{
 		// Rectangular 1:1
 		// Number of fixed nodes = 200
+
 		this->matrix_size = node_count - 200;
 	}
 	else if (this->model_type == 2)
@@ -211,14 +227,61 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 	const material_data& mat_data)
 {
 	// Circular string
-
+	int node_id = 0;
 	double line_length = mat_data.line_length;
 	double c_param = std::sqrt(mat_data.line_tension / mat_data.material_density);
+	double c_radius = 100.0;
 	this->number_of_modes = 0;
+
+
+	for (int i = 0; i < this->matrix_size; i++)
+	{
+		for (auto& nd_m : model_nodes.nodeMap)
+		{
+			node_id = nd_m.first;
+			glm::vec3 node_pt = nd_m.second.node_pt;
+			int matrix_index = nodeid_map[node_id];
+
+			// Ignore the boundary nodes
+			// Check for boundary nodes
+			double nd_radius = glm::length(node_pt);
+			double nd_theta = std::atan2(node_pt.y, node_pt.x);
+
+			if ((nd_radius - epsilon) >= c_radius)
+			{
+				continue;
+			}
+
+			//____________________________________________
+
+			// https://www.bragitoff.com/2017/08/bessel-function-series-c-program/
+
+
+
+		}
+
+		// Increment the mode number
+		this->number_of_modes++;
+	}
+	
+	
+	
+	
+	
 	int q = 1;
+
+
+
+
 
 	for (int i = 0; i < node_count; i++)
 	{
+
+		// Ignore the boundary nodes
+		// Check for boundary nodes
+		
+
+
 		//if (i < node_count - 1)
 		//{
 		double t_eigen = (q * m_pi * c_param) / line_length;
@@ -301,28 +364,6 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 
 	}
 
-
-	//// Modify the last column (Because all the values are zero )
-	//for (int j = 0; j < node_count; j++)
-	//{
-	//	int is_odd = (node_count - 1) % 2;
-	//	double val = 0.0;
-	//	if (is_odd == 0)
-	//	{
-	//		// Cosine Mode
-	//		double angle_ratio = (static_cast<float>(j) / static_cast<float>(node_count)) * 2.0 * m_pi;
-	//		val = std::cos(q * angle_ratio);
-	//	}
-	//	else
-	//	{
-	//		// Sine Mode
-	//		double angle_ratio = (static_cast<float>(j) / static_cast<float>(node_count)) * 2.0 * m_pi;
-	//		val = std::sin(q * angle_ratio);
-
-	//	}
-	//	eigen_vectors_matrix.coeffRef(j, node_count - 1) = val;
-	//	displ_vectors_matrix.coeffRef(j, node_count - 1) = val;
-	//}
 
 	double inv_factor = 2.0 / static_cast<float>(matrix_size);
 
