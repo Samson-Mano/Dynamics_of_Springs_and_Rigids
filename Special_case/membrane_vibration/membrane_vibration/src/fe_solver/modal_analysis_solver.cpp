@@ -221,6 +221,37 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 }
 
+double modal_analysis_solver::bessel_function_m(const int m, const double x)
+{
+	// Returns the value of bessel function at x of order m
+
+	double h = 2.0;
+	double t = 0.0;
+	double sum = 0.0;
+	double term = 0.0;
+	int n = 0;
+
+
+	for (int k = 1; k <= 8; k++) /* sequence of decreasing values of h */
+	{
+		t = 0.0; /* the first point of the integral */
+		sum = 0.5 * exp(-x);
+		n = 1;
+		
+		do 
+		{
+			t += h; /* successive points of the integral */
+			term = cosh(m * t) * exp(-x * cosh(t));
+			sum += term;
+
+			n++;
+		} while (term / sum > 1.e-8); /* deciding when to quit */
+		// printf("h= %lf, n=%d, ans = %24.16e\n", h, n, h * sum);
+		h = h / 2.;
+	}
+
+	return h * sum;
+}
 
 void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,

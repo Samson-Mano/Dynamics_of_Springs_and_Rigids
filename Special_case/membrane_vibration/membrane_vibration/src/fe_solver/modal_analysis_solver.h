@@ -74,6 +74,8 @@ private:
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
+	double bessel_function_m(const int m, const double x);
+
 	void modal_analysis_model_circular1(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const material_data& mat_data);
