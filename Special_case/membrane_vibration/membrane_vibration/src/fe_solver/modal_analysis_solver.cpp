@@ -141,7 +141,7 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 			modal_result_nodes,
 			modal_result_lineelements);
 
-		this->is_modal_analysis_complete = true;
+		this->is_modal_analysis_complete = false;
 
 	}
 	else if (mat_data.model_type == 1)
@@ -221,52 +221,95 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 }
 
-double modal_analysis_solver::bessel_function_m(const int m, const double x)
-{
-	// Returns the value of bessel function at x of order m
-
-	double h = 2.0;
-	double t = 0.0;
-	double sum = 0.0;
-	double term = 0.0;
-	int n = 0;
-
-
-	for (int k = 1; k <= 8; k++) /* sequence of decreasing values of h */
-	{
-		t = 0.0; /* the first point of the integral */
-		sum = 0.5 * exp(-x);
-		n = 1;
-		
-		do 
-		{
-			t += h; /* successive points of the integral */
-			term = cosh(m * t) * exp(-x * cosh(t));
-			sum += term;
-
-			n++;
-		} while (term / sum > 1.e-8); /* deciding when to quit */
-		// printf("h= %lf, n=%d, ans = %24.16e\n", h, n, h * sum);
-		h = h / 2.;
-	}
-
-	return h * sum;
-}
-
 void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
 	const material_data& mat_data)
 {
 	// Circular string
 	int node_id = 0;
-	double line_length = mat_data.line_length;
 	double c_param = std::sqrt(mat_data.line_tension / mat_data.material_density);
 	double c_radius = 100.0;
 	this->number_of_modes = 0;
 
+	// Find the modal frequency
+	int modal_m_count = std::ceilf(std::sqrt(this->matrix_size));
 
-	for (int i = 0; i < this->matrix_size; i++)
+	// Bessel function Frequency
+	std::vector<bessel_function_Frequency> t_bessel_roots;
+
+	for (int m = 0; m < modal_m_count; m++)
 	{
+		for (int n = 0; n < modal_m_count; n++)
+		{
+			double bessel_value = boost::math::cyl_bessel_j_zero((float)m, (n+1),ignore_all_policy());
+	
+			// Temp 
+			bessel_function_Frequency temp_bessel_roots;
+			temp_bessel_roots.m = m;
+			temp_bessel_roots.n = n;
+			temp_bessel_roots.root_value = bessel_value;
+
+			// Add to the list
+			t_bessel_roots.push_back(temp_bessel_roots);
+		}
+	}
+
+	// Sort the vector based on root_value
+	std::sort(t_bessel_roots.begin(), t_bessel_roots.end(), compareRootValues);
+
+	// Final Bessel function Frequency
+	bessel_roots.clear();
+	int temp_mode_number = 0;
+
+	// std::ofstream outFile("bessel_roots.txt"); // Open a file for writing
+
+	for (auto& b_root : t_bessel_roots)
+	{
+		// Temp 
+		bessel_function_Frequency temp_bessel_roots;
+		temp_bessel_roots.mode_number = temp_mode_number;
+		temp_bessel_roots.m = b_root.m;
+		temp_bessel_roots.n = b_root.n;
+		temp_bessel_roots.root_value = b_root.root_value;
+
+		// Add to the list
+		bessel_roots.push_back(temp_bessel_roots);
+
+		// outFile << temp_mode_number << ", " << b_root.m << ", "<< b_root.n << ", "<<b_root.root_value << std::endl; // Write to the file
+
+		temp_mode_number++;
+	}
+
+	// outFile.close(); // Close the file
+
+	// Create the mode shapes
+	this->number_of_modes = 0;
+	int i = 0;
+
+	for (auto& b_root : bessel_roots)
+	{
+
+		double t_eigen = (b_root.root_value / c_radius) * c_param;
+
+		// Angular frequency wn
+		angular_freq_vector.coeffRef(i) = t_eigen;
+
+		// Eigen value
+		eigen_values_vector.coeffRef(i) = (t_eigen * t_eigen);
+
+		this->number_of_modes++;
+
+		// Frequency
+		double nat_freq = t_eigen / (2.0 * m_pi);
+
+		// Modal results
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(3) << nat_freq;
+
+		// Add to the string list
+		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz (m =" 
+			+ std::to_string(b_root.m) + ", n=" + std::to_string(b_root.n) + ")");
+
 		for (auto& nd_m : model_nodes.nodeMap)
 		{
 			node_id = nd_m.first;
@@ -280,25 +323,34 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 
 			if ((nd_radius - epsilon) >= c_radius)
 			{
+				// Zero for fixed nodes
+				displ_vectors_matrix.coeffRef(matrix_index, i) = 0.0;
 				continue;
 			}
 
-			//____________________________________________
 
-			// https://www.bragitoff.com/2017/08/bessel-function-series-c-program/
+			// Get the radius ratio
+			double radius_ratio = nd_radius / c_radius;
+
+			// Eigen vectors
+			double t_eigen_vec = std::cyl_bessel_j(b_root.m,b_root.root_value * radius_ratio) * std::cos(b_root.m * nd_theta);
 
 
-
+			displ_vectors_matrix.coeffRef(matrix_index, i) = t_eigen_vec;
+			eigen_vectors_matrix.coeffRef(matrix_index, i) = t_eigen_vec;
 		}
 
-		// Increment the mode number
-		this->number_of_modes++;
+		i++;
 	}
+
+
 	
-	
-	
-	
-	
+
+
+
+	return;
+
+
 	int q = 1;
 
 
@@ -315,7 +367,7 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 
 		//if (i < node_count - 1)
 		//{
-		double t_eigen = (q * m_pi * c_param) / line_length;
+		double t_eigen = (q * m_pi * c_param) / 1000.0;
 
 		// Angular frequency wn
 		angular_freq_vector.coeffRef(i) = t_eigen;
@@ -641,6 +693,7 @@ void modal_analysis_solver::map_modal_analysis_circular_results(const nodes_list
 	{
 		int node_id = nd_m.first;
 		glm::vec3 node_pt = nd_m.second.node_pt;
+		int matrix_index = nodeid_map[node_id];
 
 		// Modal analysis results
 		std::unordered_map<int, glm::vec3> node_modal_displ;

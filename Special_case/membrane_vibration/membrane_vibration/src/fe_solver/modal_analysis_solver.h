@@ -13,6 +13,9 @@
 // Stop watch
 #include "../events_handler/Stopwatch_events.h"
 
+#include <cmath>
+#include <boost/math/special_functions/bessel.hpp>
+
 #pragma warning(push)
 #pragma warning (disable : 26451)
 #pragma warning (disable : 26495)
@@ -35,6 +38,31 @@
 typedef Eigen::SparseMatrix<double> SparseMatrix;
 #pragma warning(pop)
 
+typedef boost::math::policies::policy<
+	boost::math::policies::domain_error<boost::math::policies::ignore_error>,
+	boost::math::policies::overflow_error<boost::math::policies::ignore_error>,
+	boost::math::policies::underflow_error<boost::math::policies::ignore_error>,
+	boost::math::policies::denorm_error<boost::math::policies::ignore_error>,
+	boost::math::policies::pole_error<boost::math::policies::ignore_error>,
+	boost::math::policies::evaluation_error<boost::math::policies::ignore_error>
+> ignore_all_policy;
+
+
+
+struct bessel_function_Frequency
+{
+	int mode_number = 0; // mode number
+	int m = 0; // Bessel function m order
+	int n = 0; // n th root
+	double root_value = 0.0; // Bessel function root value
+
+};
+
+// Comparator function for sorting based on root_value
+inline bool compareRootValues(const bessel_function_Frequency& a, const bessel_function_Frequency& b) 
+{
+	return a.root_value < b.root_value;
+}
 
 class modal_analysis_solver
 {
@@ -74,11 +102,7 @@ private:
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
-	double bessel_function_m(const int m, const double x);
-
-	void modal_analysis_model_circular1(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const material_data& mat_data);
+	std::vector<bessel_function_Frequency> bessel_roots;
 
 	void modal_analysis_model_circular1(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
