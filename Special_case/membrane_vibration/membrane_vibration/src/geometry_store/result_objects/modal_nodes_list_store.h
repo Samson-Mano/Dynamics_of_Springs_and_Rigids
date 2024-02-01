@@ -31,7 +31,7 @@ public:
 
 private:
 	geom_parameters* geom_param_ptr = nullptr;
-	// label_list_store modal_node_vector_labels;
+
 	point_list_store modal_node_points;
 
 };

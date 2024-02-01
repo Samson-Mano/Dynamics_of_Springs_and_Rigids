@@ -175,6 +175,7 @@
     <ClCompile Include="src\geometry_store\geom_parameters.cpp" />
     <ClCompile Include="src\geometry_store\geom_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\modal_elementline_list_store.cpp" />
+    <ClCompile Include="src\geometry_store\result_objects\modal_elementquad_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\modal_nodes_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\pulse_elementline_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\pulse_node_list_store.cpp" />
@@ -256,6 +257,7 @@
     <ClInclude Include="src\geometry_store\geom_parameters.h" />
     <ClInclude Include="src\geometry_store\geom_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\modal_elementline_list_store.h" />
+    <ClInclude Include="src\geometry_store\result_objects\modal_elementquad_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\modal_nodes_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\pulse_elementline_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\pulse_node_list_store.h" />

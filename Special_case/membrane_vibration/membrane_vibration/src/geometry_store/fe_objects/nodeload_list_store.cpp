@@ -204,6 +204,9 @@ void nodeload_list_store::update_geometry_matrices(bool set_modelmatrix, bool se
 		load_shader.setUniform("geom_scale", static_cast<float>(geom_param_ptr->geom_scale));
 		load_shader.setUniform("transparency", 1.0f);
 
+
+		load_shader.setUniform("projectionMatrix", geom_param_ptr->projectionMatrix, false);
+		load_shader.setUniform("viewMatrix", geom_param_ptr->viewMatrix, false);
 		load_shader.setUniform("modelMatrix", geom_param_ptr->modelMatrix, false);
 	}
 

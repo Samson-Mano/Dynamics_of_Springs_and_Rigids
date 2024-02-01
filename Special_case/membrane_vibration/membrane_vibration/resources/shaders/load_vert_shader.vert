@@ -1,6 +1,9 @@
 #version 330 core
 
 uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+
 uniform mat4 panTranslation;
 uniform mat4 rotateTranslation;
 uniform float zoomscale;
@@ -34,6 +37,6 @@ void main()
 
 	// Final position passed to shader
 	gl_Position = vec4(final_load_center.x + scaled_pt.x, 
-					   final_load_center.y + scaled_pt.y, 
-					   final_load_center.z + scaled_pt.z, 1.0f);
+						final_load_center.y + scaled_pt.y, 
+						final_load_center.z + scaled_pt.z, 1.0f);
 }

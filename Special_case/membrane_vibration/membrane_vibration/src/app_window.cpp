@@ -148,14 +148,18 @@ void app_window::app_render()
 
 	// Z Clamping
 	glEnable(GL_DEPTH_CLAMP);
+	// glEnable(GL_DEPTH_TEST); // Enable depth testing
 
-	glEnable(GL_BLEND);
+
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glEnable(GL_MULTISAMPLE);
 
 	// Set the point size and line width
 	// Set the point size
 	glPointSize(geom.geom_param.point_size);
 	glLineWidth(geom.geom_param.line_width);
+
 
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
@@ -172,7 +176,7 @@ void app_window::app_render()
 		glClearColor(geom.geom_param.geom_colors.background_color.x,
 			geom.geom_param.geom_colors.background_color.y,
 			geom.geom_param.geom_colors.background_color.z, 1.0f);  // Set the clear color to black
-		glClear(GL_COLOR_BUFFER_BIT);  // Clear the color buffer
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // Clear the color buffer
 
 		// Window size change event
 		if (isWindowSizeChanging == true)

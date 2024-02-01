@@ -107,6 +107,8 @@ void point_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pan
 		point_shader.setUniform("geom_scale", static_cast<float>(geom_param_ptr->geom_scale));
 		point_shader.setUniform("transparency", 1.0f);
 
+		point_shader.setUniform("projectionMatrix", geom_param_ptr->projectionMatrix, false);
+		point_shader.setUniform("viewMatrix", geom_param_ptr->viewMatrix, false);
 		point_shader.setUniform("modelMatrix", geom_param_ptr->modelMatrix, false);
 	}
 

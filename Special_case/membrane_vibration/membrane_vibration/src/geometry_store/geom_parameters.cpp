@@ -47,6 +47,29 @@ void geom_parameters::init()
 
 
 
+	// Assuming viewer position is (0, 0, 0)
+	// Camera position is (-1, 0, 0) (offset to the left)
+
+	// Example view matrix (camera transformation)
+	glm::vec3 cameraPosition(-1.0f, 0.0f, 0.0f); // Camera position
+	glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);    // Camera target (where it's looking)
+	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);        // Up vector
+
+	this->viewMatrix = glm::lookAt(cameraPosition, cameraTarget, cameraUp);
+
+	// Example projection matrix (parallel projection)
+	float left = -1.0f;    // Left clipping plane
+	float right = 1.0f;    // Right clipping plane
+	float bottom = -1.0f;  // Bottom clipping plane
+	float top = 1.0f;      // Top clipping plane
+	float nearPlane = -1.0f; // Near clipping plane
+	float farPlane = 1.0f;  // Far clipping plane
+
+	this->projectionMatrix = glm::ortho(left, right, bottom, top, nearPlane, farPlane);
+
+	// Set the default rotation matrix
+	this->rotateTranslation = glm::mat4_cast(default_transl);
+
 //	Theme 1:
 //
 //	Nodes: glm::vec3(0.8, 0.2, 0.2) (Light Red)

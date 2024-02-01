@@ -3,34 +3,25 @@
 #include "../geometry_objects/line_list_store.h"
 
 
-struct modal_line_points
-{
-	int split_line_id = 0; // line id of the individual hermitian interpolation line 
-	// Point coordinate
-	glm::vec3 pt1 = glm::vec3(0);
-	glm::vec3 pt2 = glm::vec3(0);
-
-	// Point displacements
-	std::unordered_map<int, glm::vec3> pt1_modal_displ;
-	std::unordered_map<int, glm::vec3> pt2_modal_displ;
-};
-
-
 struct modal_elementline_store
 {
 	int line_id = 0; // ID of the line
 	modal_node_store* startNode = nullptr; // start node
 	modal_node_store* endNode = nullptr; // end node
 
-	// Line modal displacement data
-	std::vector<modal_line_points> discretized_bar_line_data;
+	// Point coordinate
+	glm::vec3 startpt = glm::vec3(0);
+	glm::vec3 endpt = glm::vec3(0);
+
+	// Point displacements
+	std::unordered_map<int, glm::vec3> startnd_modal_displ;
+	std::unordered_map<int, glm::vec3> endnd_modal_displ;
 };
 
 class modal_elementline_list_store
 {
 public:
 	const int colormap_type = 1;
-	const int interpolation_count = 2;
 	unsigned int modal_elementline_count = 0;
 	std::unordered_map<int, modal_elementline_store> modal_elementlineMap; // Create an unordered_map to store lines with ID as key
 	
@@ -39,10 +30,7 @@ public:
 	void init(geom_parameters* geom_param_ptr);
 	void clear_data();
 	void add_modal_elementline(int& line_id, modal_node_store* startNode, modal_node_store* endNode);
-	std::vector<modal_line_points> set_line_bar_interpolation(const int& interpolation_count, modal_node_store* startNode, modal_node_store* endNode);
-	double linear_bar_element_interpolation(double q1, double q2, double s);
-	double hermite_beam_element_interpolation(double v1, double theta1, double v2, double theta2, double s);
-
+	
 	void set_buffer(int selected_mode);
 	void paint_modal_elementlines();
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,

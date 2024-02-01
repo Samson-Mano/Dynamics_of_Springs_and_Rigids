@@ -1,6 +1,10 @@
 #version 330 core
 
 uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+
+
 uniform mat4 panTranslation;
 uniform mat4 rotateTranslation;
 uniform float zoomscale;
@@ -22,7 +26,7 @@ void main()
 	// apply zoom scaling and Rotation to model matrix
 	mat4 scalingMatrix = mat4(1.0)*zoomscale;
 	scalingMatrix[3][3] = 1.0f;
-	mat4 scaledModelMatrix = rotateTranslation * scalingMatrix * modelMatrix;
+	mat4 scaledModelMatrix =  rotateTranslation * scalingMatrix * modelMatrix;
 	
 	// Declare variable to store final node center
 	vec4 finalPosition;
@@ -31,7 +35,8 @@ void main()
 	if(is_offset == 0.0f)
 	{
 		// apply Translation to the final position 
-		finalPosition = scaledModelMatrix * vec4(node_position,1.0f) * panTranslation;
+		// finalPosition =  scaledModelMatrix * viewMatrix * vec4(node_position,1.0f) * panTranslation;
+		finalPosition =  scaledModelMatrix * vec4(node_position,1.0f) * panTranslation;
 
 		// Vertex color
 		final_vertexColor = vertexColor;
@@ -44,7 +49,7 @@ void main()
 
 		// Scale the deflection point
 		vec3 defl_position = vec3(node_position.x + (node_defl.x * defl_ratio), 
-								  node_position.y - (node_defl.y * defl_ratio),
+								  node_position.y + (node_defl.y * defl_ratio),
 								  node_position.z + (node_defl.z * defl_ratio));
 
 		// apply Translation to the node position
@@ -56,8 +61,11 @@ void main()
 								 (1.0f*(1.0f-normalized_deflscale)+(vertexColor.z*normalized_deflscale)));
 	}
 
-	v_Color = vec4(final_vertexColor,transparency);
 
 	// Final position passed to fragment shader
+	// gl_Position = projectionMatrix * finalPosition;
 	gl_Position = finalPosition;
+
+	v_Color = vec4(final_vertexColor,transparency);
+
 }

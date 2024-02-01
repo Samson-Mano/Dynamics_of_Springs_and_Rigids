@@ -111,7 +111,10 @@ public:
 	double normalized_defl_scale = 0.0f; // Value of deflection scale
 	double defl_scale = 0.0f; // Value of deflection scale
 
+
 	// Screen transformations
+	glm::mat4 viewMatrix = glm::mat4(1.0f); // View matrix
+	glm::mat4 projectionMatrix = glm::mat4(1.0f); // Projection matrix
 	glm::mat4 panTranslation = glm::mat4(1.0f); // Pan translataion
 	glm::mat4 rotateTranslation = glm::mat4(1.0f); // Rotate translation
 	double zoom_scale = 0.0; // Zoom scale

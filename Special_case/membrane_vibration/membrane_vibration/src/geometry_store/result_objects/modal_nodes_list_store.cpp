@@ -17,7 +17,6 @@ void modal_nodes_list_store::init(geom_parameters* geom_param_ptr)
 
 	// Set the geometry parameters for the labels (and clear the labels)
 	modal_node_points.init(geom_param_ptr);
-	// modal_node_vector_labels.init(geom_param_ptr);
 
 	// Clear the results
 	node_count = 0;
@@ -27,7 +26,6 @@ void modal_nodes_list_store::init(geom_parameters* geom_param_ptr)
 void modal_nodes_list_store::clear_data()
 {
 	modal_node_points.clear_points();
-	// modal_node_vector_labels.clear_labels();
 
 	// Clear the results
 	node_count = 0;
@@ -58,10 +56,6 @@ void modal_nodes_list_store::set_buffer(int selected_mode)
 {
 	// Clear existing modal line
 	modal_node_points.clear_points();
-	// modal_node_vector_labels.clear_labels();
-
-	//double mode_max_displ = max_node_displ[selected_mode];
-	//double mode_min_displ = min_node_displ[selected_mode];
 
 	// Add the lines
 	// Loop throug every line element
@@ -70,40 +64,22 @@ void modal_nodes_list_store::set_buffer(int selected_mode)
 	{
 		modal_node_store nd = nd_m.second;
 
-		glm::vec3 pt_displ = glm::vec3(nd.node_modal_displ[selected_mode].x, nd.node_modal_displ[selected_mode].y,0.0);
+		glm::vec3 pt_displ = glm::vec3(nd.node_modal_displ[selected_mode].x, 
+			nd.node_modal_displ[selected_mode].y,
+			nd.node_modal_displ[selected_mode].z);
 
 		// Find the displacment value
-		double pt_displ_value = std::sqrt(std::pow(nd.node_modal_displ[selected_mode].x, 2) +
-			std::pow(nd.node_modal_displ[selected_mode].y, 2));
+		double pt_displ_value =glm::length(pt_displ);
 
-		// scale the value with mode max displacement
-		glm::vec2 origin = glm::vec2(0);
-		double pt_displ_scale = geom_parameters::get_line_length(origin, nd.node_modal_displ[selected_mode]);
-
-		glm::vec3 pt_contour_color =geom_parameters::getContourColor_d(static_cast<float>(1.0 - pt_displ_scale));
+		glm::vec3 pt_contour_color =geom_parameters::getContourColor_d(static_cast<float>(1.0 - pt_displ_value));
 
 		// Add all the points
 		modal_node_points.add_point(nd.node_id, nd.node_pt, pt_displ, pt_contour_color, true);
 
-
-		////__________________________ Add the node labels
-		//// Mode x
-		//std::stringstream mode_x;
-		//mode_x << std::fixed << std::setprecision(3) << nd.node_modal_displ[selected_mode].x;
-
-		//// Mode y
-		//std::stringstream mode_y;
-		//mode_y << std::fixed << std::setprecision(3) << nd.node_modal_displ[selected_mode].y;
-
-
-		//std::string temp_str = "(" + mode_x.str() + ", " + mode_y.str() + " )";
-		//
-		//modal_node_vector_labels.add_text(temp_str, nd.node_pt, pt_displ, pt_contour_color, 0.0f, true, true);
 	}
 
 	// Set the buffer
 	modal_node_points.set_buffer();
-	// modal_node_vector_labels.set_buffer();
 }
 
 void modal_nodes_list_store::paint_modal_nodes()
@@ -116,5 +92,4 @@ void modal_nodes_list_store::update_geometry_matrices(bool set_modelmatrix, bool
 	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	modal_node_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	// modal_node_vector_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_zoomtranslation, set_transparency, set_deflscale);
 }

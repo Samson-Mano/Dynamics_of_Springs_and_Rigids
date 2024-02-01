@@ -5,10 +5,12 @@
 // FE Objects
 #include "../geometry_store/fe_objects/nodes_list_store.h"
 #include "../geometry_store/fe_objects/elementline_list_store.h"
+#include "../geometry_store/fe_objects/elementquad_list_store.h"
 
 // FE Results Modal Analysis
 #include "../geometry_store/result_objects/modal_nodes_list_store.h"
 #include "../geometry_store/result_objects/modal_elementline_list_store.h"
+#include "../geometry_store/result_objects/modal_elementquad_list_store.h"
 
 // Stop watch
 #include "../events_handler/Stopwatch_events.h"
@@ -69,6 +71,8 @@ class modal_analysis_solver
 public:
 	// Result store
 	std::unordered_map<int, int> nodeid_map; // Node ID map
+	std::unordered_map<int, int> eigen_vec_nodeid_map; // Node ID map for eigen vectors
+	const int paint_mode_count = 100; // Draw only first 100 modes (To save memory)
 	int number_of_modes = 0;
 	int node_count = 0;
 	int matrix_size = 0;
@@ -92,9 +96,11 @@ public:
 
 	void modal_analysis_start(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
+		const elementquad_list_store& model_quadelements,
 		const material_data& mat_data,
 		modal_nodes_list_store& modal_result_nodes,
-		modal_elementline_list_store& modal_result_lineelements);
+		modal_elementline_list_store& modal_result_lineelements,
+		modal_elementquad_list_store& modal_result_quadelements);
 private:
 	const double m_pi = 3.14159265358979323846;
 	const double epsilon = 0.000001;
@@ -105,13 +111,11 @@ private:
 	std::vector<bessel_function_Frequency> bessel_roots;
 
 	void modal_analysis_model_circular1(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
 		const material_data& mat_data);
 
 	void modal_analysis_model_rectangular1(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements, 
 		const material_data& mat_data);
-
 
 	void modal_analysis_model_rectangular2(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
@@ -125,13 +129,17 @@ private:
 
 	void map_modal_analysis_circular_results(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
+		const elementquad_list_store& model_quadelements,
 		modal_nodes_list_store& modal_result_nodes,
-		modal_elementline_list_store& modal_result_lineelements);
+		modal_elementline_list_store& modal_result_lineelements,
+		modal_elementquad_list_store& modal_result_quadelements);
 
 
 	void map_modal_analysis_rectangular_results(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements);
+
+	void normalizeColumn(Eigen::MatrixXd& matrix, int columnIndex);
 
 };

@@ -32,6 +32,7 @@
 // FE Result Objects Modal analysis
 #include "result_objects/modal_nodes_list_store.h";
 #include "result_objects/modal_elementline_list_store.h";
+#include "result_objects/modal_elementquad_list_store.h"
 
 // FE Result Objects Pulse analysis
 #include "result_objects/pulse_node_list_store.h"
@@ -96,6 +97,7 @@ private:
 	// Modal analysis result 
 	modal_nodes_list_store modal_result_nodes;
 	modal_elementline_list_store modal_result_lineelements;
+	modal_elementquad_list_store modal_result_quadelements;
 
 	// Pulse analysis result
 	pulse_node_list_store pulse_result_nodes;

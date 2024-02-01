@@ -122,6 +122,8 @@ void line_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pant
 		line_shader.setUniform("geom_scale", static_cast<float>(geom_param_ptr->geom_scale));
 		line_shader.setUniform("transparency", 1.0f);
 
+		line_shader.setUniform("projectionMatrix", geom_param_ptr->projectionMatrix, false);
+		line_shader.setUniform("viewMatrix", geom_param_ptr->viewMatrix, false);
 		line_shader.setUniform("modelMatrix", geom_param_ptr->modelMatrix, false);
 	}
 
