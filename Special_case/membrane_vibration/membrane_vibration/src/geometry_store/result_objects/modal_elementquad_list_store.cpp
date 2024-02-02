@@ -75,16 +75,13 @@ void modal_elementquad_list_store::add_modal_elementquadrilateral(int& quad_id, 
 
 }
 
-void modal_elementquad_list_store::set_buffer(int selected_mode)
+void modal_elementquad_list_store::set_buffer()
 {
 	// Clear existing modal quads (2 triangles)
 	modal_element_tris12m.clear_triangles(); // Tri 12m
 	modal_element_tris23m.clear_triangles(); // Tri 23m
 	modal_element_tris34m.clear_triangles(); // Tri 34m
 	modal_element_tris41m.clear_triangles(); // Tri 41m
-
-	double mode_max_displ = 1.0;
-	double mode_min_displ = 0.0;
 
 	// Add the lines
 	// Loop throug every line element
@@ -94,107 +91,137 @@ void modal_elementquad_list_store::set_buffer(int selected_mode)
 		modal_elementquad_store quad = quad_m.second;
 
 		// Node 1
-		// Scale the displacement with maximum displacement
-		glm::vec3 nd1_displ = glm::vec3(quad.nd1_modal_displ[selected_mode].x,
-			quad.nd1_modal_displ[selected_mode].y,
-			quad.nd1_modal_displ[selected_mode].z);
-
-		// Find the displacment value
-		double nd1_displ_value = glm::length(nd1_displ);
-
-		// scale the value with mode max displacement
-		double nd1_displ_scale = (nd1_displ_value - mode_min_displ) / (mode_max_displ - mode_min_displ);
-
-		glm::vec3 nd1_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - nd1_displ_scale));
-
+		std::vector<glm::vec3> nd1_point_displ; // Node 1 displ
+		std::vector<glm::vec3> nd1_point_color; // Node 1 color
 
 		// Node 2
-		// Scale the displacement with maximum displacement
-		glm::vec3 nd2_displ = glm::vec3(quad.nd2_modal_displ[selected_mode].x,
-			quad.nd2_modal_displ[selected_mode].y,
-			quad.nd2_modal_displ[selected_mode].z);
-
-		// Find the displacment value
-		double nd2_displ_value = glm::length(nd2_displ);
-
-		// scale the value with mode max displacement
-		double nd2_displ_scale = (nd2_displ_value - mode_min_displ) / (mode_max_displ - mode_min_displ);
-
-		glm::vec3 nd2_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - nd2_displ_scale));
-
+		std::vector<glm::vec3> nd2_point_displ; // Node 2 displ
+		std::vector<glm::vec3> nd2_point_color; // Node 2 color
 
 		// Node 3
-		// Scale the displacement with maximum displacement
-		glm::vec3 nd3_displ = glm::vec3(quad.nd3_modal_displ[selected_mode].x,
-			quad.nd3_modal_displ[selected_mode].y,
-			quad.nd3_modal_displ[selected_mode].z);
-
-		// Find the displacment value
-		double nd3_displ_value = glm::length(nd3_displ);
-
-		// scale the value with mode max displacement
-		double nd3_displ_scale = (nd3_displ_value - mode_min_displ) / (mode_max_displ - mode_min_displ);
-
-		glm::vec3 nd3_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - nd3_displ_scale));
-
+		std::vector<glm::vec3> nd3_point_displ; // Node 3 displ
+		std::vector<glm::vec3> nd3_point_color; // Node 3 color
 
 		// Node 4
-		// Scale the displacement with maximum displacement
-		glm::vec3 nd4_displ = glm::vec3(quad.nd4_modal_displ[selected_mode].x,
-			quad.nd4_modal_displ[selected_mode].y,
-			quad.nd4_modal_displ[selected_mode].z);
+		std::vector<glm::vec3> nd4_point_displ; // Node 4 displ
+		std::vector<glm::vec3> nd4_point_color; // Node 4 color
 
-		// Find the displacment value
-		double nd4_displ_value = glm::length(nd4_displ);
-
-		// scale the value with mode max displacement
-		double nd4_displ_scale = (nd4_displ_value - mode_min_displ) / (mode_max_displ - mode_min_displ);
-
-		glm::vec3 nd4_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - nd4_displ_scale));
-
-
-		// Mid Node 1 & 2 
-		glm::vec3 mid_nd12 = geom_param_ptr->linear_interpolation3d(quad.nd1pt, quad.nd2pt, 0.5);
-		glm::vec3 mid_nd12_displ = geom_param_ptr->linear_interpolation3d(nd1_displ, nd2_displ, 0.5);
-		glm::vec3 mid_nd12_contour_color = geom_param_ptr->linear_interpolation3d(nd1_contour_color, nd2_contour_color, 0.5);
+		// Mid Node
+		std::vector<glm::vec3> mid_point_displ; // Mid displ
+		std::vector<glm::vec3> mid_point_color; // Mid color
 
 		// Mid Node 2 & 3 
 		glm::vec3 mid_nd23 = geom_param_ptr->linear_interpolation3d(quad.nd2pt, quad.nd3pt, 0.5);
-		glm::vec3 mid_nd23_displ = geom_param_ptr->linear_interpolation3d(nd2_displ, nd3_displ, 0.5);
-		glm::vec3 mid_nd23_contour_color = geom_param_ptr->linear_interpolation3d(nd2_contour_color, nd3_contour_color, 0.5);
-
-		// Mid Node 3 & 4 
-		glm::vec3 mid_nd34 = geom_param_ptr->linear_interpolation3d(quad.nd3pt, quad.nd4pt, 0.5);
-		glm::vec3 mid_nd34_displ = geom_param_ptr->linear_interpolation3d(nd3_displ, nd4_displ, 0.5);
-		glm::vec3 mid_nd34_contour_color = geom_param_ptr->linear_interpolation3d(nd3_contour_color, nd4_contour_color, 0.5);
 
 		// Mid Node 4 & 1 
 		glm::vec3 mid_nd41 = geom_param_ptr->linear_interpolation3d(quad.nd4pt, quad.nd1pt, 0.5);
-		glm::vec3 mid_nd41_displ = geom_param_ptr->linear_interpolation3d(nd4_displ, nd1_displ, 0.5);
-		glm::vec3 mid_nd41_contour_color = geom_param_ptr->linear_interpolation3d(nd4_contour_color, nd1_contour_color, 0.5);
 
 		// Mid Node
 		glm::vec3 mid_nd = geom_param_ptr->linear_interpolation3d(mid_nd23, mid_nd41, 0.5);
-		glm::vec3 mid_nd_displ = geom_param_ptr->linear_interpolation3d(mid_nd23_displ, mid_nd41_displ, 0.5);
-		glm::vec3 mid_nd_contour_color = geom_param_ptr->linear_interpolation3d(mid_nd23_contour_color, mid_nd41_contour_color, 0.5);
+
+
+		for (int j = 0; j < static_cast<int>(quad.nd1_modal_displ.size()); j++)
+		{
+			//____________________________________________________________________________________________________________
+			// Node 1
+			glm::vec3 nd1_displ = glm::vec3(quad.nd1_modal_displ[j].x,
+											quad.nd1_modal_displ[j].y,
+											quad.nd1_modal_displ[j].z);
+
+			// Find the displacment value
+			double nd1_displ_value = glm::length(nd1_displ);
+
+			glm::vec3 nd1_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - nd1_displ_value));
+
+
+			//____________________________________________________________________________________________________________
+			// Node 2
+			glm::vec3 nd2_displ = glm::vec3(quad.nd2_modal_displ[j].x,
+											quad.nd2_modal_displ[j].y,
+											quad.nd2_modal_displ[j].z);
+
+			// Find the displacment value
+			double nd2_displ_value = glm::length(nd2_displ);
+
+			glm::vec3 nd2_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - nd2_displ_value));
+
+
+			//____________________________________________________________________________________________________________
+			// Node 3
+			glm::vec3 nd3_displ = glm::vec3(quad.nd3_modal_displ[j].x,
+											quad.nd3_modal_displ[j].y,
+											quad.nd3_modal_displ[j].z);
+
+			// Find the displacment value
+			double nd3_displ_value = glm::length(nd3_displ);
+
+			glm::vec3 nd3_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - nd3_displ_value));
+
+
+			//____________________________________________________________________________________________________________
+			// Node 4
+			glm::vec3 nd4_displ = glm::vec3(quad.nd4_modal_displ[j].x,
+											quad.nd4_modal_displ[j].y,
+											quad.nd4_modal_displ[j].z);
+
+			// Find the displacment value
+			double nd4_displ_value = glm::length(nd4_displ);
+
+			glm::vec3 nd4_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - nd4_displ_value));
+
+			// Mid Node 2 & 3 
+			glm::vec3 mid_nd23_displ = geom_param_ptr->linear_interpolation3d(nd2_displ, nd3_displ, 0.5);
+			glm::vec3 mid_nd23_contour_color = geom_param_ptr->linear_interpolation3d(nd2_contour_color, nd3_contour_color, 0.5);
+
+			// Mid Node 4 & 1 
+			glm::vec3 mid_nd41_displ = geom_param_ptr->linear_interpolation3d(nd4_displ, nd1_displ, 0.5);
+			glm::vec3 mid_nd41_contour_color = geom_param_ptr->linear_interpolation3d(nd4_contour_color, nd1_contour_color, 0.5);
+
+			// Mid Node
+			glm::vec3 mid_nd_displ = geom_param_ptr->linear_interpolation3d(mid_nd23_displ, mid_nd41_displ, 0.5);
+			glm::vec3 mid_nd_contour_color = geom_param_ptr->linear_interpolation3d(mid_nd23_contour_color, mid_nd41_contour_color, 0.5);
+
+
+
+			// Node 1
+			nd1_point_displ.push_back(nd1_displ); // Node 1 displ
+			nd1_point_color.push_back(nd1_contour_color); // Node 1 color
+
+			// Node 2
+			nd2_point_displ.push_back(nd2_displ); // Node 2 displ
+			nd2_point_color.push_back(nd2_contour_color); // Node 2 color
+
+			// Node 3
+			nd3_point_displ.push_back(nd3_displ); // Node 3 displ
+			nd3_point_color.push_back(nd3_contour_color);  // Node 3 color
+
+			// Node 4
+			nd4_point_displ.push_back(nd4_displ); // Node 4 displ
+			nd4_point_color.push_back(nd4_contour_color);  // Node 4 color
+
+			// Mid Node
+			mid_point_displ.push_back(mid_nd_displ); // Mid displ
+			mid_point_color.push_back(mid_nd_contour_color); // Mid color
+		}
+
 
 
 		// Add to the line list
 		modal_element_tris12m.add_tri(i, quad.nd1pt, quad.nd2pt, mid_nd,
-			nd1_displ, nd2_displ, mid_nd_displ,
-			nd1_contour_color, nd2_contour_color, mid_nd_contour_color, true);
+			nd1_point_displ, nd2_point_displ, mid_point_displ,
+			nd1_point_color, nd2_point_color, mid_point_color);
 			
 		modal_element_tris23m.add_tri(i, quad.nd2pt, quad.nd3pt, mid_nd,
-			nd2_displ, nd3_displ, mid_nd_displ,
-			nd2_contour_color, nd3_contour_color, mid_nd_contour_color, true);
+			nd2_point_displ, nd3_point_displ, mid_point_displ,
+			nd2_point_color, nd3_point_color, mid_point_color);
 
 		modal_element_tris34m.add_tri(i, quad.nd3pt, quad.nd4pt, mid_nd,
-			nd3_displ, nd4_displ, mid_nd_displ,
-			nd3_contour_color, nd4_contour_color, mid_nd_contour_color, true);
+			nd3_point_displ, nd4_point_displ, mid_point_displ,
+			nd3_point_color, nd4_point_color, mid_point_color);
 
 		modal_element_tris41m.add_tri(i, quad.nd4pt, quad.nd1pt, mid_nd,
-			nd4_displ, nd1_displ, mid_nd_displ,
-			nd4_contour_color, nd1_contour_color, mid_nd_contour_color, true);
+			nd4_point_displ, nd1_point_displ, mid_point_displ,
+			nd4_point_color, nd1_point_color, mid_point_color);
 
 		i++;
 	}
@@ -205,6 +232,17 @@ void modal_elementquad_list_store::set_buffer(int selected_mode)
 	modal_element_tris34m.set_buffer(); // Tri 34m
 	modal_element_tris41m.set_buffer(); // Tri 41m
 }
+
+
+void modal_elementquad_list_store::update_buffer(int selected_mode)
+{
+	modal_element_tris12m.update_buffer(selected_mode); // Tri 12m
+	modal_element_tris23m.update_buffer(selected_mode); // Tri 23m
+	modal_element_tris34m.update_buffer(selected_mode); // Tri 34m
+	modal_element_tris41m.update_buffer(selected_mode); // Tri 41m
+
+}
+
 
 void modal_elementquad_list_store::paint_modal_elementquadrilaterals()
 {

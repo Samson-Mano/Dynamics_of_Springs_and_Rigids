@@ -695,13 +695,13 @@ void geom_store::paint_modal_analysis_results()
 		{
 			// Update the buffers
 			// Modal Quad buffer
-			modal_result_quadelements.set_buffer(modal_solver_window->selected_modal_option);
+			modal_result_quadelements.update_buffer(modal_solver_window->selected_modal_option);
 			
-			// Modal Line buffer
-			modal_result_lineelements.set_buffer(modal_solver_window->selected_modal_option);
+			// Modal Line Update buffer
+			modal_result_lineelements.update_buffer(modal_solver_window->selected_modal_option);
 
-			// Modal Node buffer
-			modal_result_nodes.set_buffer(modal_solver_window->selected_modal_option);
+			// Modal Node Update buffer
+			modal_result_nodes.update_buffer(modal_solver_window->selected_modal_option);
 
 			modal_solver_window->is_mode_selection_changed = false;
 		}
@@ -773,6 +773,10 @@ void geom_store::paint_modal_analysis_results()
 			modal_solver_window->mode_result_str = modal_solver.mode_result_str;
 
 			// Set the buffer
+			modal_result_nodes.set_buffer(); // Set the node buffer
+			modal_result_lineelements.set_buffer(); // Set the line buffer
+			modal_result_quadelements.set_buffer(); // Set the tri buffer
+
 			modal_solver_window->is_mode_selection_changed = true;
 
 			// Modal analysis is already complete so set the transparency for the model

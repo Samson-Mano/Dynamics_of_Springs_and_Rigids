@@ -27,8 +27,7 @@ void line_list_store::init(geom_parameters* geom_param_ptr)
 }
 
 void line_list_store::add_line(int& line_id, glm::vec3& line_startpt_loc, glm::vec3& line_endpt_loc,
-	glm::vec3 line_startpt_offset, glm::vec3 line_endpt_offset,
-	glm::vec3& line_startpt_color, glm::vec3& line_endpt_color, bool is_offset)
+											glm::vec3& line_startpt_color, glm::vec3& line_endpt_color)
 {
 	// Create a temporary points
 	line_store temp_ln;
@@ -38,15 +37,9 @@ void line_list_store::add_line(int& line_id, glm::vec3& line_startpt_loc, glm::v
 	temp_ln.line_startpt_loc = line_startpt_loc;
 	temp_ln.line_endpt_loc = line_endpt_loc;
 
-	// Line offsets
-	temp_ln.line_startpt_offset = line_startpt_offset;
-	temp_ln.line_endpt_offset = line_endpt_offset;
-
 	// Line Color
 	temp_ln.line_startpt_color = line_startpt_color;
 	temp_ln.line_endpt_color = line_endpt_color;
-
-	temp_ln.is_offset = is_offset;
 
 	// Reserve space for the new element
 	lineMap.reserve(lineMap.size() + 1);
@@ -60,8 +53,8 @@ void line_list_store::add_line(int& line_id, glm::vec3& line_startpt_loc, glm::v
 
 void line_list_store::set_buffer()
 {
-	// Define the node vertices of the model for a node (3 position, 3 defl, 3 color  & 1 defl value) 
-	const unsigned int line_vertex_count = 10 * 2 * line_count;
+	// Define the node vertices of the model for a node (3 position, 3 color) 
+	const unsigned int line_vertex_count = 6 * 2 * line_count;
 	float* line_vertices = new float[line_vertex_count];
 
 	unsigned int line_indices_count = 2 * line_count; // 1 indices to form a point
@@ -79,9 +72,7 @@ void line_list_store::set_buffer()
 
 	VertexBufferLayout line_pt_layout;
 	line_pt_layout.AddFloat(3);  // Node center
-	line_pt_layout.AddFloat(3);  // Node offset
 	line_pt_layout.AddFloat(3);  // Node Color
-	line_pt_layout.AddFloat(1);  // bool to track offset applied or not
 
 	unsigned int line_vertex_size = line_vertex_count * sizeof(float); // Size of the node_vertex
 
@@ -168,22 +159,13 @@ void line_list_store::get_line_buffer(line_store& ln, float* line_vertices, unsi
 	line_vertices[line_v_index + 1] = ln.line_startpt_loc.y;
 	line_vertices[line_v_index + 2] = ln.line_startpt_loc.z;
 
-	// Point offset
-	line_vertices[line_v_index + 3] = ln.line_startpt_offset.x;
-	line_vertices[line_v_index + 4] = ln.line_startpt_offset.y;
-	line_vertices[line_v_index + 5] = ln.line_startpt_offset.z;
-
 	// Point color
-	line_vertices[line_v_index + 6] = ln.line_startpt_color.x;
-	line_vertices[line_v_index + 7] = ln.line_startpt_color.y;
-	line_vertices[line_v_index + 8] = ln.line_startpt_color.z;
-
-	// Point offset bool
-	// Add the bool value (as an integer) to the array
-	line_vertices[line_v_index + 9] = static_cast<float>(ln.is_offset);
+	line_vertices[line_v_index + 3] = ln.line_startpt_color.x;
+	line_vertices[line_v_index + 4] = ln.line_startpt_color.y;
+	line_vertices[line_v_index + 5] = ln.line_startpt_color.z;
 
 	// Iterate
-	line_v_index = line_v_index + 10;
+	line_v_index = line_v_index + 6;
 
 	// End Point
 	// Point location
@@ -191,22 +173,13 @@ void line_list_store::get_line_buffer(line_store& ln, float* line_vertices, unsi
 	line_vertices[line_v_index + 1] = ln.line_endpt_loc.y;
 	line_vertices[line_v_index + 2] = ln.line_endpt_loc.z;
 
-	// Point offset
-	line_vertices[line_v_index + 3] = ln.line_endpt_offset.x;
-	line_vertices[line_v_index + 4] = ln.line_endpt_offset.y;
-	line_vertices[line_v_index + 5] = ln.line_endpt_offset.z;
-
 	// Point color
-	line_vertices[line_v_index + 6] = ln.line_endpt_color.x;
-	line_vertices[line_v_index + 7] = ln.line_endpt_color.y;
-	line_vertices[line_v_index + 8] = ln.line_endpt_color.z;
-
-	// Point offset bool
-	// Add the bool value (as an integer) to the array
-	line_vertices[line_v_index + 9] = static_cast<float>(ln.is_offset);
+	line_vertices[line_v_index + 3] = ln.line_endpt_color.x;
+	line_vertices[line_v_index + 4] = ln.line_endpt_color.y;
+	line_vertices[line_v_index + 5] = ln.line_endpt_color.z;
 
 	// Iterate
-	line_v_index = line_v_index + 10;
+	line_v_index = line_v_index + 6;
 
 	//__________________________________________________________________________
 	// Add the indices

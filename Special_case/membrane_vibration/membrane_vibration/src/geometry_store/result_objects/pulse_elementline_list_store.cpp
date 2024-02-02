@@ -176,6 +176,6 @@ void pulse_elementline_list_store::update_geometry_matrices(bool set_modelmatrix
 	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Result line update geometry 
-	pulse_element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation,
+	pulse_element_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
 		set_zoomtranslation, set_transparency, set_deflscale);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "../fe_objects/nodes_list_store.h"
+#include "../geometry_objects/dynamic_point_list_store.h"
 
 struct modal_node_store
 {
@@ -23,7 +24,9 @@ public:
 	void init(geom_parameters* geom_param_ptr);
 	void clear_data();
 	void add_result_node(int& node_id, glm::vec3& node_pt, std::unordered_map<int, glm::vec3> node_modal_displ);
-	void set_buffer(int selected_mode);
+	void set_buffer();
+	void update_buffer(const int& selected_mode);
+
 	void paint_modal_nodes();
 	// void paint_label_mode_vectors();
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
@@ -32,6 +35,6 @@ public:
 private:
 	geom_parameters* geom_param_ptr = nullptr;
 
-	point_list_store modal_node_points;
+	dynamic_point_list_store modal_node_points;
 
 };

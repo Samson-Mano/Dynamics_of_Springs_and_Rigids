@@ -52,35 +52,53 @@ void modal_nodes_list_store::add_result_node(int& node_id, glm::vec3& node_pt, s
 	node_count++;
 }
 
-void modal_nodes_list_store::set_buffer(int selected_mode)
+void modal_nodes_list_store::set_buffer()
 {
 	// Clear existing modal line
 	modal_node_points.clear_points();
 
-	// Add the lines
-	// Loop throug every line element
+	// Add the dynamic points
+	// Loop through every point
 	int i = 0;
 	for (auto& nd_m : modal_nodeMap)
 	{
 		modal_node_store nd = nd_m.second;
 
-		glm::vec3 pt_displ = glm::vec3(nd.node_modal_displ[selected_mode].x, 
-			nd.node_modal_displ[selected_mode].y,
-			nd.node_modal_displ[selected_mode].z);
+		std::vector<glm::vec3> point_displ; // point displ
+		std::vector<glm::vec3> point_color; // point color
 
-		// Find the displacment value
-		double pt_displ_value =glm::length(pt_displ);
+		for (int i = 0; i < static_cast<int>(nd.node_modal_displ.size()); i++)
+		{
+			glm::vec3 pt_displ = glm::vec3(nd.node_modal_displ[i].x,
+				nd.node_modal_displ[i].y,
+				nd.node_modal_displ[i].z);
 
-		glm::vec3 pt_contour_color =geom_parameters::getContourColor_d(static_cast<float>(1.0 - pt_displ_value));
+			// Find the displacment value
+			double pt_displ_value = glm::length(pt_displ);
+
+			glm::vec3 pt_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - pt_displ_value));
+
+			// Add to the list
+			point_displ.push_back(pt_displ);
+			point_color.push_back(pt_contour_color);
+
+		}
 
 		// Add all the points
-		modal_node_points.add_point(nd.node_id, nd.node_pt, pt_displ, pt_contour_color, true);
+		modal_node_points.add_point(nd.node_id, nd.node_pt, point_displ, point_color);
 
 	}
 
 	// Set the buffer
 	modal_node_points.set_buffer();
 }
+
+
+void modal_nodes_list_store::update_buffer(const int& selected_mode)
+{
+	modal_node_points.update_buffer(selected_mode);
+}
+
 
 void modal_nodes_list_store::paint_modal_nodes()
 {

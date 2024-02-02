@@ -61,13 +61,11 @@ void elementquad_list_store::add_elementquadrilateral(int& quad_id, node_store* 
 	glm::vec3 temp_tri_color = geom_param_ptr->geom_colors.triangle_color;
 	// Main triangle 123
 	element_tris123.add_tri(tri_id123, node_pt1, node_pt2, node_pt3,
-		glm::vec3(0), glm::vec3(0), glm::vec3(0),
-		temp_tri_color, temp_tri_color, temp_tri_color, false);
+										temp_tri_color, temp_tri_color, temp_tri_color);
 
 	// Main triangle 134
 	element_tris134.add_tri(tri_id134, node_pt1, node_pt3, node_pt4,
-		glm::vec3(0), glm::vec3(0), glm::vec3(0),
-		temp_tri_color, temp_tri_color, temp_tri_color, false);
+										temp_tri_color, temp_tri_color, temp_tri_color);
 
 	// Find the shrunk vertices
 	glm::vec3 midpt = glm::vec3((node_pt1.x + node_pt2.x + node_pt3.x + node_pt4.x) / 4.0f,
@@ -82,13 +80,11 @@ void elementquad_list_store::add_elementquadrilateral(int& quad_id, node_store* 
 
 	// Main triangle123 as shrunk
 	element_tris123_shrunk.add_tri(tri_id123, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-		glm::vec3(0), glm::vec3(0), glm::vec3(0),
-		temp_tri_color, temp_tri_color, temp_tri_color, false);
+												temp_tri_color, temp_tri_color, temp_tri_color);
 
 	// Main triangle134 as shrunk
 	element_tris134_shrunk.add_tri(tri_id134, shrunk_node_pt1, shrunk_node_pt3, shrunk_node_pt4,
-		glm::vec3(0), glm::vec3(0), glm::vec3(0),
-		temp_tri_color, temp_tri_color, temp_tri_color, false);
+												temp_tri_color, temp_tri_color, temp_tri_color);
 
 
 }
@@ -123,12 +119,10 @@ void elementquad_list_store::add_selection_quadrilaterals(const std::vector<int>
 		glm::vec3 shrunk_node_pt4 = geom_parameters::linear_interpolation3d(midpt, node_pt4, shrink_factor);
 
 		selected_element_tris123_shrunk.add_tri(tri_id123, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-			glm::vec3(0), glm::vec3(0), glm::vec3(0),
-			temp_color, temp_color, temp_color, false);
+															temp_color, temp_color, temp_color);
 
 		selected_element_tris134_shrunk.add_tri(tri_id134, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-			glm::vec3(0), glm::vec3(0), glm::vec3(0),
-			temp_color, temp_color, temp_color, false);
+															temp_color, temp_color, temp_color);
 	}
 
 	// Set the selected element triangles buffer

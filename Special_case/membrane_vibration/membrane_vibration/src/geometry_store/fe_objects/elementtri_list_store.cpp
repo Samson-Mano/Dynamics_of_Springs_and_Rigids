@@ -54,8 +54,7 @@ void elementtri_list_store::add_elementtriangle(int& tri_id, node_store* nd1, no
 	glm::vec3 temp_tri_color = geom_param_ptr->geom_colors.triangle_color;
 	// Main triangle
 	element_tris.add_tri(tri_id, node_pt1, node_pt2, node_pt3,
-		glm::vec3(0), glm::vec3(0), glm::vec3(0),
-		temp_tri_color, temp_tri_color, temp_tri_color, false);
+										temp_tri_color, temp_tri_color, temp_tri_color);
 
 	// Main triangle as shrunk
 	glm::vec3 midpt = glm::vec3((node_pt1.x + node_pt2.x + node_pt3.x) / 3.0f, // mid pt x
@@ -68,8 +67,7 @@ void elementtri_list_store::add_elementtriangle(int& tri_id, node_store* nd1, no
 	glm::vec3 shrunk_node_pt3 = geom_parameters::linear_interpolation3d(midpt, node_pt1, shrink_factor);
 
 	element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-		glm::vec3(0), glm::vec3(0), glm::vec3(0),
-		temp_tri_color, temp_tri_color, temp_tri_color, false);
+											temp_tri_color, temp_tri_color, temp_tri_color);
 
 }
 
@@ -99,8 +97,7 @@ void elementtri_list_store::add_selection_triangles(const std::vector<int>& sele
 		glm::vec3 shrunk_node_pt3 = geom_parameters::linear_interpolation3d(midpt, node_pt3, shrink_factor);
 
 		selected_element_tris_shrunk.add_tri(tri_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-			glm::vec3(0), glm::vec3(0), glm::vec3(0),
-			temp_color, temp_color, temp_color, false);
+														temp_color, temp_color, temp_color);
 	}
 
 	// Set the selected element triangles buffer

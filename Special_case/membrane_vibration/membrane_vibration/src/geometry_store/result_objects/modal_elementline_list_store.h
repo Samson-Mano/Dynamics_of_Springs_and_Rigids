@@ -1,6 +1,6 @@
 #pragma once
 #include "modal_nodes_list_store.h"
-#include "../geometry_objects/line_list_store.h"
+#include "../geometry_objects/dynamic_line_list_store.h"
 
 
 struct modal_elementline_store
@@ -30,13 +30,13 @@ public:
 	void init(geom_parameters* geom_param_ptr);
 	void clear_data();
 	void add_modal_elementline(int& line_id, modal_node_store* startNode, modal_node_store* endNode);
-	
-	void set_buffer(int selected_mode);
+	void update_buffer(int selected_mode);
+	void set_buffer();
 	void paint_modal_elementlines();
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
 		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 private:
 	geom_parameters* geom_param_ptr = nullptr;
-	line_list_store modal_element_lines;
+	dynamic_line_list_store modal_element_lines;
 
 };

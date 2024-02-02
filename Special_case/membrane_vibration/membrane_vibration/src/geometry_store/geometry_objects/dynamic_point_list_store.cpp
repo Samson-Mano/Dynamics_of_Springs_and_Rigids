@@ -18,8 +18,8 @@ void dynamic_point_list_store::init(geom_parameters* geom_param_ptr)
 	// Create the point shader
 	std::filesystem::path shadersPath = geom_param_ptr->resourcePath;
 
-	dyn_point_shader.create_shader((shadersPath.string() + "/resources/shaders/point_vert_shader.vert").c_str(),
-		(shadersPath.string() + "/resources/shaders/point_frag_shader.frag").c_str());
+	dyn_point_shader.create_shader((shadersPath.string() + "/resources/shaders/dynpoint_vert_shader.vert").c_str(),
+		(shadersPath.string() + "/resources/shaders/dynpoint_frag_shader.frag").c_str());
 
 	// Delete all the labels
 	dyn_point_count = 0;
@@ -62,13 +62,12 @@ void dynamic_point_list_store::set_buffer()
 	}
 
 	VertexBufferLayout node_layout;
-	node_layout.AddFloat(2);  // Node center
-	node_layout.AddFloat(2);  // Node offset
+	node_layout.AddFloat(3);  // Node center
+	node_layout.AddFloat(3);  // Node offset
 	node_layout.AddFloat(3);  // Node Color
-	node_layout.AddFloat(1);  // bool to track offset applied or not
 
-	// Define the node vertices of the model for a node (2 position, 2 defl, 3 color  & 1 defl value) 
-	const unsigned int point_vertex_count = 8 * dyn_point_count;
+	// Define the node vertices of the model for a node (2 position, 2 defl, 3 color) 
+	const unsigned int point_vertex_count = 9 * dyn_point_count;
 	unsigned int point_vertex_size = point_vertex_count * sizeof(float); // Size of the node_vertex
 
 	// Allocate space for Vertex buffer
@@ -93,10 +92,26 @@ void dynamic_point_list_store::paint_points(const int& dyn_index)
 	dyn_point_shader.UnBind();
 }
 
+
+void dynamic_point_list_store::paint_points()
+{
+	// Paint all the points
+	dyn_point_shader.Bind();
+	dyn_point_buffer.Bind();
+
+	// point buffer updated seperately for dynamic drawing (To draw cyclic data ex. modal vectors)
+
+	glDrawElements(GL_POINTS, dyn_point_count, GL_UNSIGNED_INT, 0);
+
+	dyn_point_buffer.UnBind();
+	dyn_point_shader.UnBind();
+}
+
+
 void dynamic_point_list_store::update_buffer(const int& dyn_index)
 {
-	// Define the node vertices of the model for a node (2 position, 2 defl, 3 color  & 1 defl value) 
-	const unsigned int point_vertex_count = 8 * dyn_point_count;
+	// Define the node vertices of the model for a node (3 position, 3 defl, 3 color  & 1 defl value) 
+	const unsigned int point_vertex_count = 9 * dyn_point_count;
 	float* point_vertices = new float[point_vertex_count];
 
 	unsigned int point_v_index = 0;
@@ -125,8 +140,8 @@ void dynamic_point_list_store::clear_points()
 	dyn_pointMap.clear();
 }
 
-void dynamic_point_list_store::update_opengl_uniforms(bool set_modelmatrix, 
-	bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void dynamic_point_list_store::update_opengl_uniforms(bool set_modelmatrix,	bool set_pantranslation, bool set_rotatetranslation,
+	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	if (set_modelmatrix == true)
 	{
@@ -141,6 +156,12 @@ void dynamic_point_list_store::update_opengl_uniforms(bool set_modelmatrix,
 	{
 		// set the pan translation
 		dyn_point_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
+	}
+
+	if (set_rotatetranslation == true)
+	{
+		// set the rotate translation
+		dyn_point_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
 	}
 
 	if (set_zoomtranslation == true)
@@ -170,22 +191,20 @@ void dynamic_point_list_store::get_point_vertex_buffer(dynamic_point_store& pt,c
 	// Point location
 	dyn_point_vertices[dyn_point_v_index + 0] = pt.point_loc.x;
 	dyn_point_vertices[dyn_point_v_index + 1] = pt.point_loc.y;
+	dyn_point_vertices[dyn_point_v_index + 2] = pt.point_loc.z;
 
 	// Point offset
-	dyn_point_vertices[dyn_point_v_index + 2] = pt.point_offset[dyn_index].x;
-	dyn_point_vertices[dyn_point_v_index + 3] = pt.point_offset[dyn_index].y;
+	dyn_point_vertices[dyn_point_v_index + 3] = pt.point_offset[dyn_index].x;
+	dyn_point_vertices[dyn_point_v_index + 4] = pt.point_offset[dyn_index].y;
+	dyn_point_vertices[dyn_point_v_index + 5] = pt.point_offset[dyn_index].z;
 
 	// Point color
-	dyn_point_vertices[dyn_point_v_index + 4] = pt.point_color[dyn_index].x;
-	dyn_point_vertices[dyn_point_v_index + 5] = pt.point_color[dyn_index].y;
-	dyn_point_vertices[dyn_point_v_index + 6] = pt.point_color[dyn_index].z;
-
-	// Point offset bool
-	// Add the bool value (as an integer) to the array
-	dyn_point_vertices[dyn_point_v_index + 7] = true; // offset is enabled for Dynamic points
+	dyn_point_vertices[dyn_point_v_index + 6] = pt.point_color[dyn_index].x;
+	dyn_point_vertices[dyn_point_v_index + 7] = pt.point_color[dyn_index].y;
+	dyn_point_vertices[dyn_point_v_index + 8] = pt.point_color[dyn_index].z;
 
 	// Iterate
-	dyn_point_v_index = dyn_point_v_index + 8;
+	dyn_point_v_index = dyn_point_v_index + 9;
 }
 
 void dynamic_point_list_store::get_point_index_buffer(unsigned int* dyn_point_indices, unsigned int& dyn_point_i_index)

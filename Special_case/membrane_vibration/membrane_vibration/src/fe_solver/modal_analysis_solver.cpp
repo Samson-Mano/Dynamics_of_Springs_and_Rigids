@@ -136,12 +136,9 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	{
 		// Circular membrane
 		modal_analysis_model_circular1(model_nodes,
-			mat_data);
-
-		// Map the results
-		map_modal_analysis_circular_results(model_nodes,
 			model_lineelements,
 			model_quadelements,
+			mat_data,
 			modal_result_nodes,
 			modal_result_lineelements,
 			modal_result_quadelements);
@@ -227,7 +224,12 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 }
 
 void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_store& model_nodes,
-	const material_data& mat_data)
+	const elementline_list_store& model_lineelements,
+	const elementquad_list_store& model_quadelements,
+	const material_data& mat_data,
+	modal_nodes_list_store& modal_result_nodes,
+	modal_elementline_list_store& modal_result_lineelements,
+	modal_elementquad_list_store& modal_result_quadelements)
 {
 	// Circular string
 	int node_id = 0;
@@ -381,6 +383,73 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 	// Create the eigen vectors inverse matrix
 
 	eigen_vectors_matrix_inverse = inv_factor * eigen_vectors_matrix.transpose();
+
+	//_____________________________________________________________________________________
+	// Map the results
+
+	for (auto& nd_m : model_nodes.nodeMap)
+	{
+		int node_id = nd_m.first;
+		glm::vec3 node_pt = nd_m.second.node_pt;
+		int matrix_index = nodeid_map[node_id];
+
+		// Modal analysis results
+		std::unordered_map<int, glm::vec3> node_modal_displ;
+
+		for (int i = 0; i < paint_mode_count; i++)
+		{
+			double displ_magnitude = static_cast<float>(displ_vectors_matrix.coeff(matrix_index, i));
+			// get the appropriate modal displacement of this particular node
+			glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
+
+			// add to modal result of this node
+			node_modal_displ.insert({ i,modal_displ });
+		}
+
+		// Create the modal analysis result node
+		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ);
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model nodes at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+		// Add the modal line element result
+	for (auto& ln_m : model_lineelements.elementlineMap)
+	{
+		elementline_store ln = ln_m.second;
+
+		modal_result_lineelements.add_modal_elementline(ln.line_id,
+			&modal_result_nodes.modal_nodeMap[ln.startNode->node_id],
+			&modal_result_nodes.modal_nodeMap[ln.endNode->node_id]);
+	}
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model Line Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+
+	// Add the modal quad element result
+	for (auto& quad_m : model_quadelements.elementquadMap)
+	{
+		elementquad_store quad = quad_m.second;
+
+		modal_result_quadelements.add_modal_elementquadrilateral(quad.quad_id,
+			&modal_result_nodes.modal_nodeMap[quad.nd1->node_id],
+			&modal_result_nodes.modal_nodeMap[quad.nd2->node_id],
+			&modal_result_nodes.modal_nodeMap[quad.nd3->node_id],
+			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id]);
+	}
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model Quad Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
 
 
 }
@@ -611,80 +680,6 @@ void modal_analysis_solver::modal_analysis_model_rectangular3(const nodes_list_s
 
 		// Last node is free
 	}
-
-}
-
-
-void modal_analysis_solver::map_modal_analysis_circular_results(const nodes_list_store& model_nodes,
-	const elementline_list_store& model_lineelements,
-	const elementquad_list_store& model_quadelements,
-	modal_nodes_list_store& modal_result_nodes,
-	modal_elementline_list_store& modal_result_lineelements,
-	modal_elementquad_list_store& modal_result_quadelements)
-{
-	for (auto& nd_m : model_nodes.nodeMap)
-	{
-		int node_id = nd_m.first;
-		glm::vec3 node_pt = nd_m.second.node_pt;
-		int matrix_index = nodeid_map[node_id];
-
-		// Modal analysis results
-		std::unordered_map<int, glm::vec3> node_modal_displ;
-
-		for (int i = 0; i < paint_mode_count; i++)
-		{
-			double displ_magnitude = static_cast<float>(displ_vectors_matrix.coeff(matrix_index, i));
-			// get the appropriate modal displacement of this particular node
-			glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
-
-			// add to modal result of this node
-			node_modal_displ.insert({ i,modal_displ });
-		}
-
-		// Create the modal analysis result node
-		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ);
-	}
-
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Results mapped to model nodes at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-	//____________________________________________________________________________________________________________________
-
-		// Add the modal line element result
-	for (auto& ln_m : model_lineelements.elementlineMap)
-	{
-		elementline_store ln = ln_m.second;
-
-		modal_result_lineelements.add_modal_elementline(ln.line_id,
-			&modal_result_nodes.modal_nodeMap[ln.startNode->node_id],
-			&modal_result_nodes.modal_nodeMap[ln.endNode->node_id]);
-	}
-
-
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Results mapped to model Line Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-	//____________________________________________________________________________________________________________________
-
-
-	// Add the modal quad element result
-	for (auto& quad_m : model_quadelements.elementquadMap)
-	{
-		elementquad_store quad = quad_m.second;
-
-		modal_result_quadelements.add_modal_elementquadrilateral(quad.quad_id,
-			&modal_result_nodes.modal_nodeMap[quad.nd1->node_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd2->node_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd3->node_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id]);
-	}
-
-
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Results mapped to model Quad Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-	//____________________________________________________________________________________________________________________
-
 
 }
 

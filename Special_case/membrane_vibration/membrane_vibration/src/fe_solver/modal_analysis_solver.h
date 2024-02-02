@@ -111,7 +111,12 @@ private:
 	std::vector<bessel_function_Frequency> bessel_roots;
 
 	void modal_analysis_model_circular1(const nodes_list_store& model_nodes,
-		const material_data& mat_data);
+		const elementline_list_store& model_lineelements,
+		const elementquad_list_store& model_quadelements,
+		const material_data& mat_data,
+		modal_nodes_list_store& modal_result_nodes,
+		modal_elementline_list_store& modal_result_lineelements,
+		modal_elementquad_list_store& modal_result_quadelements);
 
 	void modal_analysis_model_rectangular1(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements, 
@@ -125,14 +130,6 @@ private:
 	void modal_analysis_model_rectangular3(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const material_data& mat_data);
-	
-
-	void map_modal_analysis_circular_results(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const elementquad_list_store& model_quadelements,
-		modal_nodes_list_store& modal_result_nodes,
-		modal_elementline_list_store& modal_result_lineelements,
-		modal_elementquad_list_store& modal_result_quadelements);
 
 
 	void map_modal_analysis_rectangular_results(const nodes_list_store& model_nodes,

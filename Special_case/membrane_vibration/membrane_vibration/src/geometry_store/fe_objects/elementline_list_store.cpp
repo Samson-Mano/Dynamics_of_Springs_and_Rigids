@@ -65,7 +65,7 @@ void elementline_list_store::add_elementline(int& line_id, node_store* startNode
 
 	//__________________________ Add the lines
 	element_lines.add_line(line_id, start_node_pt, end_node_pt,
-		glm::vec3(0), glm::vec3(0), temp_color, temp_color, false);
+									 temp_color, temp_color);
 
 }
 

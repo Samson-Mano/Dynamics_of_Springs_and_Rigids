@@ -48,7 +48,7 @@ void nodes_list_store::add_node(int& node_id, glm::vec3& node_pt)
 	glm::vec3 temp_color = geom_param_ptr->geom_colors.node_color;
 	glm::vec3 node_pt_offset = glm::vec3(0);
 
-	node_points.add_point(node_id, node_pt, node_pt_offset, temp_color, false);
+	node_points.add_point(node_id, node_pt, temp_color);
 
 
 }
@@ -63,7 +63,7 @@ void nodes_list_store::add_selection_nodes(const std::vector<int>& selected_node
 
 	for (const auto& it : selected_node_ids)
 	{
-		selected_node_points.add_point(nodeMap[it].node_id, nodeMap[it].node_pt, node_pt_offset, temp_color, false);
+		selected_node_points.add_point(nodeMap[it].node_id, nodeMap[it].node_pt, temp_color);
 	}
 
 	selected_node_points.set_buffer();

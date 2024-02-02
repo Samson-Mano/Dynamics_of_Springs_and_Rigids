@@ -60,13 +60,10 @@ void modal_elementline_list_store::add_modal_elementline(int& line_id, modal_nod
 }
 
 
-void modal_elementline_list_store::set_buffer(int selected_mode)
+void modal_elementline_list_store::set_buffer()
 {
 	// Clear existing modal line
 	modal_element_lines.clear_lines();
-
-	double mode_max_displ = 1.0;
-	double mode_min_displ = 0.0;
 
 	// Add the lines
 	// Loop throug every line element
@@ -76,43 +73,57 @@ void modal_elementline_list_store::set_buffer(int selected_mode)
 		modal_elementline_store ln = line_m.second;
 
 		// start Pt
-		// Scale the displacement with maximum displacement
-		glm::vec3 startpt_displ = glm::vec3(ln.startnd_modal_displ[selected_mode].x,
-			ln.startnd_modal_displ[selected_mode].y, 
-			ln.startnd_modal_displ[selected_mode].z);
-
-		// Find the displacment value
-		double startpt_displ_value =glm::length(startpt_displ);
-
-		// scale the value with mode max displacement
-		double startpt_displ_scale = (startpt_displ_value - mode_min_displ) / (mode_max_displ - mode_min_displ);
-
-		glm::vec3 startpt_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - startpt_displ_scale));
-
-		//___________________________________________________________________________________________________
+		std::vector<glm::vec3> startpt_point_displ; // start point displ
+		std::vector<glm::vec3> startpt_point_color; // start point color
+		
 		// end Pt
-		// Scale the displacement with maximum displacement
-		glm::vec3 endpt_displ = glm::vec3(ln.endnd_modal_displ[selected_mode].x,
-			ln.endnd_modal_displ[selected_mode].y,
-			ln.endnd_modal_displ[selected_mode].z);
+		std::vector<glm::vec3> endpt_point_displ; // end point displ
+		std::vector<glm::vec3> endpt_point_color; // end point color
 
-		// Find the displacment value
-		double endpt_displ_value = glm::length(endpt_displ);
+		for (int j = 0; j < static_cast<int>(ln.startnd_modal_displ.size()); j++)
+		{
+			glm::vec3 startpt_displ = glm::vec3(ln.startnd_modal_displ[j].x,
+												ln.startnd_modal_displ[j].y,
+												ln.startnd_modal_displ[j].z);
 
-		// scale the value with mode max displacement
-		double endpt_displ_scale = (endpt_displ_value - mode_min_displ) / (mode_max_displ - mode_min_displ);
+			// Find the displacment value
+			double startpt_displ_value = glm::length(startpt_displ);
 
-		glm::vec3 endpt_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - endpt_displ_scale));
+			glm::vec3 startpt_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - startpt_displ_value));
+
+			// Add to the list
+			startpt_point_displ.push_back(startpt_displ);
+			startpt_point_color.push_back(startpt_contour_color);
+
+			glm::vec3 endpt_displ = glm::vec3(ln.endnd_modal_displ[j].x,
+				ln.endnd_modal_displ[j].y,
+				ln.endnd_modal_displ[j].z);
+
+			// Find the displacment value
+			double endpt_displ_value = glm::length(endpt_displ);
+
+			glm::vec3 endpt_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - endpt_displ_value));
+
+			// Add to the list
+			endpt_point_displ.push_back(endpt_displ);
+			endpt_point_color.push_back(endpt_contour_color);
+		}
 
 		// Add to the line list
-		modal_element_lines.add_line(i, ln.startpt, ln.endpt, startpt_displ, endpt_displ, 
-			startpt_contour_color, endpt_contour_color, true);
+		modal_element_lines.add_line(i, ln.startpt, ln.endpt, startpt_point_displ, endpt_point_displ,
+															  startpt_point_color, endpt_point_color);
 
 		i++;
 	}
 
 	// Set the buffer
 	modal_element_lines.set_buffer();
+}
+
+void modal_elementline_list_store::update_buffer(int selected_mode)
+{
+	// Update the buffer (because selected mode is changed)
+	modal_element_lines.update_buffer(selected_mode);
 }
 
 void modal_elementline_list_store::paint_modal_elementlines()

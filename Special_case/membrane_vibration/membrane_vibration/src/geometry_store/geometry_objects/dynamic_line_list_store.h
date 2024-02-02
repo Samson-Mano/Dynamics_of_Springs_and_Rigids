@@ -32,10 +32,12 @@ public:
 		std::vector<glm::vec3>& line_startpt_offset, std::vector<glm::vec3>& line_endpt_offset,
 		std::vector<glm::vec3>& line_startpt_color, std::vector<glm::vec3>& line_endpt_color);
 	void set_buffer();
+	void paint_lines();
 	void paint_lines(const int& dyn_index);
 	void update_buffer(const int& dyn_index);
 	void clear_lines();
-	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
+	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation, 
+		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 private:
 	gBuffers dyn_line_buffer;
 	Shader dyn_line_shader;

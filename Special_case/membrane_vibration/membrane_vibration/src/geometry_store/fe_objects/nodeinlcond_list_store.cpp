@@ -124,7 +124,6 @@ void nodeinlcond_list_store::set_buffer()
 	// Create the points
 	int pt_id = 0;
 	int ln_id = 0;
-	glm::vec3 temp_offset = glm::vec3(0);
 
 	for (auto& inlcond_m : inlcondMap)
 	{
@@ -141,17 +140,17 @@ void nodeinlcond_list_store::set_buffer()
 		glm::vec3 inlcond_pt_end = glm::vec3(inlcond.inlcond_loc.x, inlcond.inlcond_loc.y, inlcond.inlcond_loc.z + pt_amplitude);
 
 		// Add the end point
-		inlcond_points.add_point(pt_id, inlcond_pt_start, temp_offset, temp_color, false);
+		inlcond_points.add_point(pt_id, inlcond_pt_start, temp_color);
 
 		pt_id++;
 
 		// Add the end point
-		inlcond_points.add_point(pt_id, inlcond_pt_end, temp_offset, temp_color, false);
+		inlcond_points.add_point(pt_id, inlcond_pt_end, temp_color);
 
 		pt_id++;
 
 		// Add the initial condition line
-		inlcond_lines.add_line(ln_id, inlcond_pt_start, inlcond_pt_end, temp_offset, temp_offset, temp_color, temp_color, false);
+		inlcond_lines.add_line(ln_id, inlcond_pt_start, inlcond_pt_end, temp_color, temp_color);
 
 		ln_id++;
 	}

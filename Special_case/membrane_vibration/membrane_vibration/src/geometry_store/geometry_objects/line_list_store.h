@@ -5,16 +5,13 @@ struct line_store
 {
 	// store the individual point
 	int line_id = 0;
+
 	glm::vec3 line_startpt_loc = glm::vec3(0);
 	glm::vec3 line_endpt_loc = glm::vec3(0);
-
-	glm::vec3 line_startpt_offset = glm::vec3(0);
-	glm::vec3 line_endpt_offset = glm::vec3(0);
 
 	glm::vec3 line_startpt_color = glm::vec3(0);
 	glm::vec3 line_endpt_color = glm::vec3(0);
 
-	bool is_offset = false;
 };
 
 class line_list_store
@@ -28,8 +25,7 @@ public:
 	~line_list_store();
 	void init(geom_parameters* geom_param_ptr);
 	void add_line(int& line_id, glm::vec3& line_startpt_loc,glm::vec3& line_endpt_loc,
-		glm::vec3 line_startpt_offset, glm::vec3 line_endpt_offset, 
-		glm::vec3& line_startpt_color, glm::vec3& line_endpt_color, bool is_offset);
+								glm::vec3& line_startpt_color, glm::vec3& line_endpt_color);
 	void set_buffer();
 	void paint_lines();
 	void clear_lines();

@@ -24,10 +24,12 @@ public:
 	void init(geom_parameters* geom_param_ptr);
 	void add_point(int& point_id, glm::vec3& point_loc, std::vector<glm::vec3>& point_offset, std::vector<glm::vec3>& point_color);
 	void set_buffer();
+	void paint_points();
 	void paint_points(const int& dyn_index);
 	void update_buffer(const int& dyn_index);
 	void clear_points();
-	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
+	void update_opengl_uniforms(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
 private:
 	gBuffers dyn_point_buffer;
 	Shader dyn_point_shader;

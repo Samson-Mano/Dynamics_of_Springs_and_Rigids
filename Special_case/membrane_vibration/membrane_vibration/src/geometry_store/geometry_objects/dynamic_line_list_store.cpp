@@ -18,20 +18,21 @@ void dynamic_line_list_store::init(geom_parameters* geom_param_ptr)
 	// Create the point shader
 	std::filesystem::path shadersPath = geom_param_ptr->resourcePath;
 
-	dyn_line_shader.create_shader((shadersPath.string() + "/resources/shaders/point_vert_shader.vert").c_str(),
-		(shadersPath.string() + "/resources/shaders/point_frag_shader.frag").c_str());
+	dyn_line_shader.create_shader((shadersPath.string() + "/resources/shaders/dynpoint_vert_shader.vert").c_str(),
+		(shadersPath.string() + "/resources/shaders/dynpoint_frag_shader.frag").c_str());
 
-	// Delete all the labels
+	// Delete all the lines
 	dyn_line_count = 0;
 	dyn_lineMap.clear();
 }
+
 
 void dynamic_line_list_store::add_line(int& line_id, 
 	glm::vec3& line_startpt_loc, glm::vec3& line_endpt_loc,
 	std::vector<glm::vec3>& line_startpt_offset, std::vector<glm::vec3>& line_endpt_offset,
 	std::vector<glm::vec3>& line_startpt_color, std::vector<glm::vec3>& line_endpt_color)
 {
-	// Create a temporary points
+	// Create a temporary lines
 	dynamic_line_store dyn_temp_ln;
 	dyn_temp_ln.line_id = line_id;
 
@@ -53,14 +54,14 @@ void dynamic_line_list_store::add_line(int& line_id,
 	// Add to the list
 	dyn_lineMap.push_back(dyn_temp_ln);
 
-	// Iterate the point count
+	// Iterate the line count
 	dyn_line_count++;
 }
 
 void dynamic_line_list_store::set_buffer()
 {
 	// Set the buffer for index
-	unsigned int line_indices_count = 2 * dyn_line_count; // 1 indices to form a point
+	unsigned int line_indices_count = 2 * dyn_line_count; // 2 indices to form a line
 	unsigned int* line_vertex_indices = new unsigned int[line_indices_count];
 
 	unsigned int line_i_index = 0;
@@ -68,18 +69,17 @@ void dynamic_line_list_store::set_buffer()
 	// Set the node vertices
 	for (auto& ln : dyn_lineMap)
 	{
-		// Add  points buffers
+		// Add line buffers
 		get_line_index_buffer(line_vertex_indices, line_i_index);
 	}
 
 	VertexBufferLayout line_pt_layout;
-	line_pt_layout.AddFloat(2);  // Node center
-	line_pt_layout.AddFloat(2);  // Node offset
+	line_pt_layout.AddFloat(3);  // Node center
+	line_pt_layout.AddFloat(3);  // Node offset
 	line_pt_layout.AddFloat(3);  // Node Color
-	line_pt_layout.AddFloat(1);  // bool to track offset applied or not
 
-	// Define the node vertices of the model for a node (2 position, 2 defl, 3 color  & 1 defl value) 
-	const unsigned int line_vertex_count = 8 * 2 * dyn_line_count;
+	// Define the node vertices of the model for a node (3 position, 3 defl, 3 color ) 
+	const unsigned int line_vertex_count = 9 * 2 * dyn_line_count;
 	unsigned int line_vertex_size = line_vertex_count * sizeof(float); // Size of the node_vertex
 
 	// Create the Node Deflection buffers
@@ -91,12 +91,26 @@ void dynamic_line_list_store::set_buffer()
 
 void dynamic_line_list_store::paint_lines(const int& dyn_index)
 {
-	// Paint all the points
+	// Paint all the lines
 	dyn_line_shader.Bind();
 	dyn_line_buffer.Bind();
 
-	// Update the point buffer data for dynamic drawing
+	// Update the line buffer data for dynamic drawing
 	update_buffer(dyn_index);
+
+	glDrawElements(GL_LINES, (2 * dyn_line_count), GL_UNSIGNED_INT, 0);
+	dyn_line_buffer.UnBind();
+	dyn_line_shader.UnBind();
+}
+
+void dynamic_line_list_store::paint_lines()
+{
+	// Paint all the lines
+	dyn_line_shader.Bind();
+	dyn_line_buffer.Bind();
+
+	// line buffer updated seperately for dynamic drawing (To draw cyclic data ex. modal vectors)
+
 
 	glDrawElements(GL_LINES, (2 * dyn_line_count), GL_UNSIGNED_INT, 0);
 	dyn_line_buffer.UnBind();
@@ -105,8 +119,8 @@ void dynamic_line_list_store::paint_lines(const int& dyn_index)
 
 void dynamic_line_list_store::update_buffer(const int& dyn_index)
 {
-	// Define the node vertices of the model for a node (2 position, 2 defl, 3 color  & 1 defl value) 
-	const unsigned int line_vertex_count = 8 * 2 * dyn_line_count;
+	// Define the node vertices of the model for a node (3 position, 3 defl, 3 color) 
+	const unsigned int line_vertex_count = 9 * 2 * dyn_line_count;
 	float* line_vertices = new float[line_vertex_count];
 
 	unsigned int line_v_index = 0;
@@ -134,8 +148,8 @@ void dynamic_line_list_store::clear_lines()
 	dyn_lineMap.clear();
 }
 
-void dynamic_line_list_store::update_opengl_uniforms(bool set_modelmatrix, 
-	bool set_pantranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void dynamic_line_list_store::update_opengl_uniforms(bool set_modelmatrix, 	bool set_pantranslation, bool set_rotatetranslation,
+	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	if (set_modelmatrix == true)
 	{
@@ -150,6 +164,12 @@ void dynamic_line_list_store::update_opengl_uniforms(bool set_modelmatrix,
 	{
 		// set the pan translation
 		dyn_line_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
+	}
+
+	if (set_rotatetranslation == true)
+	{
+		// set the rotate translation
+		dyn_line_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
 	}
 
 	if (set_zoomtranslation == true)
@@ -180,43 +200,39 @@ void dynamic_line_list_store::get_line_vertex_buffer(dynamic_line_store& ln, con
 	// Point location
 	dyn_line_vertices[dyn_line_v_index + 0] = ln.line_startpt_loc.x;
 	dyn_line_vertices[dyn_line_v_index + 1] = ln.line_startpt_loc.y;
+	dyn_line_vertices[dyn_line_v_index + 2] = ln.line_startpt_loc.z;
 
 	// Point offset
-	dyn_line_vertices[dyn_line_v_index + 2] = ln.line_startpt_offset[dyn_index].x;
-	dyn_line_vertices[dyn_line_v_index + 3] = ln.line_startpt_offset[dyn_index].y;
+	dyn_line_vertices[dyn_line_v_index + 3] = ln.line_startpt_offset[dyn_index].x;
+	dyn_line_vertices[dyn_line_v_index + 4] = ln.line_startpt_offset[dyn_index].y;
+	dyn_line_vertices[dyn_line_v_index + 5] = ln.line_startpt_offset[dyn_index].z;
 
 	// Point color
-	dyn_line_vertices[dyn_line_v_index + 4] = ln.line_startpt_color[dyn_index].x;
-	dyn_line_vertices[dyn_line_v_index + 5] = ln.line_startpt_color[dyn_index].y;
-	dyn_line_vertices[dyn_line_v_index + 6] = ln.line_startpt_color[dyn_index].z;
-
-	// Point offset bool
-	// Add the bool value (as an integer) to the array
-	dyn_line_vertices[dyn_line_v_index + 7] = true;  // offset is enabled for Dynamic lines
+	dyn_line_vertices[dyn_line_v_index + 6] = ln.line_startpt_color[dyn_index].x;
+	dyn_line_vertices[dyn_line_v_index + 7] = ln.line_startpt_color[dyn_index].y;
+	dyn_line_vertices[dyn_line_v_index + 8] = ln.line_startpt_color[dyn_index].z;
 
 	// Iterate
-	dyn_line_v_index = dyn_line_v_index + 8;
+	dyn_line_v_index = dyn_line_v_index + 9;
 
 	// End Point
 	// Point location
 	dyn_line_vertices[dyn_line_v_index + 0] = ln.line_endpt_loc.x;
 	dyn_line_vertices[dyn_line_v_index + 1] = ln.line_endpt_loc.y;
+	dyn_line_vertices[dyn_line_v_index + 2] = ln.line_endpt_loc.z;
 
 	// Point offset
-	dyn_line_vertices[dyn_line_v_index + 2] = ln.line_endpt_offset[dyn_index].x;
-	dyn_line_vertices[dyn_line_v_index + 3] = ln.line_endpt_offset[dyn_index].y;
+	dyn_line_vertices[dyn_line_v_index + 3] = ln.line_endpt_offset[dyn_index].x;
+	dyn_line_vertices[dyn_line_v_index + 4] = ln.line_endpt_offset[dyn_index].y;
+	dyn_line_vertices[dyn_line_v_index + 5] = ln.line_endpt_offset[dyn_index].z;
 
 	// Point color
-	dyn_line_vertices[dyn_line_v_index + 4] = ln.line_endpt_color[dyn_index].x;
-	dyn_line_vertices[dyn_line_v_index + 5] = ln.line_endpt_color[dyn_index].y;
-	dyn_line_vertices[dyn_line_v_index + 6] = ln.line_endpt_color[dyn_index].z;
-
-	// Point offset bool
-	// Add the bool value (as an integer) to the array
-	dyn_line_vertices[dyn_line_v_index + 7] = true;  // offset is enabled for Dynamic lines
+	dyn_line_vertices[dyn_line_v_index + 6] = ln.line_endpt_color[dyn_index].x;
+	dyn_line_vertices[dyn_line_v_index + 7] = ln.line_endpt_color[dyn_index].y;
+	dyn_line_vertices[dyn_line_v_index + 8] = ln.line_endpt_color[dyn_index].z;
 
 	// Iterate
-	dyn_line_v_index = dyn_line_v_index + 8;
+	dyn_line_v_index = dyn_line_v_index + 9;
 }
 
 void dynamic_line_list_store::get_line_index_buffer(unsigned int* dyn_line_vertex_indices, unsigned int& dyn_line_i_index)

@@ -1,6 +1,6 @@
 #pragma once
 #include "modal_elementline_list_store.h"
-#include "../geometry_objects/tri_list_store.h"
+#include "../geometry_objects/dynamic_tri_list_store.h"
 
 
 struct modal_elementquad_store
@@ -37,7 +37,8 @@ public:
 	void add_modal_elementquadrilateral(int& quad_id, modal_node_store* nd1, modal_node_store* nd2,
 		modal_node_store* nd3, modal_node_store* nd4);
 	void clear_data();
-	void set_buffer(int selected_mode);
+	void set_buffer();
+	void update_buffer(int selected_mode);
 	void paint_modal_elementquadrilaterals();
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
 		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
@@ -48,10 +49,10 @@ private:
 	//   |      |     | /     /   | 
 	//   1______2     1      1____2      
 
-	tri_list_store modal_element_tris12m; // Tri 12m
-	tri_list_store modal_element_tris23m; // Tri 23m
-	tri_list_store modal_element_tris34m; // Tri 34m
-	tri_list_store modal_element_tris41m; // Tri 41m
+	dynamic_tri_list_store modal_element_tris12m; // Tri 12m
+	dynamic_tri_list_store modal_element_tris23m; // Tri 23m
+	dynamic_tri_list_store modal_element_tris34m; // Tri 34m
+	dynamic_tri_list_store modal_element_tris41m; // Tri 41m
 
 
 };

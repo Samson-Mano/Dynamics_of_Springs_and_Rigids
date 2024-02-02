@@ -171,6 +171,9 @@
     <ClCompile Include="src\geometry_store\result_objects\modal_elementquad_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\geometry_store\geometry_objects\dynamic_tri_list_store.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\dlls\freetype.dll" />
@@ -188,6 +191,8 @@
     <None Include="resources\shaders\selrect_vert_shader.vert" />
     <None Include="resources\shaders\text_frag_shader.frag" />
     <None Include="resources\shaders\text_vert_shader.vert" />
+    <None Include="resources\shaders\dynpoint_vert_shader.vert" />
+    <None Include="resources\shaders\dynpoint_frag_shader.frag" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\CanadaDBNormal.ttf" />
@@ -373,6 +378,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\result_objects\modal_elementquad_list_store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\geometry_store\geometry_objects\dynamic_tri_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
