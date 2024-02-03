@@ -14,8 +14,8 @@ struct modal_elementline_store
 	glm::vec3 endpt = glm::vec3(0);
 
 	// Point displacements
-	std::unordered_map<int, glm::vec3> startnd_modal_displ;
-	std::unordered_map<int, glm::vec3> endnd_modal_displ;
+	std::vector<glm::vec3> startnd_modal_displ;
+	std::vector<glm::vec3> endnd_modal_displ;
 };
 
 class modal_elementline_list_store

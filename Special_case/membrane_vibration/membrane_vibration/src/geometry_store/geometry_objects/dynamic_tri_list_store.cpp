@@ -168,7 +168,7 @@ void dynamic_tri_list_store::update_opengl_uniforms(bool set_modelmatrix, bool s
 	{
 		// set the model matrix
 		dyn_tri_shader.setUniform("geom_scale", static_cast<float>(geom_param_ptr->geom_scale));
-		dyn_tri_shader.setUniform("transparency", 0.8f);
+		dyn_tri_shader.setUniform("transparency", 0.6f);
 
 		dyn_tri_shader.setUniform("modelMatrix", geom_param_ptr->modelMatrix, false);
 	}

@@ -50,6 +50,16 @@ typedef boost::math::policies::policy<
 > ignore_all_policy;
 
 
+struct quad_midnode_eigenvector_store
+{
+	int quad_id = 0;
+	std::vector<glm::vec3> v12; // eigen vector at mid of 1-2
+	std::vector<glm::vec3> v23; // eigen vector at mid of 2-3
+	std::vector<glm::vec3> v34; // eigen vector at mid of 3-4
+	std::vector<glm::vec3> v41; // eigen vector at mid of 4-1
+	std::vector<glm::vec3> v_mid; // eigen vector at quad mid
+};
+
 
 struct bessel_function_Frequency
 {
@@ -136,7 +146,5 @@ private:
 		const elementline_list_store& model_lineelements,
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements);
-
-	void normalizeColumn(Eigen::MatrixXd& matrix, int columnIndex);
 
 };

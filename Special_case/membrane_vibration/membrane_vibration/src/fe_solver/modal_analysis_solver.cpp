@@ -312,6 +312,7 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 	// Create the mode shapes
 	this->number_of_modes = 0;
 
+	std::unordered_map<int, quad_midnode_eigenvector_store> quad_midnode;
 
 	for (int i =0; i<this->matrix_size; i++)
 	{
@@ -329,7 +330,7 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 		// Frequency
 		double nat_freq = t_eigen / (2.0 * m_pi);
 
-		if (this->number_of_modes < paint_mode_count)
+		if (this->number_of_modes <= paint_mode_count)
 		{
 			// Modal results
 			std::stringstream ss;
@@ -340,6 +341,7 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 				+ std::to_string(bessel_roots[i].m) + ", n=" + std::to_string(bessel_roots[i].n) + ")");
 		}
 
+		// Node
 		for (auto& nd_m : model_nodes.nodeMap)
 		{
 			node_id = nd_m.first;
@@ -374,8 +376,113 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 		}
 
 		// Normalize the eigen vector matrix
-		normalizeColumn(displ_vectors_matrix, i);
-		normalizeColumn(eigen_vectors_matrix, i);
+		double column_max = displ_vectors_matrix.col(i).maxCoeff();
+
+		displ_vectors_matrix.col(i) = displ_vectors_matrix.col(i) / column_max;
+		eigen_vectors_matrix.col(i) = eigen_vectors_matrix.col(i) / column_max;
+
+
+		// Quad
+		if (this->number_of_modes <= paint_mode_count)
+		{
+			for (auto& quad_m : model_quadelements.elementquadMap)
+			{
+				elementquad_store quad = quad_m.second;
+
+				// Get the mid point of all the quad edges
+				glm::vec3 mid_12 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
+					quad.nd2->node_pt, 0.5); // Mid of edge 1-2
+				glm::vec3 mid_23 = geom_parameters::linear_interpolation3d(quad.nd2->node_pt,
+					quad.nd3->node_pt, 0.5); // Mid of edge 2-3
+				glm::vec3 mid_34 = geom_parameters::linear_interpolation3d(quad.nd3->node_pt,
+					quad.nd4->node_pt, 0.5); // Mid of edge 3-4
+				glm::vec3 mid_41 = geom_parameters::linear_interpolation3d(quad.nd4->node_pt,
+					quad.nd1->node_pt, 0.5); // Mid of edge 4-1
+
+				// Mid poiint of quad
+				glm::vec3 mid_qd = geom_parameters::linear_interpolation3d(mid_23,
+					mid_41, 0.5); // Mid of the quad
+
+				//_________________________________________________________________________________________________
+				glm::vec3 v12 = glm::vec3(0);
+				glm::vec3 v23 = glm::vec3(0);
+				glm::vec3 v34 = glm::vec3(0);
+				glm::vec3 v41 = glm::vec3(0);
+				glm::vec3 v_mid = glm::vec3(0);
+
+				// Edge 1-2
+				double nd_radius = glm::length(mid_12);
+				double nd_theta = std::atan2(mid_12.y, mid_12.x);
+				double radius_ratio = nd_radius / c_radius;
+
+				// Eigen vector Mid of edge 1-2
+				if (nd_radius < (c_radius - 0.1))
+				{
+					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
+
+					v12 = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
+				}
+
+				// Edge 2-3
+				nd_radius = glm::length(mid_23);
+				nd_theta = std::atan2(mid_23.y, mid_23.x);
+				radius_ratio = nd_radius / c_radius;
+
+				if (nd_radius < (c_radius - 0.1))
+				{
+					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
+
+					v23 = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
+				}
+
+				// Edge 3-4
+				nd_radius = glm::length(mid_34);
+				nd_theta = std::atan2(mid_34.y, mid_34.x);
+				radius_ratio = nd_radius / c_radius;
+
+				if (nd_radius < (c_radius - 0.1))
+				{
+					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
+
+					v34 = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
+				}
+
+				// Edge 4-1
+				nd_radius = glm::length(mid_41);
+				nd_theta = std::atan2(mid_41.y, mid_41.x);
+				radius_ratio = nd_radius / c_radius;
+
+				if (nd_radius < (c_radius - 0.1))
+				{
+					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
+
+					v41 = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
+				}
+
+				// Mid poiint of quad
+				nd_radius = glm::length(mid_qd);
+				nd_theta = std::atan2(mid_qd.y, mid_qd.x);
+				radius_ratio = nd_radius / c_radius;
+
+				if (nd_radius < (c_radius - 0.1))
+				{
+					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
+
+					v_mid = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
+				}
+
+				// Add to the quad mid node data
+				int quad_id = quad.quad_id;
+				quad_midnode[quad_id].quad_id = quad_id;
+				quad_midnode[quad_id].v12.push_back(v12);
+				quad_midnode[quad_id].v23.push_back(v23);
+				quad_midnode[quad_id].v34.push_back(v34);
+				quad_midnode[quad_id].v41.push_back(v41);
+				quad_midnode[quad_id].v_mid.push_back(v_mid);
+
+			}
+		}
+		
 	}
 
 	double inv_factor = 2.0 / static_cast<float>(matrix_size);
@@ -394,7 +501,7 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 		int matrix_index = nodeid_map[node_id];
 
 		// Modal analysis results
-		std::unordered_map<int, glm::vec3> node_modal_displ;
+		std::vector<glm::vec3> node_modal_displ;
 
 		for (int i = 0; i < paint_mode_count; i++)
 		{
@@ -403,7 +510,7 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 			glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
 
 			// add to modal result of this node
-			node_modal_displ.insert({ i,modal_displ });
+			node_modal_displ.push_back(modal_displ);
 		}
 
 		// Create the modal analysis result node
@@ -415,7 +522,7 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 	std::cout << "Results mapped to model nodes at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	//____________________________________________________________________________________________________________________
 
-		// Add the modal line element result
+	// Add the modal line element result
 	for (auto& ln_m : model_lineelements.elementlineMap)
 	{
 		elementline_store ln = ln_m.second;
@@ -431,17 +538,22 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 	std::cout << "Results mapped to model Line Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	//____________________________________________________________________________________________________________________
 
-
 	// Add the modal quad element result
 	for (auto& quad_m : model_quadelements.elementquadMap)
 	{
 		elementquad_store quad = quad_m.second;
+		int quad_id = quad.quad_id;
 
-		modal_result_quadelements.add_modal_elementquadrilateral(quad.quad_id,
+		modal_result_quadelements.add_modal_elementquadrilateral(quad_id,
 			&modal_result_nodes.modal_nodeMap[quad.nd1->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd2->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd3->node_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id]);
+			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id],
+			quad_midnode[quad_id].v12,
+			quad_midnode[quad_id].v23,
+			quad_midnode[quad_id].v34,
+			quad_midnode[quad_id].v41,
+			quad_midnode[quad_id].v_mid);
 	}
 
 
@@ -696,7 +808,7 @@ void modal_analysis_solver::map_modal_analysis_rectangular_results(const nodes_l
 		int node_id = nd_m.first;
 
 		// Modal analysis results
-		std::unordered_map<int, glm::vec3> node_modal_displ;
+		std::vector<glm::vec3> node_modal_displ;
 
 		for (int i = 0; i < number_of_modes; i++)
 		{
@@ -704,7 +816,7 @@ void modal_analysis_solver::map_modal_analysis_rectangular_results(const nodes_l
 			glm::vec3 modal_displ = glm::vec3(0.0,0.0, displ_vectors_matrix.coeff(node_id, i));
 
 			// add to modal result of this node
-			node_modal_displ.insert({ i,modal_displ });
+			node_modal_displ.push_back(modal_displ);
 		}
 
 		// Create the modal analysis result node
@@ -734,12 +846,3 @@ void modal_analysis_solver::map_modal_analysis_rectangular_results(const nodes_l
 	//____________________________________________________________________________________________________________________
 }
 
-
-void modal_analysis_solver::normalizeColumn(Eigen::MatrixXd& matrix, int columnIndex)
-{
-	// Find the maximum of elements in the specified column
-	double max = matrix.col(columnIndex).maxCoeff();
-
-	// Normalize each element in the column
-	matrix.col(columnIndex) /= max;
-}

@@ -724,13 +724,6 @@ void geom_store::paint_modal_analysis_results()
 		// Paint the modal nodes
 		modal_result_nodes.paint_modal_nodes();
 
-		// Paint result text
-		if (modal_solver_window->show_result_text_values == true)
-		{
-			// Paint the modal result vector
-			// modal_result_nodes.paint_label_mode_vectors();
-		}
-
 	}
 
 	// Open sequence for the modal analysis window
@@ -777,6 +770,8 @@ void geom_store::paint_modal_analysis_results()
 			modal_result_lineelements.set_buffer(); // Set the line buffer
 			modal_result_quadelements.set_buffer(); // Set the tri buffer
 
+			std::cout << "Modal Analysis Complete" << std::endl;
+
 			modal_solver_window->is_mode_selection_changed = true;
 
 			// Modal analysis is already complete so set the transparency for the model
@@ -786,8 +781,6 @@ void geom_store::paint_modal_analysis_results()
 
 		modal_solver_window->execute_modal_analysis = false;
 	}
-
-
 
 }
 

@@ -32,7 +32,7 @@ void modal_nodes_list_store::clear_data()
 	modal_nodeMap.clear();
 }
 
-void modal_nodes_list_store::add_result_node(int& node_id, glm::vec3& node_pt, std::unordered_map<int, glm::vec3> node_modal_displ)
+void modal_nodes_list_store::add_result_node(int& node_id, glm::vec3& node_pt, std::vector<glm::vec3> node_modal_displ)
 {
 	// Add result nodes
 	modal_node_store temp_node;
