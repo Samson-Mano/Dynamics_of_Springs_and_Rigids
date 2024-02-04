@@ -193,6 +193,8 @@
     <None Include="resources\shaders\text_vert_shader.vert" />
     <None Include="resources\shaders\dynpoint_vert_shader.vert" />
     <None Include="resources\shaders\dynpoint_frag_shader.frag" />
+    <None Include="resources\shaders\dyntripoint_vert_shader.vert" />
+    <None Include="resources\shaders\dyntripoint_frag_shader.frag" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\CanadaDBNormal.ttf" />
@@ -386,7 +388,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\junk\junk_code.txt" />
-    <Text Include="src\junk\lagrange_MPC_solver.txt" />
+    <Text Include="src\junk\quad_element.txt" />
     <Text Include="rect3_mesh.txt" />
     <Text Include="rect2_mesh.txt" />
     <Text Include="rect1_mesh.txt" />

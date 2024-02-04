@@ -204,6 +204,8 @@
     <None Include="resources\shaders\constraint_vert_shader.vert" />
     <None Include="resources\shaders\dynpoint_frag_shader.frag" />
     <None Include="resources\shaders\dynpoint_vert_shader.vert" />
+    <None Include="resources\shaders\dyntripoint_frag_shader.frag" />
+    <None Include="resources\shaders\dyntripoint_vert_shader.vert" />
     <None Include="resources\shaders\load_frag_shader.frag" />
     <None Include="resources\shaders\load_vert_shader.vert" />
     <None Include="resources\shaders\point_frag_shader.frag" />
@@ -291,7 +293,7 @@
     <Text Include="rect2_mesh.txt" />
     <Text Include="rect3_mesh.txt" />
     <Text Include="src\junk\junk_code.txt" />
-    <Text Include="src\junk\lagrange_MPC_solver.txt" />
+    <Text Include="src\junk\quad_element.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,15 +16,8 @@ void modal_elementquad_list_store::init(geom_parameters* geom_param_ptr)
 	this->geom_param_ptr = geom_param_ptr;
 
 	// Set the geometry parameters for the quads (and clear the quads)
-	modal_element_tris1_m_m12.init(geom_param_ptr); // Tri 1_m_m12
-	modal_element_tris1_m41_m.init(geom_param_ptr); // Tri 1_m41_m
-	modal_element_tris2_m12_m.init(geom_param_ptr); // Tri 2_m12_m
-	modal_element_tris2_m_m23.init(geom_param_ptr); // Tri 2_m_m23
-	modal_element_tris3_m23_m.init(geom_param_ptr); // Tri 3_m23_m
-	modal_element_tris3_m_m34.init(geom_param_ptr); // Tri 3_m_m34
-	modal_element_tris4_m34_m.init(geom_param_ptr); // Tri 4_m34_m
-	modal_element_tris4_m_m41.init(geom_param_ptr); // Tri 4_m_m41
-
+	modal_element_tris132.init(geom_param_ptr); // Tri 132
+	modal_element_tris143.init(geom_param_ptr); // Tri 143
 
 	// Clear the element quads
 	modal_elementquad_count = 0;
@@ -34,14 +27,8 @@ void modal_elementquad_list_store::init(geom_parameters* geom_param_ptr)
 void modal_elementquad_list_store::clear_data()
 {
 	// Clear the element quads
-	modal_element_tris1_m_m12.clear_triangles(); // Tri 1_m_m12
-	modal_element_tris1_m41_m.clear_triangles(); // Tri 1_m41_m
-	modal_element_tris2_m12_m.clear_triangles(); // Tri 2_m12_m
-	modal_element_tris2_m_m23.clear_triangles(); // Tri 2_m_m23
-	modal_element_tris3_m23_m.clear_triangles(); // Tri 3_m23_m
-	modal_element_tris3_m_m34.clear_triangles(); // Tri 3_m_m34
-	modal_element_tris4_m34_m.clear_triangles(); // Tri 4_m34_m
-	modal_element_tris4_m_m41.clear_triangles(); // Tri 4_m_m41
+	modal_element_tris132.clear_triangles(); // Tri 132
+	modal_element_tris143.clear_triangles(); // Tri 143
 
 	// Clear the element quads
 	modal_elementquad_count = 0;
@@ -51,11 +38,21 @@ void modal_elementquad_list_store::clear_data()
 
 void modal_elementquad_list_store::add_modal_elementquadrilateral(int& quad_id, modal_node_store* nd1,
 	modal_node_store* nd2, modal_node_store* nd3, modal_node_store* nd4,
-	std::vector<glm::vec3>& v12,
-	std::vector<glm::vec3>& v23,
-	std::vector<glm::vec3>& v34,
-	std::vector<glm::vec3>& v41,
-	std::vector<glm::vec3>& v_mid)
+	std::vector<glm::vec3> edge13_025modal_displ, // edge 13 0.25
+	std::vector<glm::vec3> edge13_050modal_displ, // edge 13 0.50
+	std::vector<glm::vec3> edge13_075modal_displ, // edge 13 0.75
+	std::vector<glm::vec3> edge32_025modal_displ, // edge 32 0.25
+	std::vector<glm::vec3> edge32_050modal_displ, // edge 32 0.50
+	std::vector<glm::vec3> edge32_075modal_displ, // edge 32 0.75
+	std::vector<glm::vec3> edge21_025modal_displ, // edge 21 0.25
+	std::vector<glm::vec3> edge21_050modal_displ, // edge 21 0.50
+	std::vector<glm::vec3> edge21_075modal_displ, // edge 21 0.75
+	std::vector<glm::vec3> edge14_025modal_displ, // edge 14 0.25
+	std::vector<glm::vec3> edge14_050modal_displ, // edge 14 0.50
+	std::vector<glm::vec3> edge14_075modal_displ, // edge 14 0.75
+	std::vector<glm::vec3> edge43_025modal_displ, // edge 43 0.25
+	std::vector<glm::vec3> edge43_050modal_displ, // edge 43 0.50
+	std::vector<glm::vec3> edge43_075modal_displ) // edge 43 0.75
 {
 	// Add result quad element
 	modal_elementquad_store temp_quad;
@@ -71,24 +68,32 @@ void modal_elementquad_list_store::add_modal_elementquadrilateral(int& quad_id, 
 	temp_quad.nd3pt = (*nd3).node_pt;
 	temp_quad.nd4pt = (*nd4).node_pt;
 
-	// Set the mid points of the edges
-	temp_quad.mid12pt = geom_parameters::linear_interpolation3d(temp_quad.nd1pt,temp_quad.nd2pt,0.5);
-	temp_quad.mid23pt = geom_parameters::linear_interpolation3d(temp_quad.nd2pt, temp_quad.nd3pt, 0.5);
-	temp_quad.mid34pt = geom_parameters::linear_interpolation3d(temp_quad.nd3pt, temp_quad.nd4pt, 0.5);
-	temp_quad.mid41pt = geom_parameters::linear_interpolation3d(temp_quad.nd4pt, temp_quad.nd1pt, 0.5);
-	temp_quad.midqdpt = geom_parameters::linear_interpolation3d(temp_quad.mid23pt, temp_quad.mid41pt, 0.5);
-
 	// Add the modal displacement
 	temp_quad.nd1_modal_displ = (*nd1).node_modal_displ;
 	temp_quad.nd2_modal_displ = (*nd2).node_modal_displ;
 	temp_quad.nd3_modal_displ = (*nd3).node_modal_displ;
 	temp_quad.nd4_modal_displ = (*nd4).node_modal_displ;
 
-	temp_quad.v12_modal_displ = v12; // eigen vector at mid of 1-2
-	temp_quad.v23_modal_displ = v23; // eigen vector at mid of 2-3
-	temp_quad.v34_modal_displ = v34; // eigen vector at mid of 3-4
-	temp_quad.v41_modal_displ = v41; // eigen vector at mid of 4-1
-	temp_quad.v_mid_modal_displ = v_mid; // eigen vector at quad mid
+	temp_quad.edge13_025modal_displ = edge13_025modal_displ; // edge 13 0.25
+	temp_quad.edge13_050modal_displ = edge13_050modal_displ; // edge 13 0.50
+	temp_quad.edge13_075modal_displ = edge13_075modal_displ; // edge 13 0.75
+
+	temp_quad.edge32_025modal_displ = edge32_025modal_displ; // edge 32 0.25
+	temp_quad.edge32_050modal_displ = edge32_050modal_displ; // edge 32 0.50
+	temp_quad.edge32_075modal_displ = edge32_075modal_displ; // edge 32 0.75
+
+	temp_quad.edge21_025modal_displ = edge21_025modal_displ; // edge 21 0.25
+	temp_quad.edge21_050modal_displ = edge21_050modal_displ; // edge 21 0.50
+	temp_quad.edge21_075modal_displ = edge21_075modal_displ; // edge 21 0.75
+
+	temp_quad.edge14_025modal_displ = edge14_025modal_displ; // edge 14 0.25
+	temp_quad.edge14_050modal_displ = edge14_050modal_displ; // edge 14 0.50
+	temp_quad.edge14_075modal_displ = edge14_075modal_displ; // edge 14 0.75
+
+	temp_quad.edge43_025modal_displ = edge43_025modal_displ; // edge 43 0.25
+	temp_quad.edge43_050modal_displ = edge43_050modal_displ; // edge 43 0.50
+	temp_quad.edge43_075modal_displ = edge43_075modal_displ; // edge 43 0.75
+
 
 	// Check whether the node_id is already there
 	if (modal_elementquadMap.find(quad_id) != modal_elementquadMap.end())
@@ -106,14 +111,8 @@ void modal_elementquad_list_store::add_modal_elementquadrilateral(int& quad_id, 
 void modal_elementquad_list_store::set_buffer()
 {
 	// Clear existing modal quads (8 triangles)
-	modal_element_tris1_m_m12.clear_triangles(); // Tri 1_m_m12
-	modal_element_tris1_m41_m.clear_triangles(); // Tri 1_m41_m
-	modal_element_tris2_m12_m.clear_triangles(); // Tri 2_m12_m
-	modal_element_tris2_m_m23.clear_triangles(); // Tri 2_m_m23
-	modal_element_tris3_m23_m.clear_triangles(); // Tri 3_m23_m
-	modal_element_tris3_m_m34.clear_triangles(); // Tri 3_m_m34
-	modal_element_tris4_m34_m.clear_triangles(); // Tri 4_m34_m
-	modal_element_tris4_m_m41.clear_triangles(); // Tri 4_m_m41
+	modal_element_tris132.clear_triangles(); // Tri 132
+	modal_element_tris143.clear_triangles(); // Tri 143
 
 	// Add the lines
 	// Loop throug every line element
@@ -138,25 +137,31 @@ void modal_elementquad_list_store::set_buffer()
 		std::vector<glm::vec3> nd4_point_displ; // Node 4 displ
 		std::vector<glm::vec3> nd4_point_color; // Node 4 color
 
-		// Edge 12
-		std::vector<glm::vec3> mid12_point_displ; // Edge 12 displ
-		std::vector<glm::vec3> mid12_point_color; // Edge 12 color
+		// Edge 13
+		std::vector<glm::vec3> edge13_025point_color; // Edge 13 025color
+		std::vector<glm::vec3> edge13_050point_color; // Edge 13 050color
+		std::vector<glm::vec3> edge13_075point_color; // Edge 13 075color
 
-		// Edge 23
-		std::vector<glm::vec3> mid23_point_displ; // Edge 23 displ
-		std::vector<glm::vec3> mid23_point_color; // Edge 23 color
+		// Edge 32
+		std::vector<glm::vec3> edge32_025point_color; // Edge 32 025color
+		std::vector<glm::vec3> edge32_050point_color; // Edge 32 050color
+		std::vector<glm::vec3> edge32_075point_color; // Edge 32 075color
 
-		// Edge 34
-		std::vector<glm::vec3> mid34_point_displ; // Edge 34 displ
-		std::vector<glm::vec3> mid34_point_color; // Edge 34 color
+		// Edge 21
+		std::vector<glm::vec3> edge21_025point_color; // Edge 21 025color
+		std::vector<glm::vec3> edge21_050point_color; // Edge 21 050color
+		std::vector<glm::vec3> edge21_075point_color; // Edge 21 075color
 
-		// Edge 41
-		std::vector<glm::vec3> mid41_point_displ; // Edge 41 displ
-		std::vector<glm::vec3> mid41_point_color; // Edge 41 color
+		// Edge 14
+		std::vector<glm::vec3> edge14_025point_color; // Edge 14 025color
+		std::vector<glm::vec3> edge14_050point_color; // Edge 14 050color
+		std::vector<glm::vec3> edge14_075point_color; // Edge 14 075color
 
-		// Mid Node
-		std::vector<glm::vec3> midqd_point_displ; // Mid displ
-		std::vector<glm::vec3> midqd_point_color; // Mid color
+		// Edge 43
+		std::vector<glm::vec3> edge43_025point_color; // Edge 43 025color
+		std::vector<glm::vec3> edge43_050point_color; // Edge 43 050color
+		std::vector<glm::vec3> edge43_075point_color; // Edge 43 075color
+
 
 		for (int j = 0; j < static_cast<int>(quad.nd1_modal_displ.size()); j++)
 		{
@@ -208,63 +213,174 @@ void modal_elementquad_list_store::set_buffer()
 			glm::vec3 nd4_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - nd4_displ_value));
 
 			//____________________________________________________________________________________________________________
-			// Edge 12
-			glm::vec3 mid12_displ = glm::vec3(quad.v12_modal_displ[j].x,
-				quad.v12_modal_displ[j].y,
-				quad.v12_modal_displ[j].z);
+			//____________________________________________________________________________________________________________
+			// Edge 13 0.25
+			glm::vec3 edge13_025displ = glm::vec3(quad.edge13_025modal_displ[j].x,
+				quad.edge13_025modal_displ[j].y,
+				quad.edge13_025modal_displ[j].z);
 
 			// Find the displacment value
-			double mid12_displ_value = glm::length(mid12_displ);
+			double edge13_025displ_value = glm::length(edge13_025displ);
 
-			glm::vec3 mid12_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - mid12_displ_value));
-
+			glm::vec3 edge13_025contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge13_025displ_value));
 
 			//____________________________________________________________________________________________________________
-			// Edge 23
-			glm::vec3 mid23_displ = glm::vec3(quad.v23_modal_displ[j].x,
-				quad.v23_modal_displ[j].y,
-				quad.v23_modal_displ[j].z);
+			// Edge 13 0.50
+			glm::vec3 edge13_050displ = glm::vec3(quad.edge13_050modal_displ[j].x,
+				quad.edge13_050modal_displ[j].y,
+				quad.edge13_050modal_displ[j].z);
 
 			// Find the displacment value
-			double mid23_displ_value = glm::length(mid23_displ);
+			double edge13_050displ_value = glm::length(edge13_050displ);
 
-			glm::vec3 mid23_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - mid23_displ_value));
-
+			glm::vec3 edge13_050contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge13_050displ_value));
 
 			//____________________________________________________________________________________________________________
-			// Edge 34
-			glm::vec3 mid34_displ = glm::vec3(quad.v34_modal_displ[j].x,
-				quad.v34_modal_displ[j].y,
-				quad.v34_modal_displ[j].z);
+			// Edge 13 0.75
+			glm::vec3 edge13_075displ = glm::vec3(quad.edge13_075modal_displ[j].x,
+				quad.edge13_075modal_displ[j].y,
+				quad.edge13_075modal_displ[j].z);
 
 			// Find the displacment value
-			double mid34_displ_value = glm::length(mid34_displ);
+			double edge13_075displ_value = glm::length(edge13_075displ);
 
-			glm::vec3 mid34_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - mid34_displ_value));
-
+			glm::vec3 edge13_075contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge13_075displ_value));
 
 			//____________________________________________________________________________________________________________
-			// Edge 41
-			glm::vec3 mid41_displ = glm::vec3(quad.v41_modal_displ[j].x,
-				quad.v41_modal_displ[j].y,
-				quad.v41_modal_displ[j].z);
+			//____________________________________________________________________________________________________________
+			// Edge 32 0.25
+			glm::vec3 edge32_025displ = glm::vec3(quad.edge32_025modal_displ[j].x,
+				quad.edge32_025modal_displ[j].y,
+				quad.edge32_025modal_displ[j].z);
 
 			// Find the displacment value
-			double mid41_displ_value = glm::length(mid41_displ);
+			double edge32_025displ_value = glm::length(edge32_025displ);
 
-			glm::vec3 mid41_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - mid41_displ_value));
-
+			glm::vec3 edge32_025contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge32_025displ_value));
 
 			//____________________________________________________________________________________________________________
-			// Mid quad
-			glm::vec3 midqd_displ = glm::vec3(quad.v_mid_modal_displ[j].x,
-				quad.v_mid_modal_displ[j].y,
-				quad.v_mid_modal_displ[j].z);
+			// Edge 32 0.50
+			glm::vec3 edge32_050displ = glm::vec3(quad.edge32_050modal_displ[j].x,
+				quad.edge32_050modal_displ[j].y,
+				quad.edge32_050modal_displ[j].z);
 
 			// Find the displacment value
-			double midqd_displ_value = glm::length(midqd_displ);
+			double edge32_050displ_value = glm::length(edge32_050displ);
 
-			glm::vec3 midqd_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - midqd_displ_value));
+			glm::vec3 edge32_050contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge32_050displ_value));
+
+			//____________________________________________________________________________________________________________
+			// Edge 32 0.75
+			glm::vec3 edge32_075displ = glm::vec3(quad.edge32_075modal_displ[j].x,
+				quad.edge32_075modal_displ[j].y,
+				quad.edge32_075modal_displ[j].z);
+
+			// Find the displacment value
+			double edge32_075displ_value = glm::length(edge32_075displ);
+
+			glm::vec3 edge32_075contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge32_075displ_value));
+
+			//____________________________________________________________________________________________________________
+			//____________________________________________________________________________________________________________
+			// Edge 21 0.25
+			glm::vec3 edge21_025displ = glm::vec3(quad.edge21_025modal_displ[j].x,
+				quad.edge21_025modal_displ[j].y,
+				quad.edge21_025modal_displ[j].z);
+
+			// Find the displacment value
+			double edge21_025displ_value = glm::length(edge21_025displ);
+
+			glm::vec3 edge21_025contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge21_025displ_value));
+
+			//____________________________________________________________________________________________________________
+			// Edge 21 0.50
+			glm::vec3 edge21_050displ = glm::vec3(quad.edge21_050modal_displ[j].x,
+				quad.edge21_050modal_displ[j].y,
+				quad.edge21_050modal_displ[j].z);
+
+			// Find the displacment value
+			double edge21_050displ_value = glm::length(edge21_050displ);
+
+			glm::vec3 edge21_050contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge21_050displ_value));
+
+			//____________________________________________________________________________________________________________
+			// Edge 21 0.75
+			glm::vec3 edge21_075displ = glm::vec3(quad.edge21_075modal_displ[j].x,
+				quad.edge21_075modal_displ[j].y,
+				quad.edge21_075modal_displ[j].z);
+
+			// Find the displacment value
+			double edge21_075displ_value = glm::length(edge21_075displ);
+
+			glm::vec3 edge21_075contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge21_075displ_value));
+
+			//____________________________________________________________________________________________________________
+			//____________________________________________________________________________________________________________
+			// Edge 14 0.25
+			glm::vec3 edge14_025displ = glm::vec3(quad.edge14_025modal_displ[j].x,
+				quad.edge14_025modal_displ[j].y,
+				quad.edge14_025modal_displ[j].z);
+
+			// Find the displacment value
+			double edge14_025displ_value = glm::length(edge14_025displ);
+
+			glm::vec3 edge14_025contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge14_025displ_value));
+
+			//____________________________________________________________________________________________________________
+			// Edge 14 0.50
+			glm::vec3 edge14_050displ = glm::vec3(quad.edge14_050modal_displ[j].x,
+				quad.edge14_050modal_displ[j].y,
+				quad.edge14_050modal_displ[j].z);
+
+			// Find the displacment value
+			double edge14_050displ_value = glm::length(edge14_050displ);
+
+			glm::vec3 edge14_050contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge14_050displ_value));
+
+			//____________________________________________________________________________________________________________
+			// Edge 14 0.75
+			glm::vec3 edge14_075displ = glm::vec3(quad.edge14_075modal_displ[j].x,
+				quad.edge14_075modal_displ[j].y,
+				quad.edge14_075modal_displ[j].z);
+
+			// Find the displacment value
+			double edge14_075displ_value = glm::length(edge14_075displ);
+
+			glm::vec3 edge14_075contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge14_075displ_value));
+
+			//____________________________________________________________________________________________________________
+			//____________________________________________________________________________________________________________
+			// Edge 43 0.25
+			glm::vec3 edge43_025displ = glm::vec3(quad.edge43_025modal_displ[j].x,
+				quad.edge43_025modal_displ[j].y,
+				quad.edge43_025modal_displ[j].z);
+
+			// Find the displacment value
+			double edge43_025displ_value = glm::length(edge43_025displ);
+
+			glm::vec3 edge43_025contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge43_025displ_value));
+
+			//____________________________________________________________________________________________________________
+			// Edge 43 0.50
+			glm::vec3 edge43_050displ = glm::vec3(quad.edge43_050modal_displ[j].x,
+				quad.edge43_050modal_displ[j].y,
+				quad.edge43_050modal_displ[j].z);
+
+			// Find the displacment value
+			double edge43_050displ_value = glm::length(edge43_050displ);
+
+			glm::vec3 edge43_050contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge43_050displ_value));
+
+			//____________________________________________________________________________________________________________
+			// Edge 43 0.75
+			glm::vec3 edge43_075displ = glm::vec3(quad.edge43_075modal_displ[j].x,
+				quad.edge43_075modal_displ[j].y,
+				quad.edge43_075modal_displ[j].z);
+
+			// Find the displacment value
+			double edge43_075displ_value = glm::length(edge43_075displ);
+
+			glm::vec3 edge43_075contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - edge43_075displ_value));
 
 
 			//____________________________________________________________________________________________________________
@@ -287,85 +403,63 @@ void modal_elementquad_list_store::set_buffer()
 			nd4_point_displ.push_back(nd4_displ); // Node 4 displ
 			nd4_point_color.push_back(nd4_contour_color);  // Node 4 color
 
-			// Edge 12
-			mid12_point_displ.push_back(mid12_displ); // Edge 12 displ
-			mid12_point_color.push_back(mid12_contour_color); // Edge 12 color
+			// Edge 13 
+			edge13_025point_color.push_back(edge13_025contour_color); // Edge 13 0.25
+			edge13_050point_color.push_back(edge13_050contour_color); // Edge 13 0.50
+			edge13_075point_color.push_back(edge13_075contour_color); // Edge 13 0.75
 
-			// Edge 23
-			mid23_point_displ.push_back(mid23_displ); // Edge 23 displ
-			mid23_point_color.push_back(mid23_contour_color); // Edge 23 color
+			// Edge 32
+			edge32_025point_color.push_back(edge32_025contour_color); // Edge 32 0.25
+			edge32_050point_color.push_back(edge32_050contour_color); // Edge 32 0.50
+			edge32_075point_color.push_back(edge32_075contour_color); // Edge 32 0.75
 
-			// Edge 34
-			mid34_point_displ.push_back(mid34_displ); // Edge 34 displ
-			mid34_point_color.push_back(mid34_contour_color); // Edge 34 color
+			// Edge 21
+			edge21_025point_color.push_back(edge21_025contour_color); // Edge 21 0.25
+			edge21_050point_color.push_back(edge21_050contour_color); // Edge 21 0.50
+			edge21_075point_color.push_back(edge21_075contour_color); // Edge 21 0.75
 
-			// Edge 41
-			mid41_point_displ.push_back(mid41_displ); // Edge 41 displ
-			mid41_point_color.push_back(mid41_contour_color); // Edge 41 color
+			// Edge 14
+			edge14_025point_color.push_back(edge14_025contour_color); // Edge 14 0.25
+			edge14_050point_color.push_back(edge14_050contour_color); // Edge 14 0.50
+			edge14_075point_color.push_back(edge14_075contour_color); // Edge 14 0.75
 
-			// Mid Node
-			midqd_point_displ.push_back(midqd_displ); // Mid displ
-			midqd_point_color.push_back(midqd_contour_color); // Mid color
+			// Edge 43
+			edge43_025point_color.push_back(edge43_025contour_color); // Edge 43 0.25
+			edge43_050point_color.push_back(edge43_050contour_color); // Edge 43 0.50
+			edge43_075point_color.push_back(edge43_075contour_color); // Edge 43 0.75
+
 		}
 
 
 		// Add to the 8 triangle list
-		modal_element_tris1_m_m12.add_tri(i, quad.nd1pt, quad.midqdpt, quad.mid12pt,
-											nd1_point_displ, midqd_point_displ, mid12_point_displ,
-											nd1_point_color, midqd_point_color, mid12_point_color); // Tri 1_m_m12
-		modal_element_tris1_m41_m.add_tri(i, quad.nd1pt, quad.mid41pt, quad.midqdpt,
-											nd1_point_displ, mid41_point_displ, midqd_point_displ,
-											nd1_point_color, mid41_point_color, midqd_point_color); // Tri 1_m41_m
-
-		modal_element_tris2_m12_m.add_tri(i, quad.nd2pt, quad.mid12pt, quad.midqdpt,
-											nd2_point_displ, mid12_point_displ, midqd_point_displ,
-											nd2_point_color, mid12_point_color, midqd_point_color); // Tri 2_m12_m
-		modal_element_tris2_m_m23.add_tri(i, quad.nd2pt, quad.midqdpt, quad.mid23pt,
-											nd2_point_displ, midqd_point_displ, mid23_point_displ,
-											nd2_point_color, midqd_point_color, mid23_point_color); // Tri 2_m_m23
-
-		modal_element_tris3_m23_m.add_tri(i, quad.nd3pt, quad.mid23pt, quad.midqdpt,
-											nd3_point_displ, mid23_point_displ, midqd_point_displ,
-											nd3_point_color, mid23_point_color, midqd_point_color); // Tri 3_m23_m
-		modal_element_tris3_m_m34.add_tri(i, quad.nd3pt, quad.midqdpt, quad.mid34pt,
-											nd3_point_displ, midqd_point_displ, mid34_point_displ,
-											nd3_point_color, midqd_point_color, mid34_point_color); // Tri 3_m_m34
-
-		modal_element_tris4_m34_m.add_tri(i, quad.nd4pt, quad.mid34pt, quad.midqdpt,
-											nd4_point_displ, mid34_point_displ, midqd_point_displ,
-											nd4_point_color, mid34_point_color, midqd_point_color); // Tri 4_m34_m
-		modal_element_tris4_m_m41.add_tri(i, quad.nd4pt, quad.midqdpt, quad.mid41pt,
-											nd4_point_displ, midqd_point_displ, mid41_point_displ,
-											nd4_point_color, midqd_point_color, mid41_point_color); // Tri 4_m_m41
-
-
+		modal_element_tris132.add_tri(i, quad.nd1pt, quad.nd3pt, quad.nd2pt,
+			nd1_point_displ, nd3_point_displ, nd2_point_displ,
+			nd1_point_color, nd3_point_color, nd2_point_color,
+			edge13_025point_color, edge13_050point_color, edge13_075point_color,
+			edge32_025point_color, edge32_050point_color, edge32_075point_color,
+			edge21_025point_color, edge21_050point_color, edge21_075point_color); // Tri 132
+		modal_element_tris143.add_tri(i, quad.nd1pt, quad.nd4pt, quad.nd3pt,
+			nd1_point_displ, nd4_point_displ, nd3_point_displ,
+			nd1_point_color, nd4_point_color, nd3_point_color,
+			edge14_025point_color, edge14_050point_color, edge14_075point_color,
+			edge43_025point_color, edge43_050point_color, edge43_075point_color,
+			edge13_075point_color, edge21_050point_color, edge13_025point_color); // Tri 143
 
 		i++;
 	}
 
 	// Set the buffer
-	modal_element_tris1_m_m12.set_buffer(); // Tri 1_m_m12
-	modal_element_tris1_m41_m.set_buffer(); // Tri 1_m41_m
-	modal_element_tris2_m12_m.set_buffer(); // Tri 2_m12_m
-	modal_element_tris2_m_m23.set_buffer(); // Tri 2_m_m23
-	modal_element_tris3_m23_m.set_buffer(); // Tri 3_m23_m
-	modal_element_tris3_m_m34.set_buffer(); // Tri 3_m_m34
-	modal_element_tris4_m34_m.set_buffer(); // Tri 4_m34_m
-	modal_element_tris4_m_m41.set_buffer(); // Tri 4_m_m41
+	modal_element_tris132.set_buffer(); // Tri 132
+	modal_element_tris143.set_buffer(); // Tri 143
+
 }
 
 
 void modal_elementquad_list_store::update_buffer(int selected_mode)
 {
 	// Update the buffer based on the selected mode
-	modal_element_tris1_m_m12.update_buffer(selected_mode); // Tri 1_m_m12
-	modal_element_tris1_m41_m.update_buffer(selected_mode); // Tri 1_m41_m
-	modal_element_tris2_m12_m.update_buffer(selected_mode); // Tri 2_m12_m
-	modal_element_tris2_m_m23.update_buffer(selected_mode); // Tri 2_m_m23
-	modal_element_tris3_m23_m.update_buffer(selected_mode); // Tri 3_m23_m
-	modal_element_tris3_m_m34.update_buffer(selected_mode); // Tri 3_m_m34
-	modal_element_tris4_m34_m.update_buffer(selected_mode); // Tri 4_m34_m
-	modal_element_tris4_m_m41.update_buffer(selected_mode); // Tri 4_m_m41
+	modal_element_tris132.update_buffer(selected_mode); // Tri 132
+	modal_element_tris143.update_buffer(selected_mode); // Tri 143
 
 }
 
@@ -373,35 +467,17 @@ void modal_elementquad_list_store::update_buffer(int selected_mode)
 void modal_elementquad_list_store::paint_modal_elementquadrilaterals()
 {
 	// Paint the triangles
-	modal_element_tris1_m_m12.paint_triangles(); // Tri 1_m_m12
-	modal_element_tris1_m41_m.paint_triangles(); // Tri 1_m41_m
-	modal_element_tris2_m12_m.paint_triangles(); // Tri 2_m12_m
-	modal_element_tris2_m_m23.paint_triangles(); // Tri 2_m_m23
-	modal_element_tris3_m23_m.paint_triangles(); // Tri 3_m23_m
-	modal_element_tris3_m_m34.paint_triangles(); // Tri 3_m_m34
-	modal_element_tris4_m34_m.paint_triangles(); // Tri 4_m34_m
-	modal_element_tris4_m_m41.paint_triangles(); // Tri 4_m_m41
+	modal_element_tris132.paint_triangles(); // Tri 132
+	modal_element_tris143.paint_triangles(); // Tri 143
 
 }
 
-void modal_elementquad_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, 
+void modal_elementquad_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation,
 	bool set_rotatetranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
-	modal_element_tris1_m_m12.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
+	modal_element_tris132.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
 		set_zoomtranslation, set_transparency, set_deflscale);
-	modal_element_tris1_m41_m.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
-		set_zoomtranslation, set_transparency, set_deflscale);
-	modal_element_tris2_m12_m.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
-		set_zoomtranslation, set_transparency, set_deflscale);
-	modal_element_tris2_m_m23.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
-		set_zoomtranslation, set_transparency, set_deflscale);
-	modal_element_tris3_m23_m.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
-		set_zoomtranslation, set_transparency, set_deflscale);
-	modal_element_tris3_m_m34.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
-		set_zoomtranslation, set_transparency, set_deflscale);
-	modal_element_tris4_m34_m.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
-		set_zoomtranslation, set_transparency, set_deflscale);
-	modal_element_tris4_m_m41.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
+	modal_element_tris143.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
 		set_zoomtranslation, set_transparency, set_deflscale);
 
 }

@@ -390,95 +390,106 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 				elementquad_store quad = quad_m.second;
 
 				// Get the mid point of all the quad edges
-				glm::vec3 mid_12 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
-					quad.nd2->node_pt, 0.5); // Mid of edge 1-2
-				glm::vec3 mid_23 = geom_parameters::linear_interpolation3d(quad.nd2->node_pt,
-					quad.nd3->node_pt, 0.5); // Mid of edge 2-3
-				glm::vec3 mid_34 = geom_parameters::linear_interpolation3d(quad.nd3->node_pt,
-					quad.nd4->node_pt, 0.5); // Mid of edge 3-4
-				glm::vec3 mid_41 = geom_parameters::linear_interpolation3d(quad.nd4->node_pt,
-					quad.nd1->node_pt, 0.5); // Mid of edge 4-1
+				// Edge 13
+				glm::vec3 edpt13_025 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
+					quad.nd3->node_pt, 0.25); // Mid of edge 13 0.25
+				glm::vec3 edpt13_050 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
+					quad.nd3->node_pt, 0.50); // Mid of edge 13 0.50
+				glm::vec3 edpt13_075 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
+					quad.nd3->node_pt, 0.75); // Mid of edge 13 0.75
 
-				// Mid poiint of quad
-				glm::vec3 mid_qd = geom_parameters::linear_interpolation3d(mid_23,
-					mid_41, 0.5); // Mid of the quad
+				// Edge 32
+				glm::vec3 edpt32_025 = geom_parameters::linear_interpolation3d(quad.nd3->node_pt,
+					quad.nd2->node_pt, 0.25); // Mid of edge 32 0.25
+				glm::vec3 edpt32_050 = geom_parameters::linear_interpolation3d(quad.nd3->node_pt,
+					quad.nd2->node_pt, 0.50); // Mid of edge 32 0.50
+				glm::vec3 edpt32_075 = geom_parameters::linear_interpolation3d(quad.nd3->node_pt,
+					quad.nd2->node_pt, 0.75); // Mid of edge 32 0.75
+
+				// Edge 21
+				glm::vec3 edpt21_025 = geom_parameters::linear_interpolation3d(quad.nd2->node_pt,
+					quad.nd1->node_pt, 0.25); // Mid of edge 21 0.25
+				glm::vec3 edpt21_050 = geom_parameters::linear_interpolation3d(quad.nd2->node_pt,
+					quad.nd1->node_pt, 0.50); // Mid of edge 21 0.50
+				glm::vec3 edpt21_075 = geom_parameters::linear_interpolation3d(quad.nd2->node_pt,
+					quad.nd1->node_pt, 0.75); // Mid of edge 21 0.75
+
+				// Edge 14
+				glm::vec3 edpt14_025 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
+					quad.nd4->node_pt, 0.25); // Mid of edge 14 0.25
+				glm::vec3 edpt14_050 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
+					quad.nd4->node_pt, 0.50); // Mid of edge 14 0.50
+				glm::vec3 edpt14_075 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
+					quad.nd4->node_pt, 0.75); // Mid of edge 14 0.75
+
+				// Edge 43
+				glm::vec3 edpt43_025 = geom_parameters::linear_interpolation3d(quad.nd4->node_pt,
+					quad.nd3->node_pt, 0.25); // Mid of edge 43 0.25
+				glm::vec3 edpt43_050 = geom_parameters::linear_interpolation3d(quad.nd4->node_pt,
+					quad.nd3->node_pt, 0.50); // Mid of edge 43 0.50
+				glm::vec3 edpt43_075 = geom_parameters::linear_interpolation3d(quad.nd4->node_pt,
+					quad.nd3->node_pt, 0.75); // Mid of edge 43 0.75
+
 
 				//_________________________________________________________________________________________________
-				glm::vec3 v12 = glm::vec3(0);
-				glm::vec3 v23 = glm::vec3(0);
-				glm::vec3 v34 = glm::vec3(0);
-				glm::vec3 v41 = glm::vec3(0);
-				glm::vec3 v_mid = glm::vec3(0);
+				glm::vec3 edgeval13_025 = glm::vec3(0.0,0.0,
+					bessel_eigen_vec(bessel_roots[i], edpt13_025, c_radius)/ column_max); // eigen vector at edge 13 0.25
+				glm::vec3 edgeval13_050 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt13_050, c_radius) / column_max); // eigen vector at edge 13 0.50
+				glm::vec3 edgeval13_075 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt13_075, c_radius) / column_max); // eigen vector at edge 13 0.75
 
-				// Edge 1-2
-				double nd_radius = glm::length(mid_12);
-				double nd_theta = std::atan2(mid_12.y, mid_12.x);
-				double radius_ratio = nd_radius / c_radius;
+				glm::vec3 edgeval32_025 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt32_025, c_radius) / column_max); // eigen vector at edge 32 0.25
+				glm::vec3 edgeval32_050 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt32_050, c_radius) / column_max); // eigen vector at edge 32 0.50
+				glm::vec3 edgeval32_075 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt32_075, c_radius) / column_max); // eigen vector at edge 32 0.75
 
-				// Eigen vector Mid of edge 1-2
-				if (nd_radius < (c_radius - 0.1))
-				{
-					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
+				glm::vec3 edgeval21_025 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt21_025, c_radius) / column_max); // eigen vector at edge 21 0.25
+				glm::vec3 edgeval21_050 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt21_050, c_radius) / column_max); // eigen vector at edge 21 0.50
+				glm::vec3 edgeval21_075 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt21_075, c_radius) / column_max); // eigen vector at edge 21 0.75
 
-					v12 = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
-				}
+				glm::vec3 edgeval14_025 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt14_025, c_radius) / column_max); // eigen vector at edge 14 0.25
+				glm::vec3 edgeval14_050 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt14_050, c_radius) / column_max); // eigen vector at edge 14 0.50
+				glm::vec3 edgeval14_075 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt14_075, c_radius) / column_max); // eigen vector at edge 14 0.75
 
-				// Edge 2-3
-				nd_radius = glm::length(mid_23);
-				nd_theta = std::atan2(mid_23.y, mid_23.x);
-				radius_ratio = nd_radius / c_radius;
+				glm::vec3 edgeval43_025 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt43_025, c_radius) / column_max); // eigen vector at edge 43 0.25
+				glm::vec3 edgeval43_050 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt43_050, c_radius) / column_max); // eigen vector at edge 43 0.50
+				glm::vec3 edgeval43_075 = glm::vec3(0.0, 0.0, 
+					bessel_eigen_vec(bessel_roots[i], edpt43_075, c_radius) / column_max); // eigen vector at edge 43 0.75
 
-				if (nd_radius < (c_radius - 0.1))
-				{
-					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
-
-					v23 = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
-				}
-
-				// Edge 3-4
-				nd_radius = glm::length(mid_34);
-				nd_theta = std::atan2(mid_34.y, mid_34.x);
-				radius_ratio = nd_radius / c_radius;
-
-				if (nd_radius < (c_radius - 0.1))
-				{
-					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
-
-					v34 = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
-				}
-
-				// Edge 4-1
-				nd_radius = glm::length(mid_41);
-				nd_theta = std::atan2(mid_41.y, mid_41.x);
-				radius_ratio = nd_radius / c_radius;
-
-				if (nd_radius < (c_radius - 0.1))
-				{
-					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
-
-					v41 = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
-				}
-
-				// Mid poiint of quad
-				nd_radius = glm::length(mid_qd);
-				nd_theta = std::atan2(mid_qd.y, mid_qd.x);
-				radius_ratio = nd_radius / c_radius;
-
-				if (nd_radius < (c_radius - 0.1))
-				{
-					double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m, bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
-
-					v_mid = glm::vec3(0.0, 0.0, t_eigen_vec / column_max);
-				}
-
+				
 				// Add to the quad mid node data
 				int quad_id = quad.quad_id;
 				quad_midnode[quad_id].quad_id = quad_id;
-				quad_midnode[quad_id].v12.push_back(v12);
-				quad_midnode[quad_id].v23.push_back(v23);
-				quad_midnode[quad_id].v34.push_back(v34);
-				quad_midnode[quad_id].v41.push_back(v41);
-				quad_midnode[quad_id].v_mid.push_back(v_mid);
+				quad_midnode[quad_id].edge13_025.push_back(edgeval13_025); // eigen vector at edge 13 0.25
+				quad_midnode[quad_id].edge13_050.push_back(edgeval13_050); // eigen vector at edge 13 0.50
+				quad_midnode[quad_id].edge13_075.push_back(edgeval13_075); // eigen vector at edge 13 0.75
+
+				quad_midnode[quad_id].edge32_025.push_back(edgeval32_025); // eigen vector at edge 32 0.25
+				quad_midnode[quad_id].edge32_050.push_back(edgeval32_050); // eigen vector at edge 32 0.50
+				quad_midnode[quad_id].edge32_075.push_back(edgeval32_075); // eigen vector at edge 32 0.75
+
+				quad_midnode[quad_id].edge21_025.push_back(edgeval21_025); // eigen vector at edge 21 0.25
+				quad_midnode[quad_id].edge21_050.push_back(edgeval21_050); // eigen vector at edge 21 0.50
+				quad_midnode[quad_id].edge21_075.push_back(edgeval21_075); // eigen vector at edge 21 0.75
+
+				quad_midnode[quad_id].edge14_025.push_back(edgeval14_025); // eigen vector at edge 14 0.25
+				quad_midnode[quad_id].edge14_050.push_back(edgeval14_050); // eigen vector at edge 14 0.50
+				quad_midnode[quad_id].edge14_075.push_back(edgeval14_075); // eigen vector at edge 14 0.75
+
+				quad_midnode[quad_id].edge43_025.push_back(edgeval43_025); // eigen vector at edge 43 0.25
+				quad_midnode[quad_id].edge43_050.push_back(edgeval43_050); // eigen vector at edge 43 0.50
+				quad_midnode[quad_id].edge43_075.push_back(edgeval43_075); // eigen vector at edge 43 0.75
 
 			}
 		}
@@ -549,11 +560,21 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 			&modal_result_nodes.modal_nodeMap[quad.nd2->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd3->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id],
-			quad_midnode[quad_id].v12,
-			quad_midnode[quad_id].v23,
-			quad_midnode[quad_id].v34,
-			quad_midnode[quad_id].v41,
-			quad_midnode[quad_id].v_mid);
+			quad_midnode[quad_id].edge13_025,
+			quad_midnode[quad_id].edge13_050,
+			quad_midnode[quad_id].edge13_075,
+			quad_midnode[quad_id].edge32_025,
+			quad_midnode[quad_id].edge32_050,
+			quad_midnode[quad_id].edge32_075,
+			quad_midnode[quad_id].edge21_025,
+			quad_midnode[quad_id].edge21_050,
+			quad_midnode[quad_id].edge21_075,
+			quad_midnode[quad_id].edge14_025,
+			quad_midnode[quad_id].edge14_050,
+			quad_midnode[quad_id].edge14_075,
+			quad_midnode[quad_id].edge43_025,
+			quad_midnode[quad_id].edge43_050,
+			quad_midnode[quad_id].edge43_075);
 	}
 
 
@@ -564,6 +585,24 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 
 
 
+}
+
+
+double modal_analysis_solver::bessel_eigen_vec(const bessel_function_Frequency& bessel_root_i, const glm::vec3& edgpt, const double& c_radius)
+{
+	double nd_radius = glm::length(edgpt); // get the radius (origin is 0,0)
+	double nd_theta = std::atan2(edgpt.y, edgpt.x); // get the theta
+	double radius_ratio = nd_radius / c_radius; // Radius ratio
+	double t_eigen_vec = 0.0;
+
+	// Eigen vector Mid of edge 1-2
+	if (nd_radius < (c_radius - 0.1))
+	{
+		t_eigen_vec = std::cyl_bessel_j(bessel_root_i.m, bessel_root_i.root_value * radius_ratio) * std::cos(bessel_root_i.m * nd_theta);
+
+	}
+
+	return t_eigen_vec;
 }
 
 

@@ -53,11 +53,26 @@ typedef boost::math::policies::policy<
 struct quad_midnode_eigenvector_store
 {
 	int quad_id = 0;
-	std::vector<glm::vec3> v12; // eigen vector at mid of 1-2
-	std::vector<glm::vec3> v23; // eigen vector at mid of 2-3
-	std::vector<glm::vec3> v34; // eigen vector at mid of 3-4
-	std::vector<glm::vec3> v41; // eigen vector at mid of 4-1
-	std::vector<glm::vec3> v_mid; // eigen vector at quad mid
+	std::vector<glm::vec3> edge13_025; // eigen vector at edge 13 0.25
+	std::vector<glm::vec3> edge13_050; // eigen vector at edge 13 0.50
+	std::vector<glm::vec3> edge13_075; // eigen vector at edge 13 0.75
+
+	std::vector<glm::vec3> edge32_025; // eigen vector at edge 32 0.25
+	std::vector<glm::vec3> edge32_050; // eigen vector at edge 32 0.50
+	std::vector<glm::vec3> edge32_075; // eigen vector at edge 32 0.75
+
+	std::vector<glm::vec3> edge21_025; // eigen vector at edge 21 0.25
+	std::vector<glm::vec3> edge21_050; // eigen vector at edge 21 0.50
+	std::vector<glm::vec3> edge21_075; // eigen vector at edge 21 0.75
+
+	std::vector<glm::vec3> edge14_025; // eigen vector at edge 14 0.25
+	std::vector<glm::vec3> edge14_050; // eigen vector at edge 14 0.50
+	std::vector<glm::vec3> edge14_075; // eigen vector at edge 14 0.75
+
+	std::vector<glm::vec3> edge43_025; // eigen vector at edge 43 0.25
+	std::vector<glm::vec3> edge43_050; // eigen vector at edge 43 0.50
+	std::vector<glm::vec3> edge43_075; // eigen vector at edge 43 0.75
+
 };
 
 
@@ -127,6 +142,8 @@ private:
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements,
 		modal_elementquad_list_store& modal_result_quadelements);
+
+	double bessel_eigen_vec(const bessel_function_Frequency& bessel_root_i, const glm::vec3& edgpt, const double& c_radius);
 
 	void modal_analysis_model_rectangular1(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements, 
