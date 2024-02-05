@@ -49,29 +49,11 @@ typedef boost::math::policies::policy<
 	boost::math::policies::evaluation_error<boost::math::policies::ignore_error>
 > ignore_all_policy;
 
-
 struct quad_midnode_eigenvector_store
 {
 	int quad_id = 0;
-	std::vector<glm::vec3> edge13_025; // eigen vector at edge 13 0.25
-	std::vector<glm::vec3> edge13_050; // eigen vector at edge 13 0.50
-	std::vector<glm::vec3> edge13_075; // eigen vector at edge 13 0.75
-
-	std::vector<glm::vec3> edge32_025; // eigen vector at edge 32 0.25
-	std::vector<glm::vec3> edge32_050; // eigen vector at edge 32 0.50
-	std::vector<glm::vec3> edge32_075; // eigen vector at edge 32 0.75
-
-	std::vector<glm::vec3> edge21_025; // eigen vector at edge 21 0.25
-	std::vector<glm::vec3> edge21_050; // eigen vector at edge 21 0.50
-	std::vector<glm::vec3> edge21_075; // eigen vector at edge 21 0.75
-
-	std::vector<glm::vec3> edge14_025; // eigen vector at edge 14 0.25
-	std::vector<glm::vec3> edge14_050; // eigen vector at edge 14 0.50
-	std::vector<glm::vec3> edge14_075; // eigen vector at edge 14 0.75
-
-	std::vector<glm::vec3> edge43_025; // eigen vector at edge 43 0.25
-	std::vector<glm::vec3> edge43_050; // eigen vector at edge 43 0.50
-	std::vector<glm::vec3> edge43_075; // eigen vector at edge 43 0.75
+	glm::vec3 mid_pt = glm::vec3(0);
+	std::vector<glm::vec3> midpt_modal_displ; // eigen vector at edge 13 0.25
 
 };
 

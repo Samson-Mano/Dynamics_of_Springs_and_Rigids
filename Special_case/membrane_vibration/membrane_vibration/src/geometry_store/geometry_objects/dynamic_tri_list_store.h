@@ -18,25 +18,11 @@ struct dynamic_tri_store
 	std::vector<glm::vec3> tript2_offset;
 	std::vector<glm::vec3> tript3_offset;
 
-	// color
-	std::vector<glm::vec3> tript1_color;
-	std::vector<glm::vec3> tript2_color;
-	std::vector<glm::vec3> tript3_color;
+	// Deflection value
+	std::vector<double> tript1_offset_val;
+	std::vector<double> tript2_offset_val;
+	std::vector<double> tript3_offset_val;
 
-	// Edge 12
-	std::vector<glm::vec3> edge12_025color;
-	std::vector<glm::vec3> edge12_050color;
-	std::vector<glm::vec3> edge12_075color;
-
-	// Edge 23
-	std::vector<glm::vec3> edge23_025color;
-	std::vector<glm::vec3> edge23_050color;
-	std::vector<glm::vec3> edge23_075color;
-
-	// Edge 31
-	std::vector<glm::vec3> edge31_025color;
-	std::vector<glm::vec3> edge31_050color;
-	std::vector<glm::vec3> edge31_075color;
 };
 
 
@@ -51,11 +37,7 @@ public:
 	~dynamic_tri_list_store();
 	void init(geom_parameters* geom_param_ptr);
 	void add_tri(int& tri_id, glm::vec3& tript1_loc, glm::vec3& tript2_loc, glm::vec3& tript3_loc,
-		std::vector<glm::vec3>& tript1_offset, std::vector<glm::vec3>& tript2_offset, std::vector<glm::vec3>& tript3_offset,
-		std::vector<glm::vec3>& tript1_color, std::vector<glm::vec3>& tript2_color, std::vector<glm::vec3>& tript3_color,
-		std::vector<glm::vec3>& edge12_025color, std::vector<glm::vec3>& edge12_050color, std::vector<glm::vec3>& edge12_075color,
-		std::vector<glm::vec3>& edge23_025color, std::vector<glm::vec3>& edge23_050color, std::vector<glm::vec3>& edge23_075color,
-		std::vector<glm::vec3>& edge31_025color, std::vector<glm::vec3>& edge31_050color, std::vector<glm::vec3>& edge31_075color);
+		std::vector<glm::vec3>& tript1_offset, std::vector<glm::vec3>& tript2_offset, std::vector<glm::vec3>& tript3_offset);
 
 	void set_buffer();
 	void paint_triangles();

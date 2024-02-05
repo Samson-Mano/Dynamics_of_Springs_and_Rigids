@@ -30,11 +30,7 @@ void dynamic_tri_list_store::init(geom_parameters* geom_param_ptr)
 
 
 void dynamic_tri_list_store::add_tri(int& tri_id, glm::vec3& tript1_loc, glm::vec3& tript2_loc, glm::vec3& tript3_loc,
-	std::vector<glm::vec3>& tript1_offset, std::vector<glm::vec3>& tript2_offset, std::vector<glm::vec3>& tript3_offset,
-	std::vector<glm::vec3>& tript1_color, std::vector<glm::vec3>& tript2_color, std::vector<glm::vec3>& tript3_color,
-	std::vector<glm::vec3>& edge12_025color, std::vector<glm::vec3>& edge12_050color, std::vector<glm::vec3>& edge12_075color,
-	std::vector<glm::vec3>& edge23_025color, std::vector<glm::vec3>& edge23_050color, std::vector<glm::vec3>& edge23_075color,
-	std::vector<glm::vec3>& edge31_025color, std::vector<glm::vec3>& edge31_050color, std::vector<glm::vec3>& edge31_075color)
+	std::vector<glm::vec3>& tript1_offset, std::vector<glm::vec3>& tript2_offset, std::vector<glm::vec3>& tript3_offset)
 {
 	// Create a temporary lines
 	dynamic_tri_store dyn_temp_tri;
@@ -50,27 +46,22 @@ void dynamic_tri_list_store::add_tri(int& tri_id, glm::vec3& tript1_loc, glm::ve
 	dyn_temp_tri.tript2_offset = tript2_offset;
 	dyn_temp_tri.tript3_offset = tript3_offset;
 
-	// Tri vertex Color
-	dyn_temp_tri.tript1_color = tript1_color;
-	dyn_temp_tri.tript2_color = tript2_color;
-	dyn_temp_tri.tript3_color = tript3_color;
+	// Tri offset values
+	std::vector<double> temp_tript1_offset;
+	std::vector<double> temp_tript2_offset;
+	std::vector<double> temp_tript3_offset;
 
-	// Tri Edge color
-	// Edge 12
-	dyn_temp_tri.edge12_025color = edge12_025color;
-	dyn_temp_tri.edge12_050color = edge12_050color;
-	dyn_temp_tri.edge12_075color = edge12_075color;
+	for (int i = 0; i < static_cast<int>(tript1_offset.size()); i++)
+	{
+		temp_tript1_offset.push_back(glm::length(tript1_offset[i]));
+		temp_tript2_offset.push_back(glm::length(tript2_offset[i]));
+		temp_tript3_offset.push_back(glm::length(tript3_offset[i]));
+	}
 
-	// Edge 23
-	dyn_temp_tri.edge23_025color = edge23_025color;
-	dyn_temp_tri.edge23_050color = edge23_050color;
-	dyn_temp_tri.edge23_075color = edge23_075color;
 
-	// Edge 31
-	dyn_temp_tri.edge31_025color = edge31_025color;
-	dyn_temp_tri.edge31_050color = edge31_050color;
-	dyn_temp_tri.edge31_075color = edge31_075color;
-
+	dyn_temp_tri.tript1_offset_val = temp_tript1_offset;
+	dyn_temp_tri.tript2_offset_val = temp_tript2_offset;
+	dyn_temp_tri.tript3_offset_val = temp_tript3_offset;
 
 	// Reserve space for the new element
 	dyn_triMap.reserve(dyn_triMap.size() + 1);
@@ -102,13 +93,11 @@ void dynamic_tri_list_store::set_buffer()
 	VertexBufferLayout tri_pt_layout;
 	tri_pt_layout.AddFloat(3);  // Node center
 	tri_pt_layout.AddFloat(3);  // Node offset
-	tri_pt_layout.AddFloat(3);  // vertex Color
-	tri_pt_layout.AddFloat(3);  // edge 025 Color
-	tri_pt_layout.AddFloat(3);  // edge 050 Color
-	tri_pt_layout.AddFloat(3);  // edge 075 Color
+	tri_pt_layout.AddFloat(1);  // Defl
+
 
 	// Define the node vertices of the model for a node (3 position, 3 defl, 3 color, 3 Edge 025, 3 Edge 050, 3 Edge 075 ) 
-	const unsigned int tri_vertex_count = 18 * 3 * dyn_tri_count;
+	const unsigned int tri_vertex_count = 7 * 3 * dyn_tri_count;
 	unsigned int tri_vertex_size = tri_vertex_count * sizeof(float); // Size of the node_vertex
 
 	// Create the Node Deflection buffers
@@ -153,7 +142,7 @@ void dynamic_tri_list_store::paint_triangles()
 void dynamic_tri_list_store::update_buffer(const int& dyn_index)
 {
 	// Define the node vertices of the model for a node (3 position, 3 defl, 3 color, 3 Edge 025, 3 Edge 050, 3 Edge 075 ) 
-	const unsigned int tri_vertex_count = 18 * 3 * dyn_tri_count;
+	const unsigned int tri_vertex_count = 7 * 3 * dyn_tri_count;
 	float* tri_vertices = new float[tri_vertex_count];
 
 	unsigned int tri_v_index = 0;
@@ -244,28 +233,11 @@ void dynamic_tri_list_store::get_tri_vertex_buffer(dynamic_tri_store& tri, const
 	dyn_tri_vertices[dyn_tri_v_index + 4] = tri.tript1_offset[dyn_index].y;
 	dyn_tri_vertices[dyn_tri_v_index + 5] = tri.tript1_offset[dyn_index].z;
 
-	// Point color
-	dyn_tri_vertices[dyn_tri_v_index + 6] = tri.tript1_color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 7] = tri.tript1_color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 8] = tri.tript1_color[dyn_index].z;
-
-	// Edge 12 025
-	dyn_tri_vertices[dyn_tri_v_index + 9] = tri.edge12_025color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 10] = tri.edge12_025color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 11] = tri.edge12_025color[dyn_index].z;
-
-	// Edge 12 050
-	dyn_tri_vertices[dyn_tri_v_index + 12] = tri.edge12_050color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 13] = tri.edge12_050color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 14] = tri.edge12_050color[dyn_index].z;
-
-	// Edge 12 075
-	dyn_tri_vertices[dyn_tri_v_index + 15] = tri.edge12_075color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 16] = tri.edge12_075color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 17] = tri.edge12_075color[dyn_index].z;
+	// Normalized deflection value
+	dyn_tri_vertices[dyn_tri_v_index + 6] = tri.tript1_offset_val[dyn_index];
 
 	// Iterate
-	dyn_tri_v_index = dyn_tri_v_index + 18;
+	dyn_tri_v_index = dyn_tri_v_index + 7;
 
 	// Tri Point 2
 	// Point location
@@ -278,28 +250,11 @@ void dynamic_tri_list_store::get_tri_vertex_buffer(dynamic_tri_store& tri, const
 	dyn_tri_vertices[dyn_tri_v_index + 4] = tri.tript2_offset[dyn_index].y;
 	dyn_tri_vertices[dyn_tri_v_index + 5] = tri.tript2_offset[dyn_index].z;
 
-	// Point color
-	dyn_tri_vertices[dyn_tri_v_index + 6] = tri.tript2_color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 7] = tri.tript2_color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 8] = tri.tript2_color[dyn_index].z;
-
-	// Edge 23 025
-	dyn_tri_vertices[dyn_tri_v_index + 9] = tri.edge23_025color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 10] = tri.edge23_025color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 11] = tri.edge23_025color[dyn_index].z;
-
-	// Edge 23 050
-	dyn_tri_vertices[dyn_tri_v_index + 12] = tri.edge23_050color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 13] = tri.edge23_050color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 14] = tri.edge23_050color[dyn_index].z;
-
-	// Edge 23 075
-	dyn_tri_vertices[dyn_tri_v_index + 15] = tri.edge23_075color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 16] = tri.edge23_075color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 17] = tri.edge23_075color[dyn_index].z;
-
+	// Normalized deflection value
+	dyn_tri_vertices[dyn_tri_v_index + 6] = tri.tript2_offset_val[dyn_index];
+	
 	// Iterate
-	dyn_tri_v_index = dyn_tri_v_index + 18;
+	dyn_tri_v_index = dyn_tri_v_index + 7;
 
 
 	// Tri Point 3
@@ -313,28 +268,11 @@ void dynamic_tri_list_store::get_tri_vertex_buffer(dynamic_tri_store& tri, const
 	dyn_tri_vertices[dyn_tri_v_index + 4] = tri.tript3_offset[dyn_index].y;
 	dyn_tri_vertices[dyn_tri_v_index + 5] = tri.tript3_offset[dyn_index].z;
 
-	// Point color
-	dyn_tri_vertices[dyn_tri_v_index + 6] = tri.tript3_color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 7] = tri.tript3_color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 8] = tri.tript3_color[dyn_index].z;
-
-	// Edge 31 025
-	dyn_tri_vertices[dyn_tri_v_index + 9] = tri.edge31_025color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 10] = tri.edge31_025color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 11] = tri.edge31_025color[dyn_index].z;
-
-	// Edge 31 050
-	dyn_tri_vertices[dyn_tri_v_index + 12] = tri.edge31_050color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 13] = tri.edge31_050color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 14] = tri.edge31_050color[dyn_index].z;
-
-	// Edge 31 075
-	dyn_tri_vertices[dyn_tri_v_index + 15] = tri.edge31_075color[dyn_index].x;
-	dyn_tri_vertices[dyn_tri_v_index + 16] = tri.edge31_075color[dyn_index].y;
-	dyn_tri_vertices[dyn_tri_v_index + 17] = tri.edge31_075color[dyn_index].z;
-
+	// Normalized deflection value
+	dyn_tri_vertices[dyn_tri_v_index + 6] = tri.tript3_offset_val[dyn_index];
+	
 	// Iterate
-	dyn_tri_v_index = dyn_tri_v_index + 18;
+	dyn_tri_v_index = dyn_tri_v_index + 7;
 }
 
 

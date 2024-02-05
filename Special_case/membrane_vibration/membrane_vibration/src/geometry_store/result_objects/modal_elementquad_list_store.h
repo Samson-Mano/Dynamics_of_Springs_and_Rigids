@@ -16,33 +16,14 @@ struct modal_elementquad_store
 	glm::vec3 nd2pt = glm::vec3(0);
 	glm::vec3 nd3pt = glm::vec3(0);
 	glm::vec3 nd4pt = glm::vec3(0);
+	glm::vec3 midpt = glm::vec3(0);
 
 	// Point displacements
 	std::vector<glm::vec3> nd1_modal_displ;
 	std::vector<glm::vec3> nd2_modal_displ;
 	std::vector<glm::vec3> nd3_modal_displ;
 	std::vector<glm::vec3> nd4_modal_displ;
-
-	std::vector<glm::vec3> edge13_025modal_displ; // edge 13 0.25
-	std::vector<glm::vec3> edge13_050modal_displ; // edge 13 0.50
-	std::vector<glm::vec3> edge13_075modal_displ; // edge 13 0.75
-
-	std::vector<glm::vec3> edge32_025modal_displ; // edge 32 0.25
-	std::vector<glm::vec3> edge32_050modal_displ; // edge 32 0.50
-	std::vector<glm::vec3> edge32_075modal_displ; // edge 32 0.75
-
-	std::vector<glm::vec3> edge21_025modal_displ; // edge 21 0.25
-	std::vector<glm::vec3> edge21_050modal_displ; // edge 21 0.50
-	std::vector<glm::vec3> edge21_075modal_displ; // edge 21 0.75
-
-	std::vector<glm::vec3> edge14_025modal_displ; // edge 14 0.25
-	std::vector<glm::vec3> edge14_050modal_displ; // edge 14 0.50
-	std::vector<glm::vec3> edge14_075modal_displ; // edge 14 0.75
-
-	std::vector<glm::vec3> edge43_025modal_displ; // edge 43 0.25
-	std::vector<glm::vec3> edge43_050modal_displ; // edge 43 0.50
-	std::vector<glm::vec3> edge43_075modal_displ; // edge 43 0.75
-
+	std::vector<glm::vec3> midpt_modal_displ;
 
 };
 
@@ -57,22 +38,7 @@ public:
 	~modal_elementquad_list_store();
 	void init(geom_parameters* geom_param_ptr);
 	void add_modal_elementquadrilateral(int& quad_id, modal_node_store* nd1, modal_node_store* nd2,
-		modal_node_store* nd3, modal_node_store* nd4,
-		std::vector<glm::vec3> edge13_025modal_displ, // edge 13 0.25
-		std::vector<glm::vec3> edge13_050modal_displ, // edge 13 0.50
-		std::vector<glm::vec3> edge13_075modal_displ, // edge 13 0.75
-		std::vector<glm::vec3> edge32_025modal_displ, // edge 32 0.25
-		std::vector<glm::vec3> edge32_050modal_displ, // edge 32 0.50
-		std::vector<glm::vec3> edge32_075modal_displ, // edge 32 0.75
-		std::vector<glm::vec3> edge21_025modal_displ, // edge 21 0.25
-		std::vector<glm::vec3> edge21_050modal_displ, // edge 21 0.50
-		std::vector<glm::vec3> edge21_075modal_displ, // edge 21 0.75
-		std::vector<glm::vec3> edge14_025modal_displ, // edge 14 0.25
-		std::vector<glm::vec3> edge14_050modal_displ, // edge 14 0.50
-		std::vector<glm::vec3> edge14_075modal_displ, // edge 14 0.75
-		std::vector<glm::vec3> edge43_025modal_displ, // edge 43 0.25
-		std::vector<glm::vec3> edge43_050modal_displ, // edge 43 0.50
-		std::vector<glm::vec3> edge43_075modal_displ); // edge 43 0.75
+		modal_node_store* nd3, modal_node_store* nd4, glm::vec3& midpt, std::vector<glm::vec3>& midpt_modal_displ);
 
 	void clear_data();
 	void set_buffer();
@@ -83,14 +49,16 @@ public:
 private:
 	geom_parameters* geom_param_ptr = nullptr;
 	// Anti clockwise
-	//   4____m34____3		
+	//   4___________3		
 	//   |		     |     
-	//   m41	m	m23
+	//   |	   m	 |
 	//   |			 |    
-	//   1_____m12___2        
+	//   1___________2        
 
-	dynamic_tri_list_store modal_element_tris132; // Tri 132
-	dynamic_tri_list_store modal_element_tris143; // Tri 143
+	dynamic_tri_list_store modal_element_tris1m2; // Tri 1m2
+	dynamic_tri_list_store modal_element_tris2m3; // Tri 2m3
+	dynamic_tri_list_store modal_element_tris3m4; // Tri 3m4
+	dynamic_tri_list_store modal_element_tris4m1; // Tri 4m1
 
 
 };

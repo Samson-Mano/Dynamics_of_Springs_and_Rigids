@@ -65,7 +65,6 @@ void modal_nodes_list_store::set_buffer()
 		modal_node_store nd = nd_m.second;
 
 		std::vector<glm::vec3> point_displ; // point displ
-		std::vector<glm::vec3> point_color; // point color
 
 		for (int i = 0; i < static_cast<int>(nd.node_modal_displ.size()); i++)
 		{
@@ -73,19 +72,13 @@ void modal_nodes_list_store::set_buffer()
 				nd.node_modal_displ[i].y,
 				nd.node_modal_displ[i].z);
 
-			// Find the displacment value
-			double pt_displ_value = glm::length(pt_displ);
-
-			glm::vec3 pt_contour_color = geom_parameters::getContourColor_d(static_cast<float>(1.0 - pt_displ_value));
-
 			// Add to the list
 			point_displ.push_back(pt_displ);
-			point_color.push_back(pt_contour_color);
 
 		}
 
 		// Add all the points
-		modal_node_points.add_point(nd.node_id, nd.node_pt, point_displ, point_color);
+		modal_node_points.add_point(nd.node_id, nd.node_pt, point_displ);
 
 	}
 

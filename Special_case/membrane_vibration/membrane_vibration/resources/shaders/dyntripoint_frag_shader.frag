@@ -1,31 +1,24 @@
 #version 330 core
 
-in vec4 v_Color;
-in vec4 e025_Color;
-in vec4 e050_Color;
-in vec4 e075_Color;
+in float v_defl_length;
+in float v_normalized_deflscale;
+in float v_transparency;
 
 out vec4 f_Color; // fragment's final color (out to the fragment shader)
 
-void main() {
-    // Barycentric coordinates
-    vec3 barycentric = vec3(1.0 - gl_FragCoord.y / gl_FragCoord.w - gl_FragCoord.x / gl_FragCoord.w,
-                             gl_FragCoord.y / gl_FragCoord.w,
-                             gl_FragCoord.x / gl_FragCoord.w);
-    
-    // Interpolate the fragment color using barycentric coordinates
-    // vec4 interpolatedColor = vec4(v_Color.rgb * barycentric.x, v_Color.a) +
-       //                      vec4(e025_Color.rgb * barycentric.y, e025_Color.a) +
-       //                      vec4(e050_Color.rgb * barycentric.z, e050_Color.a) +
-       //                      vec4(e075_Color.rgb * (1.0 - barycentric.y - barycentric.z), e075_Color.a);
+
+vec3 jetHeatmap(float value) 
+{
+
+    return clamp(vec3(1.5) - abs(4.0 * vec3(value) + vec3(-3, -2, -1)), vec3(0), vec3(1));
+}
 
 
-     vec4 interpolatedColor = vec4(v_Color.rgb * barycentric.x, v_Color.a) +
-                             vec4(e025_Color.rgb * barycentric.y, e025_Color.a) +
-                             vec4(e050_Color.rgb * barycentric.z, e050_Color.a) +
-                             vec4(e075_Color.rgb * (1.0 - barycentric.y - barycentric.z), e075_Color.a);
+void main() 
+{
+    float interpolated_defl = v_defl_length *  v_normalized_deflscale; // varies between maximum of -1.0 to 1.0
 
-    // https://stackoverflow.com/questions/18035719/drawing-a-border-on-a-2d-polygon-with-a-fragment-shader
-    
-    f_Color = interpolatedColor; // Set the final color
+    vec3 vertexColor = jetHeatmap(interpolated_defl);
+
+    f_Color = vec4(vertexColor, v_transparency); // Set the final color
 }

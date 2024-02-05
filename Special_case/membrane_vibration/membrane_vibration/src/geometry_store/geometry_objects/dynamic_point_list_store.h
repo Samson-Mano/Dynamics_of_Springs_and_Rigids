@@ -8,7 +8,7 @@ struct dynamic_point_store
 	int point_id = 0;
 	glm::vec3 point_loc = glm::vec3(0);
 	std::vector<glm::vec3> point_offset; // Dynamic point offset
-	std::vector<glm::vec3> point_color; // Dynamic point color
+	std::vector<double> point_offset_val; // Dynamic point offset values
 	int offset_pt_count = 0;
 };
 
@@ -22,7 +22,7 @@ public:
 	dynamic_point_list_store();
 	~dynamic_point_list_store();
 	void init(geom_parameters* geom_param_ptr);
-	void add_point(int& point_id, glm::vec3& point_loc, std::vector<glm::vec3>& point_offset, std::vector<glm::vec3>& point_color);
+	void add_point(int& point_id, glm::vec3& point_loc, std::vector<glm::vec3>& point_offset);
 	void set_buffer();
 	void paint_points();
 	void paint_points(const int& dyn_index);

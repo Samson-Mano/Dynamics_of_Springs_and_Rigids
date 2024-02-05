@@ -178,7 +178,7 @@ void modal_analysis_window::render_window()
 			// Handle Stop button click
 			animate_play = false;
 			animate_pause = true;
-			time_val = 0.0f;
+			time_val = 0.235619449f;
 		}
 
 		// Animation speed control

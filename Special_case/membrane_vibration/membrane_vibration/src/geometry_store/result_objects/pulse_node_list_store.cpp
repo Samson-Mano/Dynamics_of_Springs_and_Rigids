@@ -92,7 +92,7 @@ void pulse_node_list_store::set_buffer()
 		}
 
 		// Add to the pulse points
-		pulse_node_points.add_point(nd.node_id, nd.node_pt, point_offset, point_color);
+		pulse_node_points.add_point(nd.node_id, nd.node_pt, point_offset);
 	}
 
 	// Set buffer

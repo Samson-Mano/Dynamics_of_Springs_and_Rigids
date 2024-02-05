@@ -221,6 +221,11 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	}
 
 
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Modal analysis complete at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
 }
 
 void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_store& model_nodes,
@@ -308,11 +313,33 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 		j++;
 	}
 
+	//________________________________________________________________________________________________________________
 
 	// Create the mode shapes
 	this->number_of_modes = 0;
 
 	std::unordered_map<int, quad_midnode_eigenvector_store> quad_midnode;
+
+	// Create the quad mid nodes
+	for (auto& quad_m : model_quadelements.elementquadMap)
+	{
+		elementquad_store quad = quad_m.second;
+
+		// Get the mid point of the quad
+		std::vector<glm::vec3> quad_corner_pts;
+
+		quad_corner_pts.push_back(quad.nd1->node_pt); // quad point 1
+		quad_corner_pts.push_back(quad.nd2->node_pt); // quad point 2
+		quad_corner_pts.push_back(quad.nd3->node_pt); // quad point 3
+		quad_corner_pts.push_back(quad.nd4->node_pt); // quad point 4
+
+		// Quad mid point
+		glm::vec3 quad_midpt = geom_parameters::findGeometricCenter(quad_corner_pts);
+
+		quad_midnode[quad.quad_id].mid_pt = quad_midpt;
+	}
+
+	//________________________________________________________________________________________________________________
 
 	for (int i =0; i<this->matrix_size; i++)
 	{
@@ -349,25 +376,8 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 			int displ_matrix_index = nodeid_map[node_id];
 			int eigvec_matrix_index = eigen_vec_nodeid_map[node_id];
 
-			// Ignore the boundary nodes
-			// Check for boundary nodes
-			double nd_radius = glm::length(node_pt);
-			double nd_theta = std::atan2(node_pt.y, node_pt.x);
-
-			if (nd_radius  >= (c_radius - 0.1))
-			{
-				// Zero for fixed nodes
-				displ_vectors_matrix.coeffRef(displ_matrix_index, i) = 0.0;
-				continue;
-			}
-
-
-			// Get the radius ratio
-			double radius_ratio = nd_radius / c_radius;
-
 			// Eigen vectors
-			double t_eigen_vec = std::cyl_bessel_j(bessel_roots[i].m,bessel_roots[i].root_value * radius_ratio) * std::cos(bessel_roots[i].m * nd_theta);
-
+			double t_eigen_vec = bessel_eigen_vec(bessel_roots[i], node_pt, c_radius);
 
 			displ_vectors_matrix.coeffRef(displ_matrix_index, i) = t_eigen_vec;
 
@@ -381,119 +391,27 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 		displ_vectors_matrix.col(i) = displ_vectors_matrix.col(i) / column_max;
 		eigen_vectors_matrix.col(i) = eigen_vectors_matrix.col(i) / column_max;
 
-
 		// Quad
+		// Quad Eigen vector calculation
 		if (this->number_of_modes <= paint_mode_count)
 		{
 			for (auto& quad_m : model_quadelements.elementquadMap)
 			{
 				elementquad_store quad = quad_m.second;
 
-				// Get the mid point of all the quad edges
-				// Edge 13
-				glm::vec3 edpt13_025 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
-					quad.nd3->node_pt, 0.25); // Mid of edge 13 0.25
-				glm::vec3 edpt13_050 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
-					quad.nd3->node_pt, 0.50); // Mid of edge 13 0.50
-				glm::vec3 edpt13_075 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
-					quad.nd3->node_pt, 0.75); // Mid of edge 13 0.75
-
-				// Edge 32
-				glm::vec3 edpt32_025 = geom_parameters::linear_interpolation3d(quad.nd3->node_pt,
-					quad.nd2->node_pt, 0.25); // Mid of edge 32 0.25
-				glm::vec3 edpt32_050 = geom_parameters::linear_interpolation3d(quad.nd3->node_pt,
-					quad.nd2->node_pt, 0.50); // Mid of edge 32 0.50
-				glm::vec3 edpt32_075 = geom_parameters::linear_interpolation3d(quad.nd3->node_pt,
-					quad.nd2->node_pt, 0.75); // Mid of edge 32 0.75
-
-				// Edge 21
-				glm::vec3 edpt21_025 = geom_parameters::linear_interpolation3d(quad.nd2->node_pt,
-					quad.nd1->node_pt, 0.25); // Mid of edge 21 0.25
-				glm::vec3 edpt21_050 = geom_parameters::linear_interpolation3d(quad.nd2->node_pt,
-					quad.nd1->node_pt, 0.50); // Mid of edge 21 0.50
-				glm::vec3 edpt21_075 = geom_parameters::linear_interpolation3d(quad.nd2->node_pt,
-					quad.nd1->node_pt, 0.75); // Mid of edge 21 0.75
-
-				// Edge 14
-				glm::vec3 edpt14_025 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
-					quad.nd4->node_pt, 0.25); // Mid of edge 14 0.25
-				glm::vec3 edpt14_050 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
-					quad.nd4->node_pt, 0.50); // Mid of edge 14 0.50
-				glm::vec3 edpt14_075 = geom_parameters::linear_interpolation3d(quad.nd1->node_pt,
-					quad.nd4->node_pt, 0.75); // Mid of edge 14 0.75
-
-				// Edge 43
-				glm::vec3 edpt43_025 = geom_parameters::linear_interpolation3d(quad.nd4->node_pt,
-					quad.nd3->node_pt, 0.25); // Mid of edge 43 0.25
-				glm::vec3 edpt43_050 = geom_parameters::linear_interpolation3d(quad.nd4->node_pt,
-					quad.nd3->node_pt, 0.50); // Mid of edge 43 0.50
-				glm::vec3 edpt43_075 = geom_parameters::linear_interpolation3d(quad.nd4->node_pt,
-					quad.nd3->node_pt, 0.75); // Mid of edge 43 0.75
-
+				int quad_id = quad.quad_id;
 
 				//_________________________________________________________________________________________________
-				glm::vec3 edgeval13_025 = glm::vec3(0.0,0.0,
-					bessel_eigen_vec(bessel_roots[i], edpt13_025, c_radius)/ column_max); // eigen vector at edge 13 0.25
-				glm::vec3 edgeval13_050 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt13_050, c_radius) / column_max); // eigen vector at edge 13 0.50
-				glm::vec3 edgeval13_075 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt13_075, c_radius) / column_max); // eigen vector at edge 13 0.75
-
-				glm::vec3 edgeval32_025 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt32_025, c_radius) / column_max); // eigen vector at edge 32 0.25
-				glm::vec3 edgeval32_050 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt32_050, c_radius) / column_max); // eigen vector at edge 32 0.50
-				glm::vec3 edgeval32_075 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt32_075, c_radius) / column_max); // eigen vector at edge 32 0.75
-
-				glm::vec3 edgeval21_025 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt21_025, c_radius) / column_max); // eigen vector at edge 21 0.25
-				glm::vec3 edgeval21_050 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt21_050, c_radius) / column_max); // eigen vector at edge 21 0.50
-				glm::vec3 edgeval21_075 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt21_075, c_radius) / column_max); // eigen vector at edge 21 0.75
-
-				glm::vec3 edgeval14_025 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt14_025, c_radius) / column_max); // eigen vector at edge 14 0.25
-				glm::vec3 edgeval14_050 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt14_050, c_radius) / column_max); // eigen vector at edge 14 0.50
-				glm::vec3 edgeval14_075 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt14_075, c_radius) / column_max); // eigen vector at edge 14 0.75
-
-				glm::vec3 edgeval43_025 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt43_025, c_radius) / column_max); // eigen vector at edge 43 0.25
-				glm::vec3 edgeval43_050 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt43_050, c_radius) / column_max); // eigen vector at edge 43 0.50
-				glm::vec3 edgeval43_075 = glm::vec3(0.0, 0.0, 
-					bessel_eigen_vec(bessel_roots[i], edpt43_075, c_radius) / column_max); // eigen vector at edge 43 0.75
-
+				glm::vec3 quad_midpt_eigvec = glm::vec3(0.0, 0.0,
+					bessel_eigen_vec(bessel_roots[i], quad_midnode[quad_id].mid_pt, c_radius) / column_max); // eigen vector at quad mid pt
 				
-				// Add to the quad mid node data
-				int quad_id = quad.quad_id;
-				quad_midnode[quad_id].quad_id = quad_id;
-				quad_midnode[quad_id].edge13_025.push_back(edgeval13_025); // eigen vector at edge 13 0.25
-				quad_midnode[quad_id].edge13_050.push_back(edgeval13_050); // eigen vector at edge 13 0.50
-				quad_midnode[quad_id].edge13_075.push_back(edgeval13_075); // eigen vector at edge 13 0.75
-
-				quad_midnode[quad_id].edge32_025.push_back(edgeval32_025); // eigen vector at edge 32 0.25
-				quad_midnode[quad_id].edge32_050.push_back(edgeval32_050); // eigen vector at edge 32 0.50
-				quad_midnode[quad_id].edge32_075.push_back(edgeval32_075); // eigen vector at edge 32 0.75
-
-				quad_midnode[quad_id].edge21_025.push_back(edgeval21_025); // eigen vector at edge 21 0.25
-				quad_midnode[quad_id].edge21_050.push_back(edgeval21_050); // eigen vector at edge 21 0.50
-				quad_midnode[quad_id].edge21_075.push_back(edgeval21_075); // eigen vector at edge 21 0.75
-
-				quad_midnode[quad_id].edge14_025.push_back(edgeval14_025); // eigen vector at edge 14 0.25
-				quad_midnode[quad_id].edge14_050.push_back(edgeval14_050); // eigen vector at edge 14 0.50
-				quad_midnode[quad_id].edge14_075.push_back(edgeval14_075); // eigen vector at edge 14 0.75
-
-				quad_midnode[quad_id].edge43_025.push_back(edgeval43_025); // eigen vector at edge 43 0.25
-				quad_midnode[quad_id].edge43_050.push_back(edgeval43_050); // eigen vector at edge 43 0.50
-				quad_midnode[quad_id].edge43_075.push_back(edgeval43_075); // eigen vector at edge 43 0.75
+				// Add to the quad mid node eigenvector list
+				quad_midnode[quad_id].midpt_modal_displ.push_back(quad_midpt_eigvec);
 
 			}
 		}
-		
+
+
 	}
 
 	double inv_factor = 2.0 / static_cast<float>(matrix_size);
@@ -560,21 +478,8 @@ void modal_analysis_solver::modal_analysis_model_circular1(const nodes_list_stor
 			&modal_result_nodes.modal_nodeMap[quad.nd2->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd3->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id],
-			quad_midnode[quad_id].edge13_025,
-			quad_midnode[quad_id].edge13_050,
-			quad_midnode[quad_id].edge13_075,
-			quad_midnode[quad_id].edge32_025,
-			quad_midnode[quad_id].edge32_050,
-			quad_midnode[quad_id].edge32_075,
-			quad_midnode[quad_id].edge21_025,
-			quad_midnode[quad_id].edge21_050,
-			quad_midnode[quad_id].edge21_075,
-			quad_midnode[quad_id].edge14_025,
-			quad_midnode[quad_id].edge14_050,
-			quad_midnode[quad_id].edge14_075,
-			quad_midnode[quad_id].edge43_025,
-			quad_midnode[quad_id].edge43_050,
-			quad_midnode[quad_id].edge43_075);
+			quad_midnode[quad_id].mid_pt,
+			quad_midnode[quad_id].midpt_modal_displ);
 	}
 
 

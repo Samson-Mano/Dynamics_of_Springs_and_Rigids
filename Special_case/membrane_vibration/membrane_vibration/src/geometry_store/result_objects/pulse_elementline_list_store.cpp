@@ -158,7 +158,7 @@ void pulse_elementline_list_store::set_buffer()
 			pulse_element_lines.add_line(rline.line_id, 
 				rline.startNode->node_pt, 
 				rline.endNode->node_pt,
-				line_startpt_offset, line_endpt_offset, line_startpt_color, line_endpt_color);
+				line_startpt_offset, line_endpt_offset);
 			
 	}
 

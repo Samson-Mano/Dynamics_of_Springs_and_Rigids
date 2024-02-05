@@ -18,8 +18,8 @@ void dynamic_line_list_store::init(geom_parameters* geom_param_ptr)
 	// Create the point shader
 	std::filesystem::path shadersPath = geom_param_ptr->resourcePath;
 
-	dyn_line_shader.create_shader((shadersPath.string() + "/resources/shaders/dynpoint_vert_shader.vert").c_str(),
-		(shadersPath.string() + "/resources/shaders/dynpoint_frag_shader.frag").c_str());
+	dyn_line_shader.create_shader((shadersPath.string() + "/resources/shaders/dyntripoint_vert_shader.vert").c_str(),
+		(shadersPath.string() + "/resources/shaders/dyntripoint_frag_shader.frag").c_str());
 
 	// Delete all the lines
 	dyn_line_count = 0;
@@ -29,8 +29,7 @@ void dynamic_line_list_store::init(geom_parameters* geom_param_ptr)
 
 void dynamic_line_list_store::add_line(int& line_id, 
 	glm::vec3& line_startpt_loc, glm::vec3& line_endpt_loc,
-	std::vector<glm::vec3>& line_startpt_offset, std::vector<glm::vec3>& line_endpt_offset,
-	std::vector<glm::vec3>& line_startpt_color, std::vector<glm::vec3>& line_endpt_color)
+	std::vector<glm::vec3>& line_startpt_offset, std::vector<glm::vec3>& line_endpt_offset)
 {
 	// Create a temporary lines
 	dynamic_line_store dyn_temp_ln;
@@ -44,9 +43,21 @@ void dynamic_line_list_store::add_line(int& line_id,
 	dyn_temp_ln.line_startpt_offset = line_startpt_offset;
 	dyn_temp_ln.line_endpt_offset = line_endpt_offset;
 
-	// Line Color
-	dyn_temp_ln.line_startpt_color = line_startpt_color;
-	dyn_temp_ln.line_endpt_color = line_endpt_color;
+	// Line offset values
+	std::vector<double> temp_line_startpt_offset_val;
+	std::vector<double> temp_line_endpt_offset_val;
+
+	for (int i = 0; i < static_cast<int>(line_startpt_offset.size()); i++)
+	{
+		temp_line_startpt_offset_val.push_back(glm::length(line_startpt_offset[i]));
+		temp_line_endpt_offset_val.push_back(glm::length(line_endpt_offset[i]));
+
+	}
+
+	// Line offset values
+	dyn_temp_ln.line_startpt_offset_val = temp_line_startpt_offset_val;
+	dyn_temp_ln.line_endpt_offset_val = temp_line_endpt_offset_val;
+
 
 	// Reserve space for the new element
 	dyn_lineMap.reserve(dyn_lineMap.size() + 1);
@@ -76,10 +87,10 @@ void dynamic_line_list_store::set_buffer()
 	VertexBufferLayout line_pt_layout;
 	line_pt_layout.AddFloat(3);  // Node center
 	line_pt_layout.AddFloat(3);  // Node offset
-	line_pt_layout.AddFloat(3);  // Node Color
+	line_pt_layout.AddFloat(1);  // Node Normalized deflection
 
-	// Define the node vertices of the model for a node (3 position, 3 defl, 3 color ) 
-	const unsigned int line_vertex_count = 9 * 2 * dyn_line_count;
+	// Define the node vertices of the model for a node (3 position, 3 defl, 1 normalized defl length) 
+	const unsigned int line_vertex_count = 7 * 2 * dyn_line_count;
 	unsigned int line_vertex_size = line_vertex_count * sizeof(float); // Size of the node_vertex
 
 	// Create the Node Deflection buffers
@@ -119,8 +130,8 @@ void dynamic_line_list_store::paint_lines()
 
 void dynamic_line_list_store::update_buffer(const int& dyn_index)
 {
-	// Define the node vertices of the model for a node (3 position, 3 defl, 3 color) 
-	const unsigned int line_vertex_count = 9 * 2 * dyn_line_count;
+	// Define the node vertices of the model for a node (3 position, 3 defl, 1 normalized defl length) 
+	const unsigned int line_vertex_count = 7 * 2 * dyn_line_count;
 	float* line_vertices = new float[line_vertex_count];
 
 	unsigned int line_v_index = 0;
@@ -207,13 +218,11 @@ void dynamic_line_list_store::get_line_vertex_buffer(dynamic_line_store& ln, con
 	dyn_line_vertices[dyn_line_v_index + 4] = ln.line_startpt_offset[dyn_index].y;
 	dyn_line_vertices[dyn_line_v_index + 5] = ln.line_startpt_offset[dyn_index].z;
 
-	// Point color
-	dyn_line_vertices[dyn_line_v_index + 6] = ln.line_startpt_color[dyn_index].x;
-	dyn_line_vertices[dyn_line_v_index + 7] = ln.line_startpt_color[dyn_index].y;
-	dyn_line_vertices[dyn_line_v_index + 8] = ln.line_startpt_color[dyn_index].z;
+	// Normalized offset length
+	dyn_line_vertices[dyn_line_v_index + 6] = ln.line_startpt_offset_val[dyn_index];
 
 	// Iterate
-	dyn_line_v_index = dyn_line_v_index + 9;
+	dyn_line_v_index = dyn_line_v_index + 7;
 
 	// End Point
 	// Point location
@@ -226,13 +235,11 @@ void dynamic_line_list_store::get_line_vertex_buffer(dynamic_line_store& ln, con
 	dyn_line_vertices[dyn_line_v_index + 4] = ln.line_endpt_offset[dyn_index].y;
 	dyn_line_vertices[dyn_line_v_index + 5] = ln.line_endpt_offset[dyn_index].z;
 
-	// Point color
-	dyn_line_vertices[dyn_line_v_index + 6] = ln.line_endpt_color[dyn_index].x;
-	dyn_line_vertices[dyn_line_v_index + 7] = ln.line_endpt_color[dyn_index].y;
-	dyn_line_vertices[dyn_line_v_index + 8] = ln.line_endpt_color[dyn_index].z;
+	// Normalized offset length
+	dyn_line_vertices[dyn_line_v_index + 6] = ln.line_endpt_offset_val[dyn_index];
 
 	// Iterate
-	dyn_line_v_index = dyn_line_v_index + 9;
+	dyn_line_v_index = dyn_line_v_index + 7;
 }
 
 void dynamic_line_list_store::get_line_index_buffer(unsigned int* dyn_line_vertex_indices, unsigned int& dyn_line_i_index)
