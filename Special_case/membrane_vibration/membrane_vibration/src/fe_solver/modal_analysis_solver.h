@@ -115,35 +115,29 @@ private:
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
-	std::vector<bessel_function_Frequency> bessel_roots;
+	std::vector<bessel_function_Frequency> eigen_freq;
 
-	void modal_analysis_model_circular1(const nodes_list_store& model_nodes,
+	void modal_analysis_model_circular(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const elementquad_list_store& model_quadelements,
 		const material_data& mat_data,
+		const double& c_radius,
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements,
 		modal_elementquad_list_store& modal_result_quadelements);
 
-	double bessel_eigen_vec(const bessel_function_Frequency& bessel_root_i, const glm::vec3& edgpt, const double& c_radius);
+	double bessel_eigen_vec(const bessel_function_Frequency& bessel_root_i, const glm::vec3& nodept, const double& c_radius);
 
-	void modal_analysis_model_rectangular1(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements, 
-		const material_data& mat_data);
-
-	void modal_analysis_model_rectangular2(const nodes_list_store& model_nodes,
+	void modal_analysis_model_rectangular(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
-		const material_data& mat_data);
-
-
-	void modal_analysis_model_rectangular3(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const material_data& mat_data);
-
-
-	void map_modal_analysis_rectangular_results(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
+		const elementquad_list_store& model_quadelements,
+		const material_data& mat_data,
+		const double& length_x,
+		const double& length_y,
 		modal_nodes_list_store& modal_result_nodes,
-		modal_elementline_list_store& modal_result_lineelements);
+		modal_elementline_list_store& modal_result_lineelements,
+		modal_elementquad_list_store& modal_result_quadelements);
+
+	double rect_eigen_vec(const bessel_function_Frequency& rect_freq_i, const glm::vec3& nodept, const double& length_x, const double& length_y);
 
 };

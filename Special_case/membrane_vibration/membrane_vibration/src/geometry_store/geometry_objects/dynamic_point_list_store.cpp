@@ -43,8 +43,6 @@ void dynamic_point_list_store::add_point(int& point_id, glm::vec3& point_loc, st
 	dyn_temp_pt.point_offset_val = temp_pt_offset;
 
 
-	dyn_temp_pt.offset_pt_count = static_cast<int>(point_offset.size());
-
 	//___________________________________________________________________
 	// Reserve space for the new element
 	dyn_pointMap.reserve(dyn_pointMap.size() + 1);

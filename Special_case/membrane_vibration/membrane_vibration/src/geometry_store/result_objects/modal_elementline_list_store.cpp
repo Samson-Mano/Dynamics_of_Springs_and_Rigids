@@ -72,31 +72,8 @@ void modal_elementline_list_store::set_buffer()
 	{
 		modal_elementline_store ln = line_m.second;
 
-		// start Pt
-		std::vector<glm::vec3> startpt_point_displ; // start point displ
-		
-		// end Pt
-		std::vector<glm::vec3> endpt_point_displ; // end point displ
-
-		for (int j = 0; j < static_cast<int>(ln.startnd_modal_displ.size()); j++)
-		{
-			glm::vec3 startpt_displ = glm::vec3(ln.startnd_modal_displ[j].x,
-												ln.startnd_modal_displ[j].y,
-												ln.startnd_modal_displ[j].z);
-
-			// Add to the list
-			startpt_point_displ.push_back(startpt_displ);
-
-			glm::vec3 endpt_displ = glm::vec3(ln.endnd_modal_displ[j].x,
-				ln.endnd_modal_displ[j].y,
-				ln.endnd_modal_displ[j].z);
-
-			// Add to the list
-			endpt_point_displ.push_back(endpt_displ);
-		}
-
 		// Add to the line list
-		modal_element_lines.add_line(i, ln.startpt, ln.endpt, startpt_point_displ, endpt_point_displ);
+		modal_element_lines.add_line(i, ln.startpt, ln.endpt, ln.startnd_modal_displ, ln.endnd_modal_displ);
 
 		i++;
 	}

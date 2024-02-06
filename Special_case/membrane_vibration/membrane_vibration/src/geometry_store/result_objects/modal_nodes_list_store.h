@@ -9,6 +9,7 @@ struct modal_node_store
 
 	// Modal results (x, y, z)
 	std::vector<glm::vec3> node_modal_displ;
+	std::vector<double> node_modal_displ_magnitude;
 };
 
 class modal_nodes_list_store
@@ -21,7 +22,8 @@ public:
 	~modal_nodes_list_store();
 	void init(geom_parameters* geom_param_ptr);
 	void clear_data();
-	void add_result_node(int& node_id, glm::vec3& node_pt, std::vector<glm::vec3> node_modal_displ);
+	void add_result_node(int& node_id, glm::vec3& node_pt, std::vector<glm::vec3>& node_modal_displ,
+		std::vector<double>& node_modal_displ_magnitude);
 	void set_buffer();
 	void update_buffer(const int& selected_mode);
 

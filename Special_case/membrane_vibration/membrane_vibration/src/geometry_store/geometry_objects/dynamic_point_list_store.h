@@ -9,7 +9,6 @@ struct dynamic_point_store
 	glm::vec3 point_loc = glm::vec3(0);
 	std::vector<glm::vec3> point_offset; // Dynamic point offset
 	std::vector<double> point_offset_val; // Dynamic point offset values
-	int offset_pt_count = 0;
 };
 
 class dynamic_point_list_store
