@@ -22,8 +22,8 @@ public:
 	~modal_nodes_list_store();
 	void init(geom_parameters* geom_param_ptr);
 	void clear_data();
-	void add_result_node(int& node_id, glm::vec3& node_pt, std::vector<glm::vec3>& node_modal_displ,
-		std::vector<double>& node_modal_displ_magnitude);
+	void add_result_node(int& node_id,const glm::vec3& node_pt,const std::vector<glm::vec3>& node_modal_displ,
+		const std::vector<double>& node_modal_displ_magnitude);
 	void set_buffer();
 	void update_buffer(const int& selected_mode);
 

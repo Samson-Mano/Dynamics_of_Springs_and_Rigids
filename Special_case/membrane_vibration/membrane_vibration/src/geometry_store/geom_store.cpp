@@ -714,6 +714,7 @@ void geom_store::paint_modal_analysis_results()
 		modal_result_quadelements.update_geometry_matrices(false, false, false, false, false, true);
 		modal_result_lineelements.update_geometry_matrices(false, false, false, false, false, true);
 		modal_result_nodes.update_geometry_matrices(false, false, false, false, false, true);
+
 		// ______________________________________________________________________________________
 		// Paint the modal quads 
 		modal_result_quadelements.paint_modal_elementquadrilaterals();
@@ -874,6 +875,7 @@ void geom_store::paint_pulse_analysis_results()
 		// Execute the Pulse response Analysis
 		pulse_solver.pulse_analysis_start(model_nodes,
 			model_lineelements,
+			model_quadelements,
 			node_loads,
 			node_inldispl,
 			node_inlvelo,
@@ -884,7 +886,8 @@ void geom_store::paint_pulse_analysis_results()
 			pulse_solver_window->damping_ratio,
 			pulse_solver_window->selected_pulse_option,
 			pulse_result_nodes,
-			pulse_result_lineelements);
+			pulse_result_lineelements,
+			pulse_result_quadelements);
 
 		// Check whether the modal analysis is complete or not
 		if (pulse_solver.is_pulse_analysis_complete == true)

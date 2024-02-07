@@ -36,8 +36,9 @@ public:
 	dynamic_tri_list_store();
 	~dynamic_tri_list_store();
 	void init(geom_parameters* geom_param_ptr);
-	void add_tri(int& tri_id, glm::vec3& tript1_loc, glm::vec3& tript2_loc, glm::vec3& tript3_loc,
-		std::vector<glm::vec3>& tript1_offset, std::vector<glm::vec3>& tript2_offset, std::vector<glm::vec3>& tript3_offset);
+	void add_tri(int& tri_id, const glm::vec3& tript1_loc, const glm::vec3& tript2_loc, const glm::vec3& tript3_loc,
+		const std::vector<glm::vec3>& tript1_offset, const std::vector<glm::vec3>& tript2_offset, const std::vector<glm::vec3>& tript3_offset,
+		const std::vector<double>& tript1_offset_mag, const std::vector<double>& tript2_offset_mag, const std::vector<double>& tript3_offset_mag);
 
 	void set_buffer();
 	void paint_triangles();

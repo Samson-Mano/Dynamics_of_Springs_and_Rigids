@@ -47,9 +47,7 @@ void dynamic_line_list_store::add_line(int& line_id,
 	dyn_temp_ln.line_startpt_color = line_startpt_color;
 	dyn_temp_ln.line_endpt_color = line_endpt_color;
 
-	// Reserve space for the new element
-	dyn_lineMap.reserve(dyn_lineMap.size() + 1);
-
+	//___________________________________________________________________
 	// Add to the list
 	dyn_lineMap.push_back(dyn_temp_ln);
 

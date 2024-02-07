@@ -16,6 +16,10 @@ vec3 jetHeatmap(float value)
 
 void main() 
 {
+
+
+    //_____________________________________________________________________
+
     float interpolated_defl = v_defl_length *  v_normalized_deflscale; // varies between maximum of -1.0 to 1.0
 
     vec3 vertexColor = jetHeatmap(interpolated_defl);

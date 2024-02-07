@@ -15,8 +15,9 @@ struct pulse_elementline_store
 	std::vector<double> endpt_displ_magnitude; // Pt2 displacmenet magnitude at time t
 
 	// Line normalized displacement vector
-	std::vector<glm::vec3> startpt_normalized_displ;
-	std::vector<glm::vec3> endpt_normalized_displ;
+	std::vector<glm::vec3> startpt_displ;
+	std::vector<glm::vec3> endpt_displ;
+
 };
 
 
@@ -26,8 +27,6 @@ public:
 	unsigned int pulse_elementline_count = 0;
 	std::unordered_map<int, pulse_elementline_store> pulse_elementlineMap; // Create an unordered_map to store lines with ID as key
 	double max_line_displ = 0.0; // Maximum line displacement
-	double element_max_length = 0.0;
-	double element_min_length = DBL_MAX;
 
 	pulse_elementline_list_store();
 	~pulse_elementline_list_store();

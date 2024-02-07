@@ -29,8 +29,9 @@ void dynamic_tri_list_store::init(geom_parameters* geom_param_ptr)
 }
 
 
-void dynamic_tri_list_store::add_tri(int& tri_id, glm::vec3& tript1_loc, glm::vec3& tript2_loc, glm::vec3& tript3_loc,
-	std::vector<glm::vec3>& tript1_offset, std::vector<glm::vec3>& tript2_offset, std::vector<glm::vec3>& tript3_offset)
+void dynamic_tri_list_store::add_tri(int& tri_id, const glm::vec3& tript1_loc, const glm::vec3& tript2_loc, const glm::vec3& tript3_loc,
+	const std::vector<glm::vec3>& tript1_offset, const std::vector<glm::vec3>& tript2_offset, const std::vector<glm::vec3>& tript3_offset,
+	const std::vector<double>& tript1_offset_mag, const std::vector<double>& tript2_offset_mag, const std::vector<double>& tript3_offset_mag)
 {
 	// Create a temporary lines
 	dynamic_tri_store dyn_temp_tri;
@@ -47,31 +48,16 @@ void dynamic_tri_list_store::add_tri(int& tri_id, glm::vec3& tript1_loc, glm::ve
 	dyn_temp_tri.tript3_offset = tript3_offset;
 
 	// Tri offset values
-	std::vector<double> temp_tript1_offset;
-	std::vector<double> temp_tript2_offset;
-	std::vector<double> temp_tript3_offset;
+	dyn_temp_tri.tript1_offset_val = tript1_offset_mag;
+	dyn_temp_tri.tript2_offset_val = tript2_offset_mag;
+	dyn_temp_tri.tript3_offset_val = tript3_offset_mag;
 
-	for (int i = 0; i < static_cast<int>(tript1_offset.size()); i++)
-	{
-		temp_tript1_offset.push_back(glm::length(tript1_offset[i]));
-		temp_tript2_offset.push_back(glm::length(tript2_offset[i]));
-		temp_tript3_offset.push_back(glm::length(tript3_offset[i]));
-	}
-
-
-	dyn_temp_tri.tript1_offset_val = temp_tript1_offset;
-	dyn_temp_tri.tript2_offset_val = temp_tript2_offset;
-	dyn_temp_tri.tript3_offset_val = temp_tript3_offset;
-
-	// Reserve space for the new element
-	dyn_triMap.reserve(dyn_triMap.size() + 1);
-
+	//___________________________________________________________________
 	// Add to the list
 	dyn_triMap.push_back(dyn_temp_tri);
 
 	// Iterate the tri count
 	dyn_tri_count++;
-
 }
 
 

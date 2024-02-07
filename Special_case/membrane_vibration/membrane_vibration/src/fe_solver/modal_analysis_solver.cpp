@@ -415,11 +415,13 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 				int quad_id = quad.quad_id;
 
 				//_________________________________________________________________________________________________
-				glm::vec3 quad_midpt_eigvec = glm::vec3(0.0, 0.0,
-					bessel_eigen_vec(eigen_freq[i], quad_midnode[quad_id].mid_pt, c_radius) / column_max); // eigen vector at quad mid pt
+				double t_eigen_vec = bessel_eigen_vec(eigen_freq[i], quad_midnode[quad_id].mid_pt, c_radius) / column_max;
+
+				glm::vec3 quad_midpt_eigvec = glm::vec3(0.0, 0.0,t_eigen_vec); // eigen vector at quad mid pt
 				
 				// Add to the quad mid node eigenvector list
 				quad_midnode[quad_id].midpt_modal_displ.push_back(quad_midpt_eigvec);
+				quad_midnode[quad_id].midpt_modal_displ_mag.push_back(std::abs(t_eigen_vec));
 
 			}
 		}
@@ -444,6 +446,7 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 
 		// Modal analysis results
 		std::vector<glm::vec3> node_modal_displ;
+		std::vector<double> node_modal_displ_magnitude;
 
 		for (int i = 0; i < paint_mode_count; i++)
 		{
@@ -453,10 +456,11 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 
 			// add to modal result of this node
 			node_modal_displ.push_back(modal_displ);
+			node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
 		}
 
 		// Create the modal analysis result node
-		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ);
+		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ, node_modal_displ_magnitude);
 	}
 
 	stopwatch_elapsed_str.str("");
@@ -492,7 +496,8 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 			&modal_result_nodes.modal_nodeMap[quad.nd3->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id],
 			quad_midnode[quad_id].mid_pt,
-			quad_midnode[quad_id].midpt_modal_displ);
+			quad_midnode[quad_id].midpt_modal_displ,
+			quad_midnode[quad_id].midpt_modal_displ_mag);
 	}
 
 
@@ -701,11 +706,13 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 				int quad_id = quad.quad_id;
 
 				//_________________________________________________________________________________________________
-				glm::vec3 quad_midpt_eigvec = glm::vec3(0.0, 0.0,
-					rect_eigen_vec(eigen_freq[i], quad_midnode[quad_id].mid_pt, length_x,length_y) / column_max); // eigen vector at quad mid pt
+				double t_eigen_vec = rect_eigen_vec(eigen_freq[i], quad_midnode[quad_id].mid_pt, length_x, length_y) / column_max;
+
+				glm::vec3 quad_midpt_eigvec = glm::vec3(0.0, 0.0,t_eigen_vec); // eigen vector at quad mid pt
 
 				// Add to the quad mid node eigenvector list
 				quad_midnode[quad_id].midpt_modal_displ.push_back(quad_midpt_eigvec);
+				quad_midnode[quad_id].midpt_modal_displ_mag.push_back(std::abs(t_eigen_vec));
 
 			}
 		}
@@ -731,6 +738,7 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 
 		// Modal analysis results
 		std::vector<glm::vec3> node_modal_displ;
+		std::vector<double> node_modal_displ_magnitude;
 
 		for (int i = 0; i < paint_mode_count; i++)
 		{
@@ -740,10 +748,11 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 
 			// add to modal result of this node
 			node_modal_displ.push_back(modal_displ);
+			node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
 		}
 
 		// Create the modal analysis result node
-		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ);
+		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ, node_modal_displ_magnitude);
 	}
 
 	stopwatch_elapsed_str.str("");
@@ -779,7 +788,8 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 			&modal_result_nodes.modal_nodeMap[quad.nd3->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id],
 			quad_midnode[quad_id].mid_pt,
-			quad_midnode[quad_id].midpt_modal_displ);
+			quad_midnode[quad_id].midpt_modal_displ,
+			quad_midnode[quad_id].midpt_modal_displ_mag);
 	}
 
 

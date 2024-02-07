@@ -32,14 +32,15 @@ void modal_nodes_list_store::clear_data()
 	modal_nodeMap.clear();
 }
 
-void modal_nodes_list_store::add_result_node(int& node_id, glm::vec3& node_pt, std::vector<glm::vec3>& node_modal_displ,
-	std::vector<double>& node_modal_displ_magnitude)
+void modal_nodes_list_store::add_result_node(int& node_id, const glm::vec3& node_pt,const std::vector<glm::vec3>& node_modal_displ,
+	const std::vector<double>& node_modal_displ_magnitude)
 {
 	// Add result nodes
 	modal_node_store temp_node;
 	temp_node.node_id = node_id;
 	temp_node.node_pt = node_pt;
 	temp_node.node_modal_displ = node_modal_displ;
+	temp_node.node_modal_displ_magnitude = node_modal_displ_magnitude;
 
 	// Check whether the node_id is already there
 	if (modal_nodeMap.find(node_id) != modal_nodeMap.end())
@@ -66,7 +67,7 @@ void modal_nodes_list_store::set_buffer()
 		modal_node_store nd = nd_m.second;
 
 		// Add all the points
-		modal_node_points.add_point(i, nd.node_pt, nd.node_modal_displ);
+		modal_node_points.add_point(i, nd.node_pt, nd.node_modal_displ,nd.node_modal_displ_magnitude);
 
 		i++;
 	}

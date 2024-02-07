@@ -37,6 +37,7 @@
 // FE Result Objects Pulse analysis
 #include "result_objects/pulse_node_list_store.h"
 #include "result_objects/pulse_elementline_list_store.h"
+#include "result_objects/pulse_elementquad_list_store.h"
 
 
 class geom_store
@@ -102,6 +103,7 @@ private:
 	// Pulse analysis result
 	pulse_node_list_store pulse_result_nodes;
 	pulse_elementline_list_store pulse_result_lineelements;
+	pulse_elementquad_list_store pulse_result_quadelements;
 
 	// Solver object
 	modal_analysis_solver modal_solver;

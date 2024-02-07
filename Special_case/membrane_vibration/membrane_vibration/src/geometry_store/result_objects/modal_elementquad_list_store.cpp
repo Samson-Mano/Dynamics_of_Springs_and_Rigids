@@ -41,7 +41,8 @@ void modal_elementquad_list_store::clear_data()
 }
 
 void modal_elementquad_list_store::add_modal_elementquadrilateral(int& quad_id, modal_node_store* nd1,
-	modal_node_store* nd2, modal_node_store* nd3, modal_node_store* nd4, glm::vec3& midpt, std::vector<glm::vec3>& midpt_modal_displ)
+	modal_node_store* nd2, modal_node_store* nd3, modal_node_store* nd4, 
+	glm::vec3& midpt, std::vector<glm::vec3>& midpt_modal_displ, std::vector<double>& midpt_modal_displ_mag)
 {
 	// Add result quad element
 	modal_elementquad_store temp_quad;
@@ -65,14 +66,22 @@ void modal_elementquad_list_store::add_modal_elementquadrilateral(int& quad_id, 
 	temp_quad.nd4_modal_displ = (*nd4).node_modal_displ;
 	temp_quad.midpt_modal_displ = midpt_modal_displ;
 
-	// Check whether the node_id is already there
+	// Add the modal displacement magnitude
+	temp_quad.nd1_modal_displ_mag = (*nd1).node_modal_displ_magnitude;
+	temp_quad.nd2_modal_displ_mag = (*nd2).node_modal_displ_magnitude;
+	temp_quad.nd3_modal_displ_mag = (*nd3).node_modal_displ_magnitude;
+	temp_quad.nd4_modal_displ_mag = (*nd4).node_modal_displ_magnitude;
+	temp_quad.midpt_modal_displ_mag = midpt_modal_displ_mag;
+
+
+	// Check whether the Quad_id is already there
 	if (modal_elementquadMap.find(quad_id) != modal_elementquadMap.end())
 	{
 		// Element ID already exist (do not add)
 		return;
 	}
 
-	// Insert to the lines
+	// Insert to the Quads
 	modal_elementquadMap.insert({ quad_id, temp_quad });
 	modal_elementquad_count++;
 
@@ -96,13 +105,17 @@ void modal_elementquad_list_store::set_buffer()
 
 		// Add to the 8 triangle list
 		modal_element_tris1m2.add_tri(i, quad.nd1pt, quad.midpt, quad.nd2pt,
-			quad.nd1_modal_displ, quad.midpt_modal_displ, quad.nd2_modal_displ); // Tri 1m2
+			quad.nd1_modal_displ, quad.midpt_modal_displ, quad.nd2_modal_displ,
+			quad.nd1_modal_displ_mag, quad.midpt_modal_displ_mag, quad.nd2_modal_displ_mag); // Tri 1m2
 		modal_element_tris2m3.add_tri(i, quad.nd2pt, quad.midpt, quad.nd3pt,
-			quad.nd2_modal_displ, quad.midpt_modal_displ, quad.nd3_modal_displ); // Tri 2m3
+			quad.nd2_modal_displ, quad.midpt_modal_displ, quad.nd3_modal_displ,
+			quad.nd2_modal_displ_mag, quad.midpt_modal_displ_mag, quad.nd3_modal_displ_mag); // Tri 2m3
 		modal_element_tris3m4.add_tri(i, quad.nd3pt, quad.midpt, quad.nd4pt,
-			quad.nd3_modal_displ, quad.midpt_modal_displ, quad.nd4_modal_displ); // Tri 3m4
+			quad.nd3_modal_displ, quad.midpt_modal_displ, quad.nd4_modal_displ,
+			quad.nd3_modal_displ_mag, quad.midpt_modal_displ_mag, quad.nd4_modal_displ_mag); // Tri 3m4
 		modal_element_tris4m1.add_tri(i, quad.nd4pt, quad.midpt, quad.nd1pt,
-			quad.nd4_modal_displ, quad.midpt_modal_displ, quad.nd1_modal_displ); // Tri 4m1
+			quad.nd4_modal_displ, quad.midpt_modal_displ, quad.nd1_modal_displ,
+			quad.nd4_modal_displ_mag, quad.midpt_modal_displ_mag, quad.nd1_modal_displ_mag); // Tri 4m1
 
 
 		i++;
@@ -141,6 +154,7 @@ void modal_elementquad_list_store::paint_modal_elementquadrilaterals()
 void modal_elementquad_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation,
 	bool set_rotatetranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
+	// Result quad update geometry 
 	modal_element_tris1m2.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,
 		set_zoomtranslation, set_transparency, set_deflscale);
 	modal_element_tris2m3.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,

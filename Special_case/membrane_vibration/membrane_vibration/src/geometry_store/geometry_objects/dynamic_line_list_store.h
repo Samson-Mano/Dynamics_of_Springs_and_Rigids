@@ -28,8 +28,9 @@ public:
 	dynamic_line_list_store();
 	~dynamic_line_list_store();
 	void init(geom_parameters* geom_param_ptr);
-	void add_line(int& line_id, glm::vec3& line_startpt_loc, glm::vec3& line_endpt_loc,
-		std::vector<glm::vec3>& line_startpt_offset, std::vector<glm::vec3>& line_endpt_offset);
+	void add_line(int& line_id, const glm::vec3& line_startpt_loc,const glm::vec3& line_endpt_loc,
+		const std::vector<glm::vec3>& line_startpt_offset,const std::vector<glm::vec3>& line_endpt_offset,
+		const std::vector<double>& line_startpt_offset_mag,const std::vector<double>& line_endpt_offset_mag);
 	void set_buffer();
 	void paint_lines();
 	void paint_lines(const int& dyn_index);

@@ -1,10 +1,6 @@
 #version 330 core
 
 uniform mat4 modelMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 projectionMatrix;
-
-
 uniform mat4 panTranslation;
 uniform mat4 rotateTranslation;
 uniform float zoomscale;

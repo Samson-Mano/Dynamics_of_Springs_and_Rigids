@@ -16,6 +16,10 @@ struct modal_elementline_store
 	// Point displacements
 	std::vector<glm::vec3> startnd_modal_displ;
 	std::vector<glm::vec3> endnd_modal_displ;
+
+	// Point displacements magnitude
+	std::vector<double> startnd_modal_displ_mag;
+	std::vector<double> endnd_modal_displ_mag;
 };
 
 class modal_elementline_list_store

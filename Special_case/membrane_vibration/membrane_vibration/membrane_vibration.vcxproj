@@ -179,6 +179,7 @@
     <ClCompile Include="src\geometry_store\result_objects\modal_elementquad_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\modal_nodes_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\pulse_elementline_list_store.cpp" />
+    <ClCompile Include="src\geometry_store\result_objects\pulse_elementquad_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\pulse_node_list_store.cpp" />
     <ClCompile Include="src\ImGui\imgui.cpp" />
     <ClCompile Include="src\ImGui\imgui_draw.cpp" />
@@ -266,6 +267,7 @@
     <ClInclude Include="src\geometry_store\result_objects\modal_elementquad_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\modal_nodes_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\pulse_elementline_list_store.h" />
+    <ClInclude Include="src\geometry_store\result_objects\pulse_elementquad_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\pulse_node_list_store.h" />
     <ClInclude Include="src\ImGui\imconfig.h" />
     <ClInclude Include="src\ImGui\imgui.h" />

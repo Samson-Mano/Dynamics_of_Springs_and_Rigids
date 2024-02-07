@@ -26,27 +26,16 @@ void dynamic_point_list_store::init(geom_parameters* geom_param_ptr)
 	dyn_pointMap.clear();
 }
 
-void dynamic_point_list_store::add_point(int& point_id, glm::vec3& point_loc, std::vector<glm::vec3>& point_offset)
+void dynamic_point_list_store::add_point(int& point_id, const glm::vec3& point_loc, const std::vector<glm::vec3>& point_offset, 
+	const std::vector<double>& point_offset_mag)
 {
 	dynamic_point_store dyn_temp_pt;
 	dyn_temp_pt.point_id = point_id;
 	dyn_temp_pt.point_loc = point_loc;
 	dyn_temp_pt.point_offset = point_offset; // Dynamic point offset
-
-	std::vector<double> temp_pt_offset;
-
-	for (int i = 0; i < static_cast<int>(point_offset.size()); i++)
-	{
-		temp_pt_offset.push_back(glm::length(point_offset[i]));
-	}
-
-	dyn_temp_pt.point_offset_val = temp_pt_offset;
-
+	dyn_temp_pt.point_offset_mag = point_offset_mag; // Dynamic point magnitude
 
 	//___________________________________________________________________
-	// Reserve space for the new element
-	dyn_pointMap.reserve(dyn_pointMap.size() + 1);
-
 	// Add to the list
 	dyn_pointMap.push_back(dyn_temp_pt);
 
@@ -207,7 +196,7 @@ void dynamic_point_list_store::get_point_vertex_buffer(dynamic_point_store& pt,c
 	dyn_point_vertices[dyn_point_v_index + 5] = pt.point_offset[dyn_index].z;
 
 	// Point color
-	dyn_point_vertices[dyn_point_v_index + 6] = pt.point_offset_val[dyn_index];
+	dyn_point_vertices[dyn_point_v_index + 6] = pt.point_offset_mag[dyn_index];
 
 	// Iterate
 	dyn_point_v_index = dyn_point_v_index + 7;

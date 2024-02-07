@@ -22,6 +22,7 @@ void pulse_analysis_solver::clear_results()
 
 void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_nodes, 
 	const elementline_list_store& model_lineelements, 
+	const elementquad_list_store& model_quadelements,
 	const nodeload_list_store& node_loads, 
 	const nodeinlcond_list_store& node_inldispl,
 	const nodeinlcond_list_store& node_inlvelo,
@@ -32,7 +33,8 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	const double damping_ratio, 
 	const int selected_pulse_option,
 	pulse_node_list_store& pulse_result_nodes,
-	pulse_elementline_list_store& pulse_result_lineelements)
+	pulse_elementline_list_store& pulse_result_lineelements,
+	pulse_elementquad_list_store& pulse_result_quadelements)
 {
 	// Main solver call
 	this->is_pulse_analysis_complete = false;
@@ -116,7 +118,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 
 	//____________________________________________________________________________________________________________________
 	// Step: 3 Find the pulse response
-	std::unordered_map<int, pulse_node_result> node_results;
+	// std::unordered_map<int, pulse_node_result> node_results;
 
 	// Time step count
 	this->time_step_count = 0;
@@ -273,13 +275,13 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			}
 
 			// Add the index
-			node_results[node_id].index.push_back(this->time_step_count);
+		//	node_results[node_id].index.push_back(this->time_step_count);
 			// Add the time val
-			node_results[node_id].time_val.push_back(time_t);
+		//	node_results[node_id].time_val.push_back(time_t);
 			// Add the displacement magnitude
-			node_results[node_id].displ_magnitude.push_back(displ_magnitude);
+		//	node_results[node_id].displ_magnitude.push_back(displ_magnitude);
 			// Add the Normalized displacement
-			node_results[node_id].normalized_displ.push_back(normalized_node_displ);
+		//	node_results[node_id].normalized_displ.push_back(normalized_node_displ);
 		}
 
 		// iterate the time step count
@@ -293,12 +295,12 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	//____________________________________________________________________________________________________________________
 	// Step: 4 Map the results
 
-	map_pulse_analysis_results(pulse_result_nodes,
-		pulse_result_lineelements,
-		this->time_step_count,
-		model_nodes,
-		model_lineelements,
-		node_results);
+	//map_pulse_analysis_results(pulse_result_nodes,
+	//	pulse_result_lineelements,
+	//	this->time_step_count,
+	//	model_nodes,
+	//	model_lineelements,
+	//	node_results);
 
 
 
@@ -782,66 +784,66 @@ double pulse_analysis_solver::get_total_harmonic_soln(const double& time_t,
 	return (transient_displ_resp + steady_state_displ_resp);
 }
 
-void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
-	pulse_elementline_list_store& pulse_result_lineelements,
-	const int& number_of_time_steps,
-	const nodes_list_store& model_nodes,
-	const elementline_list_store& model_lineelements,
-	const std::unordered_map<int, pulse_node_result>& node_results)
-{
-	// Map the pulse analysis results
-		// map the node results
-	pulse_result_nodes.clear_data();
-
-	for (auto& nd_m : model_nodes.nodeMap)
-	{
-		// Extract the model node
-		node_store nd = nd_m.second;
-
-		// Add to the pulse node results store
-		pulse_result_nodes.add_result_node(nd.node_id, nd.node_pt, node_results.at(nd.node_id), number_of_time_steps);
-	}
-
-	// map the line results
-	pulse_result_lineelements.clear_data();
-
-	for (auto& ln_m : model_lineelements.elementlineMap)
-	{
-		// Extract the model lines
-		elementline_store ln = ln_m.second;
-
-		// Extract the pulse node store -> start node and end node
-		pulse_node_store* startNode = &pulse_result_nodes.pulse_nodeMap[ln.startNode->node_id];
-		pulse_node_store* endNode = &pulse_result_nodes.pulse_nodeMap[ln.endNode->node_id];
-
-		// Add to the pulse element results store
-		pulse_result_lineelements.add_pulse_elementline(ln.line_id, startNode, endNode);
-	}
-
-	//_________________________________________________________________________________________________________________
-	double maximum_displacement = 0.0;
-
-	for (auto& ln_m : pulse_result_lineelements.pulse_elementlineMap)
-	{
-		pulse_elementline_store ln = ln_m.second;
-
-		//get all the two points
-		// Point 1 displacement
-		for (auto& startpt_displ : ln.startpt_displ_magnitude)
-		{
-			maximum_displacement = std::max(maximum_displacement, startpt_displ);
-		}
-
-		// Point 2 displacement
-		for (auto& endpt_displ : ln.endpt_displ_magnitude)
-		{
-			maximum_displacement = std::max(maximum_displacement, endpt_displ);
-		}
-	}
-
-	// Set the maximim displacement
-	pulse_result_nodes.max_node_displ = maximum_displacement;
-	pulse_result_lineelements.max_line_displ = maximum_displacement;
-
-
-}
+//void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
+//	pulse_elementline_list_store& pulse_result_lineelements,
+//	const int& number_of_time_steps,
+//	const nodes_list_store& model_nodes,
+//	const elementline_list_store& model_lineelements,
+//	const std::unordered_map<int, pulse_node_result>& node_results)
+//{
+//	// Map the pulse analysis results
+//		// map the node results
+//	pulse_result_nodes.clear_data();
+//
+//	for (auto& nd_m : model_nodes.nodeMap)
+//	{
+//		// Extract the model node
+//		node_store nd = nd_m.second;
+//
+//		// Add to the pulse node results store
+//		pulse_result_nodes.add_result_node(nd.node_id, nd.node_pt, node_results.at(nd.node_id), number_of_time_steps);
+//	}
+//
+//	// map the line results
+//	pulse_result_lineelements.clear_data();
+//
+//	for (auto& ln_m : model_lineelements.elementlineMap)
+//	{
+//		// Extract the model lines
+//		elementline_store ln = ln_m.second;
+//
+//		// Extract the pulse node store -> start node and end node
+//		pulse_node_store* startNode = &pulse_result_nodes.pulse_nodeMap[ln.startNode->node_id];
+//		pulse_node_store* endNode = &pulse_result_nodes.pulse_nodeMap[ln.endNode->node_id];
+//
+//		// Add to the pulse element results store
+//		pulse_result_lineelements.add_pulse_elementline(ln.line_id, startNode, endNode);
+//	}
+//
+//	//_________________________________________________________________________________________________________________
+//	double maximum_displacement = 0.0;
+//
+//	for (auto& ln_m : pulse_result_lineelements.pulse_elementlineMap)
+//	{
+//		pulse_elementline_store ln = ln_m.second;
+//
+//		//get all the two points
+//		// Point 1 displacement
+//		for (auto& startpt_displ : ln.startpt_displ_magnitude)
+//		{
+//			maximum_displacement = std::max(maximum_displacement, startpt_displ);
+//		}
+//
+//		// Point 2 displacement
+//		for (auto& endpt_displ : ln.endpt_displ_magnitude)
+//		{
+//			maximum_displacement = std::max(maximum_displacement, endpt_displ);
+//		}
+//	}
+//
+//	// Set the maximim displacement
+//	pulse_result_nodes.max_node_displ = maximum_displacement;
+//	pulse_result_lineelements.max_line_displ = maximum_displacement;
+//
+//
+//}

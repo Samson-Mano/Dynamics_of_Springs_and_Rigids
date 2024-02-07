@@ -25,6 +25,13 @@ struct modal_elementquad_store
 	std::vector<glm::vec3> nd4_modal_displ;
 	std::vector<glm::vec3> midpt_modal_displ;
 
+	// Point displacement magnitude
+	std::vector<double> nd1_modal_displ_mag;
+	std::vector<double> nd2_modal_displ_mag;
+	std::vector<double> nd3_modal_displ_mag;
+	std::vector<double> nd4_modal_displ_mag;
+	std::vector<double> midpt_modal_displ_mag;
+
 };
 
 
@@ -38,7 +45,8 @@ public:
 	~modal_elementquad_list_store();
 	void init(geom_parameters* geom_param_ptr);
 	void add_modal_elementquadrilateral(int& quad_id, modal_node_store* nd1, modal_node_store* nd2,
-		modal_node_store* nd3, modal_node_store* nd4, glm::vec3& midpt, std::vector<glm::vec3>& midpt_modal_displ);
+		modal_node_store* nd3, modal_node_store* nd4, glm::vec3& midpt, std::vector<glm::vec3>& midpt_modal_displ,
+		std::vector<double>& midpt_modal_displ_mag);
 
 	void clear_data();
 	void set_buffer();

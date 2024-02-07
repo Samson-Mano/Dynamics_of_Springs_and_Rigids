@@ -4,6 +4,7 @@
 #include "../geometry_store/fe_objects/nodeinlcond_list_store.h"
 #include "../geometry_store/result_objects/pulse_node_list_store.h"
 #include "../geometry_store/result_objects/pulse_elementline_list_store.h"
+#include "../geometry_store/result_objects/pulse_elementquad_list_store.h"
 
 
 struct pulse_load_data
@@ -36,6 +37,7 @@ public:
 	void clear_results();
 	void pulse_analysis_start(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
+		const elementquad_list_store& model_quadelements,
 		const nodeload_list_store& node_loads,
 		const nodeinlcond_list_store& node_inldispl,
 		const nodeinlcond_list_store& node_inlvelo,
@@ -46,7 +48,8 @@ public:
 		const double damping_ratio,
 		const int selected_pulse_option,
 		pulse_node_list_store& pulse_result_nodes,
-		pulse_elementline_list_store& pulse_result_lineelements);
+		pulse_elementline_list_store& pulse_result_lineelements,
+		pulse_elementquad_list_store& pulse_result_quadelements);
 
 private:
 	Stopwatch_events stopwatch;
@@ -118,11 +121,11 @@ private:
 		const double& modal_force_endtime);
 
 
-	void map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
-		pulse_elementline_list_store& pulse_result_lineelements,
-		const int& number_of_time_steps,
-		const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const std::unordered_map<int, pulse_node_result>& node_results);
+	//void map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
+	//	pulse_elementline_list_store& pulse_result_lineelements,
+	//	const int& number_of_time_steps,
+	//	const nodes_list_store& model_nodes,
+	//	const elementline_list_store& model_lineelements,
+	//	const std::unordered_map<int, pulse_node_result>& node_results);
 
 };

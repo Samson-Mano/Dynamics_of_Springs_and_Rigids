@@ -28,8 +28,9 @@ void dynamic_line_list_store::init(geom_parameters* geom_param_ptr)
 
 
 void dynamic_line_list_store::add_line(int& line_id, 
-	glm::vec3& line_startpt_loc, glm::vec3& line_endpt_loc,
-	std::vector<glm::vec3>& line_startpt_offset, std::vector<glm::vec3>& line_endpt_offset)
+	const glm::vec3& line_startpt_loc, const glm::vec3& line_endpt_loc,
+	const std::vector<glm::vec3>& line_startpt_offset, const std::vector<glm::vec3>& line_endpt_offset,
+	const std::vector<double>& line_startpt_offset_mag, const std::vector<double>& line_endpt_offset_mag)
 {
 	// Create a temporary lines
 	dynamic_line_store dyn_temp_ln;
@@ -44,24 +45,10 @@ void dynamic_line_list_store::add_line(int& line_id,
 	dyn_temp_ln.line_endpt_offset = line_endpt_offset;
 
 	// Line offset values
-	std::vector<double> temp_line_startpt_offset_val;
-	std::vector<double> temp_line_endpt_offset_val;
+	dyn_temp_ln.line_startpt_offset_val = line_startpt_offset_mag;
+	dyn_temp_ln.line_endpt_offset_val = line_endpt_offset_mag;
 
-	for (int i = 0; i < static_cast<int>(line_startpt_offset.size()); i++)
-	{
-		temp_line_startpt_offset_val.push_back(glm::length(line_startpt_offset[i]));
-		temp_line_endpt_offset_val.push_back(glm::length(line_endpt_offset[i]));
-
-	}
-
-	// Line offset values
-	dyn_temp_ln.line_startpt_offset_val = temp_line_startpt_offset_val;
-	dyn_temp_ln.line_endpt_offset_val = temp_line_endpt_offset_val;
-
-
-	// Reserve space for the new element
-	dyn_lineMap.reserve(dyn_lineMap.size() + 1);
-
+	//___________________________________________________________________
 	// Add to the list
 	dyn_lineMap.push_back(dyn_temp_ln);
 

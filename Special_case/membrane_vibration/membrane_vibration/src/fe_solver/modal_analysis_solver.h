@@ -53,8 +53,8 @@ struct quad_midnode_eigenvector_store
 {
 	int quad_id = 0;
 	glm::vec3 mid_pt = glm::vec3(0);
-	std::vector<glm::vec3> midpt_modal_displ; // eigen vector at edge 13 0.25
-
+	std::vector<glm::vec3> midpt_modal_displ; // eigen vector at mid pt of quad
+	std::vector<double> midpt_modal_displ_mag; // eigen vector magnitude at mid pt of quad
 };
 
 

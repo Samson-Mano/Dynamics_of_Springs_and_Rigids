@@ -47,7 +47,11 @@ void modal_elementline_list_store::add_modal_elementline(int& line_id, modal_nod
 	temp_line.startnd_modal_displ = (*startNode).node_modal_displ;
 	temp_line.endnd_modal_displ = (*endNode).node_modal_displ;
 
-	// Check whether the node_id is already there
+	// Add the modal displacement magnitude
+	temp_line.startnd_modal_displ_mag = (*startNode).node_modal_displ_magnitude;
+	temp_line.endnd_modal_displ_mag = (*endNode).node_modal_displ_magnitude;
+
+	// Check whether the line_id is already there
 	if (modal_elementlineMap.find(line_id) != modal_elementlineMap.end())
 	{
 		// Element ID already exist (do not add)
@@ -73,7 +77,8 @@ void modal_elementline_list_store::set_buffer()
 		modal_elementline_store ln = line_m.second;
 
 		// Add to the line list
-		modal_element_lines.add_line(i, ln.startpt, ln.endpt, ln.startnd_modal_displ, ln.endnd_modal_displ);
+		modal_element_lines.add_line(i, ln.startpt, ln.endpt, ln.startnd_modal_displ, ln.endnd_modal_displ,
+			ln.startnd_modal_displ_mag,ln.endnd_modal_displ_mag);
 
 		i++;
 	}

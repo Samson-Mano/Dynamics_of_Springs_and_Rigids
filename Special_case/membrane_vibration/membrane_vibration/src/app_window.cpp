@@ -154,6 +154,7 @@ void app_window::app_render()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_LINE_SMOOTH);
 
 	// Set the point size and line width
 	// Set the point size
