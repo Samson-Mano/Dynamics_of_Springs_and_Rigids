@@ -36,10 +36,7 @@ void pulse_node_list_store::clear_data()
 }
 
 void pulse_node_list_store::add_result_node(int& node_id, const glm::vec3& node_pt,
-	const std::vector<int>& index, // index
-	const std::vector<double>& time_val, // at time t list
-	const std::vector <glm::vec3>& node_displ, // Nodal actual displacement at time t
-	const std::vector<double>& node_displ_magnitude, // Displacmenet magnitude at time t
+	const pulse_node_result& node_pulse_result,
 	const int& number_of_timesteps)
 {
 	// Add the result nodes
@@ -47,10 +44,7 @@ void pulse_node_list_store::add_result_node(int& node_id, const glm::vec3& node_
 
 	temp_pulse_node.node_id = node_id; // Add the node ID
 	temp_pulse_node.node_pt = node_pt; // Add the node point
-	temp_pulse_node.index = index; // index
-	temp_pulse_node.time_val = time_val; // at time t list
-	temp_pulse_node.node_displ = node_displ; // Nodal normalized displacement at time t
-	temp_pulse_node.node_displ_magnitude = node_displ_magnitude; // Displacmenet magnitude at time t
+	temp_pulse_node.node_pulse_result = node_pulse_result; // node pulse result
 	temp_pulse_node.number_of_timesteps = number_of_timesteps; // Number of time steps
 
 	// Check whether the node_id is already there
@@ -75,8 +69,19 @@ void pulse_node_list_store::set_buffer()
 	{
 		pulse_node_store nd = nd_m.second; // get the node data
 
+		// Scale the displacement with the max pulse displacement
+		std::vector<glm::vec3> node_displ;
+		std::vector<double> node_displ_magnitude;
+
+		for (int i = 0; i < static_cast<int>(nd.node_pulse_result.node_displ.size()); i++)
+		{
+			node_displ.push_back(nd.node_pulse_result.node_displ[i] / static_cast<float>(max_node_displ));
+			node_displ_magnitude.push_back(nd.node_pulse_result.node_displ_magnitude[i]/ static_cast<float>(max_node_displ));
+		}
+
+
 		// Add to the pulse points
-		pulse_node_points.add_point(nd.node_id, nd.node_pt, nd.node_displ, nd.node_displ_magnitude);
+		pulse_node_points.add_point(nd.node_id, nd.node_pt, node_displ, node_displ_magnitude);
 	}
 
 	// Set buffer

@@ -20,17 +20,17 @@ void pulse_analysis_solver::clear_results()
 
 }
 
-void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_nodes, 
-	const elementline_list_store& model_lineelements, 
-	const nodeconstraint_list_store& node_constraints, 
-	const nodeload_list_store& node_loads, 
+void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_nodes,
+	const elementline_list_store& model_lineelements,
+	const nodeconstraint_list_store& node_constraints,
+	const nodeload_list_store& node_loads,
 	const nodeinlcond_list_store& node_inldispl,
 	const nodeinlcond_list_store& node_inlvelo,
-	const material_data& mat_data, 
-	const modal_analysis_solver& modal_solver, 
-	const double total_simulation_time, 
-	const double time_interval, 
-	const double damping_ratio, 
+	const material_data& mat_data,
+	const modal_analysis_solver& modal_solver,
+	const double total_simulation_time,
+	const double time_interval,
+	const double damping_ratio,
 	const int selected_pulse_option,
 	pulse_node_list_store& pulse_result_nodes,
 	pulse_elementline_list_store& pulse_result_lineelements)
@@ -40,7 +40,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 
 	// Check the model
 	// Number of loads, initial condition (Exit if no load and no initial condition is present)
-	if (node_loads.load_count == 0 && 
+	if (node_loads.load_count == 0 &&
 		static_cast<int>(node_inldispl.inlcondMap.size()) == 0 &&
 		static_cast<int>(node_inlvelo.inlcondMap.size()) == 0)
 	{
@@ -87,7 +87,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	// Step: 2 Create the pulse load matrix (Modal Transformed pulse loads)
 
 	this->pulse_loads.clear();
-	
+
 	for (auto& ld_m : node_loads.loadMap)
 	{
 		// get the loads
@@ -151,71 +151,78 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			// Cycle through all the loads
 			for (auto& pulse_load : pulse_loads)
 			{
-				// Go through all the force
-				double at_force_displ_resp = 0.0;
 
-				if (selected_pulse_option == 0)
+
+				if (std::abs(pulse_load.modal_LoadamplMatrix(i)) > epsilon)
 				{
-					// Half sine pulse
+					// Go through all the force
+					double at_force_displ_resp = 0.0;
 
-					at_force_displ_resp = get_steady_state_half_sine_pulse_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
+					// Load amplitude at index not equal to zero
 
+					if (selected_pulse_option == 0)
+					{
+						// Half sine pulse
+
+						at_force_displ_resp = get_steady_state_half_sine_pulse_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 1)
+					{
+						// Rectangular pulse
+
+						at_force_displ_resp = get_steady_state_rectangular_pulse_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 2)
+					{
+						// Triangular pulse
+
+						at_force_displ_resp = get_steady_state_triangular_pulse_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 3)
+					{
+						// Step force with finite rise
+
+						at_force_displ_resp = get_steady_state_stepforce_finiterise_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 4)
+					{
+						// Harmonic Excitation
+
+						at_force_displ_resp = get_total_harmonic_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+
+					displ_resp_force = displ_resp_force + at_force_displ_resp;
 				}
-				else if (selected_pulse_option == 1)
-				{
-					// Rectangular pulse
-
-					at_force_displ_resp = get_steady_state_rectangular_pulse_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
-
-				}
-				else if (selected_pulse_option == 2)
-				{
-					// Triangular pulse
-
-					at_force_displ_resp = get_steady_state_triangular_pulse_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
-
-				}
-				else if (selected_pulse_option == 3)
-				{
-					// Step force with finite rise
-
-					at_force_displ_resp = get_steady_state_stepforce_finiterise_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
-
-				}
-				else if (selected_pulse_option == 4)
-				{
-					// Harmonic Excitation
-
-					at_force_displ_resp = get_total_harmonic_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
-
-				}
-
-				displ_resp_force = displ_resp_force + at_force_displ_resp;
 			}
 
 			// Store the displacement result
@@ -353,7 +360,7 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 		int q = 0;
 		for (int i = 1; i < this->numDOF - 1; i++)
 		{
-			global_reducedInitialDisplacementMatrix.coeffRef(q) = -1.0*node_inldispl.inlcondMap.at(i).y_val;
+			global_reducedInitialDisplacementMatrix.coeffRef(q) = -1.0 * node_inldispl.inlcondMap.at(i).y_val;
 			global_reducedInitialVelocityMatrix.coeffRef(q) = -1.0 * node_inlvelo.inlcondMap.at(i).y_val;
 
 			q++;
@@ -394,8 +401,8 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 		int q = 0;
 		for (int i = 0; i < this->numDOF; i++)
 		{
-			global_reducedInitialDisplacementMatrix.coeffRef(q) =  node_inldispl.inlcondMap.at(i).y_val;
-			global_reducedInitialVelocityMatrix.coeffRef(q) =  node_inlvelo.inlcondMap.at(i).y_val;
+			global_reducedInitialDisplacementMatrix.coeffRef(q) = node_inldispl.inlcondMap.at(i).y_val;
+			global_reducedInitialVelocityMatrix.coeffRef(q) = node_inlvelo.inlcondMap.at(i).y_val;
 
 			q++;
 		}
@@ -439,8 +446,8 @@ void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_ld
 		// Apply modal Transformation
 		Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
 
-		modal_reducedLoadMatrix = eigen_vectors_matrix_inverse * global_reducedLoadMatrix;
-		
+		modal_reducedLoadMatrix = eigen_vectors_matrix.transpose() * global_reducedLoadMatrix;
+
 		// Store the modal amplitude matrix
 		pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
 
@@ -465,7 +472,7 @@ void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_ld
 		// Apply modal Transformation
 		Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
 
-		modal_reducedLoadMatrix = eigen_vectors_matrix_inverse * global_reducedLoadMatrix;
+		modal_reducedLoadMatrix = eigen_vectors_matrix.transpose() * global_reducedLoadMatrix;
 
 		// Store the modal amplitude matrix
 		pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
@@ -492,7 +499,7 @@ void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_ld
 		// Apply modal Transformation
 		Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
 
-		modal_reducedLoadMatrix = eigen_vectors_matrix_inverse * global_reducedLoadMatrix;
+		modal_reducedLoadMatrix = eigen_vectors_matrix.transpose() * global_reducedLoadMatrix;
 
 		// Store the modal amplitude matrix
 		pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
@@ -769,7 +776,7 @@ double pulse_analysis_solver::get_total_harmonic_soln(const double& time_t,
 	else
 	{
 		// Regular case
-		double force_factor = (modal_force_ampl /  modal_stiff);
+		double force_factor = (modal_force_ampl / modal_stiff);
 		double freq_ratio = modal_omega_f / modal_omega_n;
 		double freq_factor = (1.0 - (freq_ratio * freq_ratio));
 

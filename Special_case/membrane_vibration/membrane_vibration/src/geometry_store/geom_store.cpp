@@ -78,6 +78,7 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	this->modal_result_quadelements.init(&geom_param);
 	this->pulse_result_nodes.init(&geom_param);
 	this->pulse_result_lineelements.init(&geom_param);
+	this->pulse_result_quadelements.init(&geom_param);
 
 	// Re-initialized the analysis window
 	this->modal_solver_window->init();
@@ -370,7 +371,7 @@ void geom_store::update_model_matrix()
 	modal_result_quadelements.update_geometry_matrices(true, false, false, false, false, false);
 	pulse_result_nodes.update_geometry_matrices(true, false, false, false, false, false);
 	pulse_result_lineelements.update_geometry_matrices(true, false, false, false, false, false);
-
+	pulse_result_quadelements.update_geometry_matrices(true, false, false, false, false, false);
 }
 
 void geom_store::update_model_zoomfit()
@@ -401,6 +402,7 @@ void geom_store::update_model_zoomfit()
 	modal_result_quadelements.update_geometry_matrices(false, true, true, true, false, false);
 	pulse_result_nodes.update_geometry_matrices(false, true, true, true, false, false);
 	pulse_result_lineelements.update_geometry_matrices(false, true, true, true, false, false);
+	pulse_result_quadelements.update_geometry_matrices(false, true, true, true, false, false);
 
 }
 
@@ -429,6 +431,7 @@ void geom_store::update_model_pan(glm::vec2& transl)
 	modal_result_quadelements.update_geometry_matrices(false, true, false, false, false, false);
 	pulse_result_nodes.update_geometry_matrices(false, true, false, false, false, false);
 	pulse_result_lineelements.update_geometry_matrices(false, true, false, false, false, false);
+	pulse_result_quadelements.update_geometry_matrices(false, true, false, false, false, false);
 
 }
 
@@ -454,6 +457,7 @@ void geom_store::update_model_rotate(glm::mat4& rotation_m)
 	modal_result_quadelements.update_geometry_matrices(false, false, true, false, false, false);
 	pulse_result_nodes.update_geometry_matrices(false, false, true, false, false, false);
 	pulse_result_lineelements.update_geometry_matrices(false, false, true, false, false, false);
+	pulse_result_quadelements.update_geometry_matrices(false, false, true, false, false, false);
 
 }
 
@@ -480,6 +484,7 @@ void geom_store::update_model_zoom(double& z_scale)
 	modal_result_quadelements.update_geometry_matrices(false, false, false, true, false, false);
 	pulse_result_nodes.update_geometry_matrices(false, false, false, true, false, false);
 	pulse_result_lineelements.update_geometry_matrices(false, false, false, true, false, false);
+	pulse_result_quadelements.update_geometry_matrices(false, false, false, true, false, false);
 
 }
 
@@ -817,21 +822,20 @@ void geom_store::paint_pulse_analysis_results()
 		geom_param.defl_scale = pulse_solver_window->deformation_scale_max;
 
 		// Update the deflection scale
+		pulse_result_quadelements.update_geometry_matrices(false, false, false, false, false, true);
 		pulse_result_lineelements.update_geometry_matrices(false, false, false, false, false, true);
 		pulse_result_nodes.update_geometry_matrices(false, false, false, false, false, true);
+
 		// ______________________________________________________________________________________
+		// Paint the pulse quads 
+		pulse_result_quadelements.paint_pulse_elementquads(pulse_solver_window->time_step);
 
 		// Paint the pulse lines
-		if (pulse_solver_window->show_result_elements == true)
-		{
-			pulse_result_lineelements.paint_pulse_elementlines(pulse_solver_window->time_step);
-		}
+		pulse_result_lineelements.paint_pulse_elementlines(pulse_solver_window->time_step);
 
 		// Paint the pulse nodes
-		if (pulse_solver_window->show_result_nodes == true)
-		{
-			pulse_result_nodes.paint_pulse_nodes(pulse_solver_window->time_step);
-		}
+		pulse_result_nodes.paint_pulse_nodes(pulse_solver_window->time_step);
+
 	}
 
 
@@ -858,9 +862,10 @@ void geom_store::paint_pulse_analysis_results()
 				pulse_solver_window->time_interval_atrun = pulse_solver.time_interval;
 				pulse_solver_window->time_step_count = pulse_solver.time_step_count;
 
-				// Reset the buffers for pulse result nodes and lines
-				pulse_result_lineelements.set_buffer();
-				pulse_result_nodes.set_buffer();
+				// Reset the buffers for pulse result nodes, lines and quads
+				// pulse_result_quadelements.set_buffer();
+				// pulse_result_lineelements.set_buffer();
+				// pulse_result_nodes.set_buffer();
 
 				// Pulse response analysis is complete
 				update_model_transperency(true);
@@ -896,7 +901,8 @@ void geom_store::paint_pulse_analysis_results()
 			pulse_solver_window->time_interval_atrun = pulse_solver.time_interval;
 			pulse_solver_window->time_step_count = pulse_solver.time_step_count;
 
-			// Reset the buffers for pulse result nodes and lines
+			// Reset the buffers for pulse result nodes, lines and quads
+			pulse_result_quadelements.set_buffer();
 			pulse_result_lineelements.set_buffer();
 			pulse_result_nodes.set_buffer();
 

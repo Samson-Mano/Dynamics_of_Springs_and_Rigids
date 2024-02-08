@@ -39,6 +39,7 @@ class pulse_elementquad_list_store
 public:
 	unsigned int pulse_elementquad_count = 0;
 	std::unordered_map<int, pulse_elementquad_store> pulse_elementquadMap; // Create an unordered_map to store quads with ID as key
+	double max_quad_displ = 0.0; // Maximum quad displacement
 
 	pulse_elementquad_list_store();
 	~pulse_elementquad_list_store();

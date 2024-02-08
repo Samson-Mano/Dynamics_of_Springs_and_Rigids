@@ -60,13 +60,12 @@ void pulse_elementline_list_store::add_pulse_elementline(int& line_id, pulse_nod
 
 	//__________________________ Add result lines Displacement results
 	// Displacement magnitude list
-	temp_pulse_line.startpt_displ_magnitude = startNode->node_displ_magnitude;
-	temp_pulse_line.endpt_displ_magnitude = endNode->node_displ_magnitude;
+	temp_pulse_line.startpt_displ_magnitude = startNode->node_pulse_result.node_displ_magnitude;
+	temp_pulse_line.endpt_displ_magnitude = endNode->node_pulse_result.node_displ_magnitude;
 
 	// Displacement vector list
-	temp_pulse_line.startpt_displ = startNode->node_displ;
-	temp_pulse_line.endpt_displ = endNode->node_displ;
-
+	temp_pulse_line.startpt_displ = startNode->node_pulse_result.node_displ;
+	temp_pulse_line.endpt_displ = endNode->node_pulse_result.node_displ;
 
 	// Insert to the lines
 	pulse_elementlineMap.insert({ line_id, temp_pulse_line });
@@ -83,12 +82,31 @@ void pulse_elementline_list_store::set_buffer()
 	{
 		pulse_elementline_store  rline = line_m.second;
 
+		// Scale the displacement with the max pulse displacement
+		std::vector<glm::vec3> startnode_displ;
+		std::vector<double> startnode_displ_magnitude;
+		std::vector<glm::vec3> endnode_displ;
+		std::vector<double> endnode_displ_magnitude;
+
+		for (int i = 0; i < static_cast<int>(rline.startpt_displ.size()); i++)
+		{
+			// Start Node
+			startnode_displ.push_back(rline.startpt_displ[i] / static_cast<float>(max_line_displ));
+			startnode_displ_magnitude.push_back(rline.startpt_displ_magnitude[i]/ static_cast<float>(max_line_displ ));
+
+			// End Node
+			endnode_displ.push_back(rline.endpt_displ[i] / static_cast<float>(max_line_displ));
+			endnode_displ_magnitude.push_back(rline.endpt_displ_magnitude[i] / static_cast<float>(max_line_displ));
+
+		}
+
+
 		// Add to the line list
 		pulse_element_lines.add_line(rline.line_id,
 			rline.startNode->node_pt,
 			rline.endNode->node_pt,
-			rline.startpt_displ, rline.endpt_displ,
-			rline.startpt_displ_magnitude, rline.endpt_displ_magnitude);
+			startnode_displ, endnode_displ,
+			startnode_displ_magnitude, endnode_displ_magnitude);
 
 	}
 

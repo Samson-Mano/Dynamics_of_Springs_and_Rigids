@@ -9,7 +9,7 @@
 
 struct pulse_load_data
 {
-	int load_id = 0;
+	int node_id = 0;
 	double load_start_time = 0.0;
 	double load_end_time = 0.0;
 	Eigen::VectorXd modal_LoadamplMatrix;
@@ -22,6 +22,8 @@ public:
 	const double m_pi = 3.14159265358979323846;
 	const double epsilon = 0.000001;
 	bool print_matrix = false;
+	std::unordered_map<int, bool> constrained_node_map; // Node ID and Bool True = Constrained, False = Un Constrained
+	std::unordered_map<int, int> nodeid_map; // Node ID map
 	int model_type = 0;
 	int numDOF = 0;
 	int reducedDOF = 0; // reduced dof is the dof after support condition is applied.
@@ -66,13 +68,11 @@ private:
 		Eigen::VectorXd& modal_reducedInitialVelocityMatrix,
 		const nodes_list_store& model_nodes,
 		const nodeinlcond_list_store& node_inldispl,
-		const nodeinlcond_list_store& node_inlvelo,
-		const Eigen::MatrixXd& eigen_vectors_matrix_inverse);
+		const nodeinlcond_list_store& node_inlvelo);
 
 	void create_pulse_load_matrices(pulse_load_data& pulse_ld,
 		const load_data& ld,
-		const nodes_list_store& model_nodes,
-		const Eigen::MatrixXd& eigen_vectors_matrix_inverse);
+		const nodes_list_store& model_nodes);
 
 	double get_steady_state_initial_condition_soln(const double& time_t,
 		const double& modal_mass,
@@ -121,11 +121,13 @@ private:
 		const double& modal_force_endtime);
 
 
-	//void map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
-	//	pulse_elementline_list_store& pulse_result_lineelements,
-	//	const int& number_of_time_steps,
-	//	const nodes_list_store& model_nodes,
-	//	const elementline_list_store& model_lineelements,
-	//	const std::unordered_map<int, pulse_node_result>& node_results);
+	void map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
+		pulse_elementline_list_store& pulse_result_lineelements,
+		pulse_elementquad_list_store& pulse_result_quadelements,
+		const int& number_of_time_steps,
+		const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		const elementquad_list_store& model_quadelements,
+		const std::unordered_map<int, pulse_node_result>& node_results);
 
 };

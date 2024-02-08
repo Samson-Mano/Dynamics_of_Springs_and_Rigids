@@ -41,7 +41,9 @@ void pulse_elementquad_list_store::clear_data()
 
 }
 
-void pulse_elementquad_list_store::add_pulse_elementquadrilateral(int& quad_id, pulse_node_store* nd1, pulse_node_store* nd2, pulse_node_store* nd3, pulse_node_store* nd4, glm::vec3& midpt, std::vector<glm::vec3>& midpt_displ, std::vector<double>& midpt_displ_mag)
+void pulse_elementquad_list_store::add_pulse_elementquadrilateral(int& quad_id, pulse_node_store* nd1, pulse_node_store* nd2, 
+	pulse_node_store* nd3, 	pulse_node_store* nd4, 
+	glm::vec3& midpt, std::vector<glm::vec3>& midpt_displ, std::vector<double>& midpt_displ_mag)
 {
 	// Add result quad element
 	pulse_elementquad_store temp_quad;
@@ -59,17 +61,17 @@ void pulse_elementquad_list_store::add_pulse_elementquadrilateral(int& quad_id, 
 	temp_quad.midpt = midpt;
 
 	// Add the modal displacement
-	temp_quad.nd1_displ = (*nd1).node_displ;
-	temp_quad.nd2_displ = (*nd2).node_displ;
-	temp_quad.nd3_displ = (*nd3).node_displ;
-	temp_quad.nd4_displ = (*nd4).node_displ;
+	temp_quad.nd1_displ = (*nd1).node_pulse_result.node_displ;
+	temp_quad.nd2_displ = (*nd2).node_pulse_result.node_displ;
+	temp_quad.nd3_displ = (*nd3).node_pulse_result.node_displ;
+	temp_quad.nd4_displ = (*nd4).node_pulse_result.node_displ;
 	temp_quad.midpt_displ = midpt_displ;
 
 	// Add the modal displacement magnitude
-	temp_quad.nd1_displ_mag = (*nd1).node_displ_magnitude;
-	temp_quad.nd2_displ_mag = (*nd2).node_displ_magnitude;
-	temp_quad.nd3_displ_mag = (*nd3).node_displ_magnitude;
-	temp_quad.nd4_displ_mag = (*nd4).node_displ_magnitude;
+	temp_quad.nd1_displ_mag = (*nd1).node_pulse_result.node_displ_magnitude;
+	temp_quad.nd2_displ_mag = (*nd2).node_pulse_result.node_displ_magnitude;
+	temp_quad.nd3_displ_mag = (*nd3).node_pulse_result.node_displ_magnitude;
+	temp_quad.nd4_displ_mag = (*nd4).node_pulse_result.node_displ_magnitude;
 	temp_quad.midpt_displ_mag = midpt_displ_mag;
 
 
@@ -101,20 +103,56 @@ void pulse_elementquad_list_store::set_buffer()
 	{
 		pulse_elementquad_store quad = quad_m.second;
 
+		// Scale the displacement with the max pulse displacement
+		std::vector<glm::vec3> node1_displ;
+		std::vector<double> node1_displ_magnitude;
+		std::vector<glm::vec3> node2_displ;
+		std::vector<double> node2_displ_magnitude;
+		std::vector<glm::vec3> node3_displ;
+		std::vector<double> node3_displ_magnitude;
+		std::vector<glm::vec3> node4_displ;
+		std::vector<double> node4_displ_magnitude;
+		std::vector<glm::vec3> mid_displ;
+		std::vector<double> mid_displ_magnitude;
+
+
+		for (int i = 0; i < static_cast<int>(quad.nd1_displ.size()); i++)
+		{
+			// Node 1
+			node1_displ.push_back(quad.nd1_displ[i] / static_cast<float> (max_quad_displ));
+			node1_displ_magnitude.push_back(quad.nd1_displ_mag[i]/ static_cast<float> (max_quad_displ ));
+
+			// Node 2
+			node2_displ.push_back(quad.nd2_displ[i]/ static_cast<float> (max_quad_displ));
+			node2_displ_magnitude.push_back(quad.nd2_displ_mag[i] / static_cast<float> (max_quad_displ));
+
+			// Node 3
+			node3_displ.push_back(quad.nd3_displ[i] / static_cast<float> (max_quad_displ));
+			node3_displ_magnitude.push_back(quad.nd3_displ_mag[i]/ static_cast<float> (max_quad_displ));
+
+			// Node 4
+			node4_displ.push_back(quad.nd4_displ[i] / static_cast<float> (max_quad_displ));
+			node4_displ_magnitude.push_back(quad.nd4_displ_mag[i] / static_cast<float> (max_quad_displ));
+
+			// Mid pt
+			mid_displ.push_back(quad.midpt_displ[i] / static_cast<float> (max_quad_displ));
+			mid_displ_magnitude.push_back(quad.midpt_displ_mag[i]/ static_cast<float> (max_quad_displ));
+		}
+
 
 		// Add to the 8 triangle list
 		pulse_element_tris1m2.add_tri(i, quad.nd1pt, quad.midpt, quad.nd2pt,
-			quad.nd1_displ, quad.midpt_displ, quad.nd2_displ,
-			quad.nd1_displ_mag, quad.midpt_displ_mag, quad.nd2_displ_mag); // Tri 1m2
+			node1_displ, mid_displ, node2_displ,
+			node1_displ_magnitude, mid_displ_magnitude, node2_displ_magnitude); // Tri 1m2
 		pulse_element_tris2m3.add_tri(i, quad.nd2pt, quad.midpt, quad.nd3pt,
-			quad.nd2_displ, quad.midpt_displ, quad.nd3_displ,
-			quad.nd2_displ_mag, quad.midpt_displ_mag, quad.nd3_displ_mag); // Tri 2m3
+			node2_displ, mid_displ, node3_displ,
+			node2_displ_magnitude, mid_displ_magnitude, node3_displ_magnitude); // Tri 2m3
 		pulse_element_tris3m4.add_tri(i, quad.nd3pt, quad.midpt, quad.nd4pt,
-			quad.nd3_displ, quad.midpt_displ, quad.nd4_displ,
-			quad.nd3_displ_mag, quad.midpt_displ_mag, quad.nd4_displ_mag); // Tri 3m4
+			node3_displ, mid_displ, node4_displ,
+			node3_displ_magnitude, mid_displ_magnitude, node4_displ_magnitude); // Tri 3m4
 		pulse_element_tris4m1.add_tri(i, quad.nd4pt, quad.midpt, quad.nd1pt,
-			quad.nd4_displ, quad.midpt_displ, quad.nd1_displ,
-			quad.nd4_displ_mag, quad.midpt_displ_mag, quad.nd1_displ_mag); // Tri 4m1
+			node4_displ, mid_displ, node1_displ,
+			node4_displ_magnitude, mid_displ_magnitude, node1_displ_magnitude); // Tri 4m1
 
 
 		i++;

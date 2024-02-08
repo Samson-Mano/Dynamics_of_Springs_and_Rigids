@@ -53,8 +53,8 @@ struct quad_midnode_eigenvector_store
 {
 	int quad_id = 0;
 	glm::vec3 mid_pt = glm::vec3(0);
-	std::vector<glm::vec3> midpt_modal_displ; // eigen vector at mid pt of quad
-	std::vector<double> midpt_modal_displ_mag; // eigen vector magnitude at mid pt of quad
+	std::vector<glm::vec3> midpt_displ; // eigen vector at mid pt of quad
+	std::vector<double> midpt_displ_mag; // eigen vector magnitude at mid pt of quad
 };
 
 
@@ -64,7 +64,7 @@ struct bessel_function_Frequency
 	int m = 0; // Bessel function m order
 	int n = 0; // n th root
 	double root_value = 0.0; // Bessel function root value
-
+	double phase_pi = 0.0; // Used only for circular membrane (Not used for rectangular membrane)
 };
 
 // Comparator function for sorting based on root_value
@@ -77,9 +77,9 @@ class modal_analysis_solver
 {
 public:
 	// Result store
-	std::unordered_map<int, int> nodeid_map; // Node ID map
-	std::unordered_map<int, int> eigen_vec_nodeid_map; // Node ID map for eigen vectors
-	const int paint_mode_count = 100; // Draw only first 100 modes (To save memory)
+	std::unordered_map<int, bool> constrained_node_map; // Node ID and Bool True = Constrained, False = Un Constrained
+	std::unordered_map<int, int> nodeid_map; // Node ID map for eigen vectors
+	int paint_mode_count = 100; // Draw only first 100 modes (To save memory)
 	int number_of_modes = 0;
 	int node_count = 0;
 	int matrix_size = 0;
@@ -90,9 +90,8 @@ public:
 	Eigen::VectorXd eigen_values_vector;
 
 	// Eigen vector matrices
-	Eigen::MatrixXd displ_vectors_matrix;
+	// Eigen::MatrixXd displ_vectors_matrix;
 	Eigen::MatrixXd eigen_vectors_matrix;
-	Eigen::MatrixXd eigen_vectors_matrix_inverse;
 
 	std::vector<std::string> mode_result_str;
 	bool is_modal_analysis_complete = false;
@@ -111,7 +110,7 @@ public:
 private:
 	const double m_pi = 3.14159265358979323846;
 	const double epsilon = 0.000001;
-	bool print_matrix = false;
+	// const bool print_matrix = true;
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 

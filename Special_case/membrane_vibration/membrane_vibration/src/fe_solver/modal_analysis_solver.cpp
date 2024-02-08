@@ -14,6 +14,7 @@ modal_analysis_solver::~modal_analysis_solver()
 void modal_analysis_solver::clear_results()
 {
 	// Clear the eigen values and eigen vectors
+	constrained_node_map.clear(); // Constrained Node  map
 	nodeid_map.clear(); // Node ID map
 	number_of_modes = 0;
 	node_count = 0;
@@ -56,18 +57,6 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	stopwatch_elapsed_str << std::fixed << std::setprecision(6);
 
 	std::cout << "Modal analysis - started" << std::endl;
-
-	// Create a node ID map (to create a nodes as ordered and numbered from 0,1,2...n)
-	int i = 0;
-	for (auto& nd : model_nodes.nodeMap)
-	{
-		nodeid_map[nd.first] = i;
-		i++;
-	}
-
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Node maping completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-
 	//____________________________________________________________________________________________________________________
 
 
@@ -79,7 +68,7 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	if (this->model_type == 0)
 	{
 		// Circular Membrane
-		// Number of fixed nodes = 128 or 256 
+		// Number of fixed nodes = 128 or 256 test = 16
 		// Radius = 100
 		this->matrix_size = node_count - 128;
 	}
@@ -103,11 +92,6 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 		this->matrix_size = node_count - 400;
 	}
 
-
-	// Displacement vectors matrix
-	displ_vectors_matrix.resize(node_count, this->matrix_size); // Number of nodes as row & Mode count as column
-	displ_vectors_matrix.setZero();
-
 	// Clear the angular frequency matrix
 	angular_freq_vector.resize(matrix_size);
 	angular_freq_vector.setZero();
@@ -120,10 +104,6 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	eigen_vectors_matrix.resize(matrix_size, matrix_size);
 	eigen_vectors_matrix.setZero();
 
-	// Clear the eigen vector inverse
-	eigen_vectors_matrix_inverse.resize(matrix_size, matrix_size);
-	eigen_vectors_matrix_inverse.setZero();
-
 	// Re-initialize the variables
 	modal_result_nodes.clear_data();
 	modal_result_lineelements.clear_data();
@@ -131,6 +111,12 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 	// Mode results as string
 	mode_result_str.clear();
+
+	if (paint_mode_count > matrix_size)
+	{
+		paint_mode_count = matrix_size;
+	}
+
 
 	if (mat_data.model_type == 0)
 	{
@@ -207,32 +193,6 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 	}
 
-	if (print_matrix == true)
-	{
-		// Create a file to keep track of matrices
-		std::ofstream output_file;
-		output_file.open("modal_analysis_results.txt");
-
-		output_file << "Eigen vectors:" << std::endl;
-		output_file << eigen_vectors_matrix << std::endl;
-		output_file << std::endl;
-
-		// eigen_vectors_matrix_inverse = eigen_vectors_matrix.inverse();
-
-		output_file << "Eigen vectors Inverse" << std::endl;
-		output_file << eigen_vectors_matrix_inverse << std::endl;
-		output_file << std::endl;
-
-		Eigen::MatrixXd eigen_check = eigen_vectors_matrix_inverse * eigen_vectors_matrix;
-
-		output_file << "Eigen Check" << std::endl;
-		output_file << eigen_check << std::endl;
-		output_file << std::endl;
-
-		output_file.close();
-	}
-
-
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Modal analysis complete at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
@@ -289,26 +249,69 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 
 	for (auto& b_root : t_bessel_roots)
 	{
-		// Temp 
-		bessel_function_Frequency temp_bessel_roots;
-		temp_bessel_roots.mode_number = temp_mode_number;
-		temp_bessel_roots.m = b_root.m;
-		temp_bessel_roots.n = b_root.n;
-		temp_bessel_roots.root_value = b_root.root_value;
+		if (b_root.m == 0)
+		{
+			// m = 0 has no phase change
+			bessel_function_Frequency temp_bessel_roots;
+			temp_bessel_roots.mode_number = temp_mode_number;
+			temp_bessel_roots.m = b_root.m;
+			temp_bessel_roots.n = b_root.n;
+			temp_bessel_roots.phase_pi = 0.0; // Phase = 0 when m = 0
+			temp_bessel_roots.root_value = b_root.root_value;
 
-		// Add to the list
-		eigen_freq.push_back(temp_bessel_roots);
+			// Add to the list
+			eigen_freq.push_back(temp_bessel_roots);
 
-		// outFile << temp_mode_number << ", " << b_root.m << ", "<< b_root.n << ", "<<b_root.root_value << std::endl; // Write to the file
+			// outFile << temp_mode_number << ", " << b_root.m << ", "<< b_root.n << ", "<<b_root.root_value << std::endl; // Write to the file
 
-		temp_mode_number++;
+			temp_mode_number++;
+		}
+		else
+		{
+			// m not equal to zero // so add the anti mode 
+			bessel_function_Frequency temp_bessel_roots_p0;
+			temp_bessel_roots_p0.mode_number = temp_mode_number;
+			temp_bessel_roots_p0.m = b_root.m;
+			temp_bessel_roots_p0.n = b_root.n;
+			temp_bessel_roots_p0.phase_pi = 0.0; // Phase = 0 when m = 0
+			temp_bessel_roots_p0.root_value = b_root.root_value;
+
+			// Add to the list
+			eigen_freq.push_back(temp_bessel_roots_p0);
+
+			// outFile << temp_mode_number << ", " << b_root.m << ", "<< b_root.n << ", "<<b_root.root_value << std::endl; // Write to the file
+
+			temp_mode_number++;
+
+			// Antimode with pi/2 * m phase
+			bessel_function_Frequency temp_bessel_roots_p1;
+			temp_bessel_roots_p1.mode_number = temp_mode_number;
+			temp_bessel_roots_p1.m = b_root.m;
+			temp_bessel_roots_p1.n = b_root.n;
+			temp_bessel_roots_p1.phase_pi = (1.0 / static_cast<float>(b_root.m)) * (m_pi * 0.5); // Phase = (pi/2) * (1/m) when m not equal to 0
+			temp_bessel_roots_p1.root_value = b_root.root_value;
+
+			// Add to the list
+			eigen_freq.push_back(temp_bessel_roots_p1);
+
+			// outFile << temp_mode_number << ", " << b_root.m << ", "<< b_root.n << ", "<<b_root.root_value << std::endl; // Write to the file
+
+			temp_mode_number++;
+
+		}
+		
 	}
+
+	// Resize the eigen freq size (to be inline with matrix size)
+	eigen_freq.resize(this->matrix_size);
+
 
 	// outFile.close(); // Close the file
 
 	// Create the eigen vector node map
 	int j = 0;
-	this->eigen_vec_nodeid_map.clear();
+	this->constrained_node_map.clear();
+	this->nodeid_map.clear();
 
 	for (auto& nd_m : model_nodes.nodeMap)
 	{
@@ -319,10 +322,12 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 		if (nd_radius >= (c_radius- 0.1) )
 		{
 			// Zero for fixed nodes
+			this->constrained_node_map[node_id] = true; // is constrained
 			continue;
 		}
 
-		this->eigen_vec_nodeid_map[node_id] = j;
+		this->constrained_node_map[node_id] = false; // Node is not fixed
+		this->nodeid_map[node_id] = j;
 		j++;
 	}
 
@@ -351,6 +356,10 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 
 		quad_midnode[quad.quad_id].mid_pt = quad_midpt;
 	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Node maping completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	//________________________________________________________________________________________________________________
 
@@ -384,24 +393,27 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 		// Node
 		for (auto& nd_m : model_nodes.nodeMap)
 		{
+			// Get the node ID
 			node_id = nd_m.first;
-			glm::vec3 node_pt = nd_m.second.node_pt;
-			int displ_matrix_index = nodeid_map[node_id];
-			int eigvec_matrix_index = eigen_vec_nodeid_map[node_id];
 
-			// Eigen vectors
-			double t_eigen_vec = bessel_eigen_vec(eigen_freq[i], node_pt, c_radius);
+			if (constrained_node_map[node_id] == false)
+			{
+				// Node is not constrained, so get the co-ordinate
+				glm::vec3 node_pt = nd_m.second.node_pt;
 
-			displ_vectors_matrix.coeffRef(displ_matrix_index, i) = t_eigen_vec;
+				int matrix_index = nodeid_map[node_id];
 
-			// Add the eigen vectors
-			eigen_vectors_matrix.coeffRef(eigvec_matrix_index, i) = t_eigen_vec;
+				// Eigen vectors
+				double t_eigen_vec = bessel_eigen_vec(eigen_freq[i], node_pt, c_radius);
+
+				// Add the eigen vectors
+				eigen_vectors_matrix.coeffRef(matrix_index, i) = t_eigen_vec;
+			}
 		}
 
 		// Normalize the eigen vector matrix
-		double column_max = displ_vectors_matrix.col(i).maxCoeff();
+		double column_max = eigen_vectors_matrix.col(i).maxCoeff();
 
-		displ_vectors_matrix.col(i) = displ_vectors_matrix.col(i) / column_max;
 		eigen_vectors_matrix.col(i) = eigen_vectors_matrix.col(i) / column_max;
 
 		// Quad
@@ -420,20 +432,13 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 				glm::vec3 quad_midpt_eigvec = glm::vec3(0.0, 0.0,t_eigen_vec); // eigen vector at quad mid pt
 				
 				// Add to the quad mid node eigenvector list
-				quad_midnode[quad_id].midpt_modal_displ.push_back(quad_midpt_eigvec);
-				quad_midnode[quad_id].midpt_modal_displ_mag.push_back(std::abs(t_eigen_vec));
+				quad_midnode[quad_id].midpt_displ.push_back(quad_midpt_eigvec);
+				quad_midnode[quad_id].midpt_displ_mag.push_back(std::abs(t_eigen_vec));
 
 			}
 		}
-
-
 	}
 
-	double inv_factor = 2.0 / static_cast<float>(matrix_size);
-
-	// Create the eigen vectors inverse matrix
-
-	eigen_vectors_matrix_inverse = inv_factor * eigen_vectors_matrix.transpose();
 
 	//_____________________________________________________________________________________
 	// Map the results
@@ -442,21 +447,33 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 	{
 		int node_id = nd_m.first;
 		glm::vec3 node_pt = nd_m.second.node_pt;
-		int matrix_index = nodeid_map[node_id];
 
 		// Modal analysis results
 		std::vector<glm::vec3> node_modal_displ;
 		std::vector<double> node_modal_displ_magnitude;
 
-		for (int i = 0; i < paint_mode_count; i++)
+		// Check whether the node is fixed or not
+		if (this->constrained_node_map[node_id] == false)
 		{
-			double displ_magnitude = static_cast<float>(displ_vectors_matrix.coeff(matrix_index, i));
-			// get the appropriate modal displacement of this particular node
-			glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
+			int matrix_index = nodeid_map[node_id];
 
-			// add to modal result of this node
-			node_modal_displ.push_back(modal_displ);
-			node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
+			for (int i = 0; i < paint_mode_count; i++)
+			{
+				double displ_magnitude = static_cast<float>(eigen_vectors_matrix.coeff(matrix_index, i));
+				
+				// get the appropriate modal displacement of this particular node
+				glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
+
+				// add to modal result of this node
+				node_modal_displ.push_back(modal_displ);
+				node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
+			}
+		}
+		else
+		{
+			// Node is constrained so make it zero
+			node_modal_displ.resize(paint_mode_count, glm::vec3(0.0f));
+			node_modal_displ_magnitude.resize(paint_mode_count, 0.0);
 		}
 
 		// Create the modal analysis result node
@@ -496,8 +513,8 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 			&modal_result_nodes.modal_nodeMap[quad.nd3->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id],
 			quad_midnode[quad_id].mid_pt,
-			quad_midnode[quad_id].midpt_modal_displ,
-			quad_midnode[quad_id].midpt_modal_displ_mag);
+			quad_midnode[quad_id].midpt_displ,
+			quad_midnode[quad_id].midpt_displ_mag);
 	}
 
 
@@ -521,7 +538,7 @@ double modal_analysis_solver::bessel_eigen_vec(const bessel_function_Frequency& 
 	// Eigen vector at the node point
 	if (nd_radius < (c_radius - 0.1))
 	{
-		t_eigen_vec = std::cyl_bessel_j(bessel_root_i.m, bessel_root_i.root_value * radius_ratio) * std::cos(bessel_root_i.m * nd_theta);
+		t_eigen_vec = std::cyl_bessel_j(bessel_root_i.m, bessel_root_i.root_value * radius_ratio) * std::cos(bessel_root_i.m *( nd_theta + bessel_root_i.phase_pi));
 
 	}
 
@@ -600,7 +617,8 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 
 	// Create the eigen vector node map
 	int j = 0;
-	this->eigen_vec_nodeid_map.clear();
+	this->constrained_node_map.clear();
+	this->nodeid_map.clear();
 
 	for (auto& nd_m : model_nodes.nodeMap)
 	{
@@ -610,10 +628,12 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 		if (node_pt.x <= 0.1 || node_pt.y <= 0.1 || node_pt.x >= (length_x -0.1) || node_pt.y >= (length_y - 0.1))
 		{
 			// Zero for fixed nodes
+			this->constrained_node_map[node_id] = true; // is constrained
 			continue;
 		}
 
-		this->eigen_vec_nodeid_map[node_id] = j;
+		this->constrained_node_map[node_id] = false; // Node is not fixed
+		this->nodeid_map[node_id] = j;
 		j++;
 	}
 
@@ -643,6 +663,9 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 		quad_midnode[quad.quad_id].mid_pt = quad_midpt;
 	}
 
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Node maping completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	//________________________________________________________________________________________________________________
 
 	for (int i = 0; i < this->matrix_size; i++)
@@ -675,24 +698,28 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 		// Node
 		for (auto& nd_m : model_nodes.nodeMap)
 		{
+			// Get the node ID
 			node_id = nd_m.first;
-			glm::vec3 node_pt = nd_m.second.node_pt;
-			int displ_matrix_index = nodeid_map[node_id];
-			int eigvec_matrix_index = eigen_vec_nodeid_map[node_id];
 
-			// Eigen vectors
-			double t_eigen_vec = rect_eigen_vec(eigen_freq[i], node_pt, length_x,length_y);
+			if (this->constrained_node_map[node_id] == false)
+			{
+				// Node is not constrained, so get the co-ordinate
+				glm::vec3 node_pt = nd_m.second.node_pt;
 
-			displ_vectors_matrix.coeffRef(displ_matrix_index, i) = t_eigen_vec;
+				int matrix_index = nodeid_map[node_id];
 
-			// Add the eigen vectors
-			eigen_vectors_matrix.coeffRef(eigvec_matrix_index, i) = t_eigen_vec;
+				// Eigen vectors
+				double t_eigen_vec = rect_eigen_vec(eigen_freq[i], node_pt, length_x, length_y);
+
+				// Add the eigen vectors
+				eigen_vectors_matrix.coeffRef(matrix_index, i) = t_eigen_vec;
+			}
+
 		}
 
 		// Normalize the eigen vector matrix
-		double column_max = displ_vectors_matrix.col(i).maxCoeff();
+		double column_max = eigen_vectors_matrix.col(i).maxCoeff();
 
-		displ_vectors_matrix.col(i) = displ_vectors_matrix.col(i) / column_max;
 		eigen_vectors_matrix.col(i) = eigen_vectors_matrix.col(i) / column_max;
 
 		// Quad
@@ -711,21 +738,12 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 				glm::vec3 quad_midpt_eigvec = glm::vec3(0.0, 0.0,t_eigen_vec); // eigen vector at quad mid pt
 
 				// Add to the quad mid node eigenvector list
-				quad_midnode[quad_id].midpt_modal_displ.push_back(quad_midpt_eigvec);
-				quad_midnode[quad_id].midpt_modal_displ_mag.push_back(std::abs(t_eigen_vec));
+				quad_midnode[quad_id].midpt_displ.push_back(quad_midpt_eigvec);
+				quad_midnode[quad_id].midpt_displ_mag.push_back(std::abs(t_eigen_vec));
 
 			}
 		}
-
-
 	}
-
-	double inv_factor = 2.0 / static_cast<float>(matrix_size);
-
-	// Create the eigen vectors inverse matrix
-
-	eigen_vectors_matrix_inverse = inv_factor * eigen_vectors_matrix.transpose();
-
 
 	//_____________________________________________________________________________________
 	// Map the results
@@ -734,21 +752,31 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 	{
 		int node_id = nd_m.first;
 		glm::vec3 node_pt = nd_m.second.node_pt;
-		int matrix_index = nodeid_map[node_id];
-
 		// Modal analysis results
 		std::vector<glm::vec3> node_modal_displ;
 		std::vector<double> node_modal_displ_magnitude;
 
-		for (int i = 0; i < paint_mode_count; i++)
+		// Check whether the node is fixed or not
+		if (this->constrained_node_map[node_id] == false)
 		{
-			double displ_magnitude = static_cast<float>(displ_vectors_matrix.coeff(matrix_index, i));
-			// get the appropriate modal displacement of this particular node
-			glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
+			int matrix_index = nodeid_map[node_id];
 
-			// add to modal result of this node
-			node_modal_displ.push_back(modal_displ);
-			node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
+			for (int i = 0; i < paint_mode_count; i++)
+			{
+				double displ_magnitude = static_cast<float>(eigen_vectors_matrix.coeff(matrix_index, i));
+				// get the appropriate modal displacement of this particular node
+				glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
+
+				// add to modal result of this node
+				node_modal_displ.push_back(modal_displ);
+				node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
+			}
+		}
+		else
+		{
+			// Node is constrained so make it zero
+			node_modal_displ.resize(paint_mode_count, glm::vec3(0.0f));
+			node_modal_displ_magnitude.resize(paint_mode_count, 0.0);
 		}
 
 		// Create the modal analysis result node
@@ -788,8 +816,8 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 			&modal_result_nodes.modal_nodeMap[quad.nd3->node_id],
 			&modal_result_nodes.modal_nodeMap[quad.nd4->node_id],
 			quad_midnode[quad_id].mid_pt,
-			quad_midnode[quad_id].midpt_modal_displ,
-			quad_midnode[quad_id].midpt_modal_displ_mag);
+			quad_midnode[quad_id].midpt_displ,
+			quad_midnode[quad_id].midpt_displ_mag);
 	}
 
 
@@ -797,10 +825,6 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const nodes_list_st
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Results mapped to model Quad Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	//____________________________________________________________________________________________________________________
-
-
-
-
 
 }
 

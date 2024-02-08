@@ -140,6 +140,8 @@ public:
 
 	static	glm::vec3 findGeometricCenter(const std::vector<glm::vec3>& all_pts);
 
+	static	glm::vec3 findGeometricCenter(const glm::vec3& pt1, const glm::vec3& pt2, const glm::vec3& pt3, const glm::vec3& pt4);
+
 	static std::pair<glm::vec3, glm::vec3> findMinMaxXY(const std::vector<glm::vec3>& all_pts);
 
 	static glm::vec3 getHeatMapColor(float value);

@@ -198,6 +198,19 @@ glm::vec3 geom_parameters::findGeometricCenter(const std::vector<glm::vec3>& all
 	return sum / static_cast<float>(all_pts.size());
 }
 
+glm::vec3 geom_parameters::findGeometricCenter(const glm::vec3& pt1, const glm::vec3& pt2, const glm::vec3& pt3, const glm::vec3& pt4)
+{
+	// Function returns the geometric center of four nodes
+	glm::vec3 sum(0);
+
+	sum += pt1;
+	sum += pt2;
+	sum += pt3;
+	sum += pt4;
+
+	return sum / 4.0f;
+}
+
 
 std::pair<glm::vec3, glm::vec3> geom_parameters::findMinMaxXY(const std::vector<glm::vec3>& all_pts)
 {

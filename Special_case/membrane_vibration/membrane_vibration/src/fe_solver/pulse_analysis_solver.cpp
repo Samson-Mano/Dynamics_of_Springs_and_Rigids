@@ -20,17 +20,17 @@ void pulse_analysis_solver::clear_results()
 
 }
 
-void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_nodes, 
-	const elementline_list_store& model_lineelements, 
+void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_nodes,
+	const elementline_list_store& model_lineelements,
 	const elementquad_list_store& model_quadelements,
-	const nodeload_list_store& node_loads, 
+	const nodeload_list_store& node_loads,
 	const nodeinlcond_list_store& node_inldispl,
 	const nodeinlcond_list_store& node_inlvelo,
-	const material_data& mat_data, 
-	const modal_analysis_solver& modal_solver, 
-	const double total_simulation_time, 
-	const double time_interval, 
-	const double damping_ratio, 
+	const material_data& mat_data,
+	const modal_analysis_solver& modal_solver,
+	const double total_simulation_time,
+	const double time_interval,
+	const double damping_ratio,
 	const int selected_pulse_option,
 	pulse_node_list_store& pulse_result_nodes,
 	pulse_elementline_list_store& pulse_result_lineelements,
@@ -41,7 +41,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 
 	// Check the model
 	// Number of loads, initial condition (Exit if no load and no initial condition is present)
-	if (node_loads.load_count == 0 && 
+	if (node_loads.load_count == 0 &&
 		static_cast<int>(node_inldispl.inlcondMap.size()) == 0 &&
 		static_cast<int>(node_inlvelo.inlcondMap.size()) == 0)
 	{
@@ -58,13 +58,31 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	std::cout << "Pulse analysis started" << std::endl;
 
 	// Retrive the Eigen values and Eigen vectors data from Modan Analysis solver
+	this->constrained_node_map = modal_solver.constrained_node_map;
+	this->nodeid_map = modal_solver.nodeid_map;
 	this->model_type = modal_solver.model_type;
 	this->numDOF = modal_solver.node_count;
 	this->reducedDOF = modal_solver.matrix_size;
 	this->eigen_values_vector = modal_solver.eigen_values_vector;
 	this->eigen_vectors_matrix = modal_solver.eigen_vectors_matrix;
-	this->eigen_vectors_matrix_inverse = modal_solver.eigen_vectors_matrix_inverse;
 
+
+	// Eigen vector inverse
+	this->eigen_vectors_matrix_inverse.resize(this->reducedDOF, this->reducedDOF);
+	this->eigen_vectors_matrix_inverse.setZero();
+
+	// Create Eigen vector inverse
+	if (static_cast<int>(node_inldispl.inlcondMap.size()) != 0 ||
+		static_cast<int>(node_inlvelo.inlcondMap.size()) != 0)
+	{
+		// Initial condition is applied
+		// Inverting eigen vector matrix take 120 seconds for (2000 x 2000 matrix)
+		this->eigen_vectors_matrix_inverse = this->eigen_vectors_matrix.inverse();
+
+		stopwatch_elapsed_str.str("");
+		stopwatch_elapsed_str << stopwatch.elapsed();
+		std::cout << "Eigen vector inversion completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	}
 
 	//____________________________________________________________________________________________________________________
 	// Step: 1 Create the initial displacement matrix (Modal Transformed initial displacement matrix)
@@ -76,19 +94,18 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 		modal_reducedInitialVelocityMatrix,
 		model_nodes,
 		node_inldispl,
-		node_inlvelo,
-		this->eigen_vectors_matrix_inverse);
+		node_inlvelo);
 
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Intial condition matrices created at" << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Intial condition matrices created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	//____________________________________________________________________________________________________________________
 	// Step: 2 Create the pulse load matrix (Modal Transformed pulse loads)
 
 	this->pulse_loads.clear();
-	
+
 	for (auto& ld_m : node_loads.loadMap)
 	{
 		// get the loads
@@ -99,11 +116,10 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 
 		create_pulse_load_matrices(pulse_ld,
 			ld,
-			model_nodes,
-			this->eigen_vectors_matrix_inverse);
+			model_nodes);
 
 		// Set the time data to the pulse loads
-		// pulse_ld.load_id = ld.load_setid;
+		pulse_ld.node_id = ld.node_id;
 		pulse_ld.load_start_time = ld.load_start_time;
 		pulse_ld.load_end_time = ld.load_end_time;
 
@@ -114,11 +130,11 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Pulse Load matrices created at" << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Pulse Load matrices created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	//____________________________________________________________________________________________________________________
 	// Step: 3 Find the pulse response
-	// std::unordered_map<int, pulse_node_result> node_results;
+	std::unordered_map<int, pulse_node_result> node_results;
 
 	// Time step count
 	this->time_step_count = 0;
@@ -139,11 +155,15 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			double displ_resp_initial = 0.0;
 
 			// Get the steady state displacemetn response for the initial condition
-			displ_resp_initial = get_steady_state_initial_condition_soln(time_t,
-				modal_mass,
-				modal_stiff,
-				modal_reducedInitialDisplacementMatrix.coeff(i),
-				modal_reducedInitialVelocityMatrix.coeff(i));
+			if (std::abs(modal_reducedInitialDisplacementMatrix.coeff(i)) > epsilon ||
+				std::abs(modal_reducedInitialVelocityMatrix.coeff(i)) > epsilon)
+			{
+				displ_resp_initial = get_steady_state_initial_condition_soln(time_t,
+					modal_mass,
+					modal_stiff,
+					modal_reducedInitialDisplacementMatrix.coeff(i),
+					modal_reducedInitialVelocityMatrix.coeff(i));
+			}
 
 			//_______________________________________________________________________
 			// Displacement response due to pulse force
@@ -152,71 +172,76 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			// Cycle through all the loads
 			for (auto& pulse_load : pulse_loads)
 			{
-				// Go through all the force
-				double at_force_displ_resp = 0.0;
-
-				if (selected_pulse_option == 0)
+				if (std::abs(pulse_load.modal_LoadamplMatrix(i)) > epsilon)
 				{
-					// Half sine pulse
+					// Load amplitude at index not equal to zero
+					// Go through all the force
+					double at_force_displ_resp = 0.0;
 
-					at_force_displ_resp = get_steady_state_half_sine_pulse_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
+					if (selected_pulse_option == 0)
+					{
+						// Half sine pulse
 
+						at_force_displ_resp = get_steady_state_half_sine_pulse_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 1)
+					{
+						// Rectangular pulse
+
+						at_force_displ_resp = get_steady_state_rectangular_pulse_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 2)
+					{
+						// Triangular pulse
+
+						at_force_displ_resp = get_steady_state_triangular_pulse_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 3)
+					{
+						// Step force with finite rise
+
+						at_force_displ_resp = get_steady_state_stepforce_finiterise_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 4)
+					{
+						// Harmonic Excitation
+
+						at_force_displ_resp = get_total_harmonic_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+
+					displ_resp_force = displ_resp_force + at_force_displ_resp;
 				}
-				else if (selected_pulse_option == 1)
-				{
-					// Rectangular pulse
 
-					at_force_displ_resp = get_steady_state_rectangular_pulse_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
-
-				}
-				else if (selected_pulse_option == 2)
-				{
-					// Triangular pulse
-
-					at_force_displ_resp = get_steady_state_triangular_pulse_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
-
-				}
-				else if (selected_pulse_option == 3)
-				{
-					// Step force with finite rise
-
-					at_force_displ_resp = get_steady_state_stepforce_finiterise_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
-
-				}
-				else if (selected_pulse_option == 4)
-				{
-					// Harmonic Excitation
-
-					at_force_displ_resp = get_total_harmonic_soln(time_t,
-						modal_mass,
-						modal_stiff,
-						pulse_load.modal_LoadamplMatrix(i),
-						pulse_load.load_start_time,
-						pulse_load.load_end_time);
-
-				}
-
-				displ_resp_force = displ_resp_force + at_force_displ_resp;
 			}
 
 			// Store the displacement result
@@ -238,50 +263,26 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 
 			// Node displacement response
 			glm::vec3 node_displ = glm::vec3(0);
+			double displ_magnitude = 0.0;
 
-			if (this->model_type == 0)
+			// Check whether the node is fixed or not
+			if (this->constrained_node_map[node_id] == false)
 			{
-				// Fixed  - Fixed Condition so skip the first and last node
-				if (node_id != 0 && node_id != (numDOF - 1))
-				{
-					node_displ = glm::vec3(0.0,0.0, global_displ_ampl_respMatrix.coeff(node_id - 1));
-				}
-			}
-			else if (this->model_type == 1)
-			{
-				// Fixed - Free Condition so skip the first node
-				if (node_id != 0)
-				{
-					node_displ = glm::vec3(0.0,0.0, global_displ_ampl_respMatrix.coeff(node_id - 1));
-				}
-			}
-			else if (this->model_type == 3)
-			{
-				// Circular string Free - Free
-				glm::vec3 normal_dir = glm::normalize(nd_m.second.node_pt);
+				int matrix_index = nodeid_map[node_id];
 
-				// get the appropriate modal displacement of this particular node
-				node_displ = static_cast<float>(global_displ_ampl_respMatrix.coeff(node_id)) * glm::vec3(normal_dir.x, -1.0 * normal_dir.y,0.0);
-
-			}
-
-			// Node displacement magnitude
-			double displ_magnitude = static_cast<float>(glm::length(node_displ));
-			glm::vec3 normalized_node_displ = glm::vec3(0.0,0.0, -1.0);
-
-			if (displ_magnitude > epsilon)
-			{
-				normalized_node_displ = glm::normalize(node_displ);
+				// get the nodal displacement at time t
+				node_displ = glm::vec3(0.0, 0.0, global_displ_ampl_respMatrix.coeff(matrix_index));
+				displ_magnitude = std::abs(global_displ_ampl_respMatrix.coeff(matrix_index));
 			}
 
 			// Add the index
-		//	node_results[node_id].index.push_back(this->time_step_count);
+			node_results[node_id].index.push_back(this->time_step_count);
 			// Add the time val
-		//	node_results[node_id].time_val.push_back(time_t);
+			node_results[node_id].time_val.push_back(time_t);
 			// Add the displacement magnitude
-		//	node_results[node_id].displ_magnitude.push_back(displ_magnitude);
+			node_results[node_id].node_displ_magnitude.push_back(displ_magnitude);
 			// Add the Normalized displacement
-		//	node_results[node_id].normalized_displ.push_back(normalized_node_displ);
+			node_results[node_id].node_displ.push_back(node_displ);
 		}
 
 		// iterate the time step count
@@ -295,12 +296,14 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	//____________________________________________________________________________________________________________________
 	// Step: 4 Map the results
 
-	//map_pulse_analysis_results(pulse_result_nodes,
-	//	pulse_result_lineelements,
-	//	this->time_step_count,
-	//	model_nodes,
-	//	model_lineelements,
-	//	node_results);
+	map_pulse_analysis_results(pulse_result_nodes,
+		pulse_result_lineelements,
+		pulse_result_quadelements,
+		this->time_step_count,
+		model_nodes,
+		model_lineelements,
+		model_quadelements,
+		node_results);
 
 
 
@@ -337,169 +340,87 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 	Eigen::VectorXd& modal_reducedInitialVelocityMatrix,
 	const nodes_list_store& model_nodes,
 	const nodeinlcond_list_store& node_inldispl,
-	const nodeinlcond_list_store& node_inlvelo,
-	const Eigen::MatrixXd& eigen_vectors_matrix_inverse)
+	const nodeinlcond_list_store& node_inlvelo)
 {
 	// Modal reduction of global initial displacement
 	// Modal vector transformation 
 	modal_reducedInitialDisplacementMatrix.setZero();
 	modal_reducedInitialVelocityMatrix.setZero();
 
-	if (this->model_type == 0)
+	// Fixed  - Fixed Condition so skip the first and last node
+	Eigen::VectorXd global_reducedInitialDisplacementMatrix(reducedDOF);
+	Eigen::VectorXd global_reducedInitialVelocityMatrix(reducedDOF);
+
+	// Set the initial condition - Displacement
+	int matrix_index = 0;
+	global_reducedInitialDisplacementMatrix.setZero();
+
+	for (auto& inlc_m : node_inldispl.inlcondMap)
 	{
-		// Fixed  - Fixed Condition so skip the first and last node
-		Eigen::VectorXd global_reducedInitialDisplacementMatrix(reducedDOF);
-		Eigen::VectorXd global_reducedInitialVelocityMatrix(reducedDOF);
+		nodeinl_condition_data inlc = inlc_m.second;
 
-		int q = 0;
-		for (int i = 1; i < this->numDOF - 1; i++)
+		if (this->constrained_node_map[inlc.node_id] == false)
 		{
-			global_reducedInitialDisplacementMatrix.coeffRef(q) = -1.0*node_inldispl.inlcondMap.at(i).inl_amplitude_z;
-			global_reducedInitialVelocityMatrix.coeffRef(q) = -1.0 * node_inlvelo.inlcondMap.at(i).inl_amplitude_z;
+			// Node is un-constrained
+			// get the matrix index
+			matrix_index = this->nodeid_map[inlc.node_id]; // get the ordered map of the start node ID
 
-			q++;
+			global_reducedInitialDisplacementMatrix.coeffRef(matrix_index) = -1.0 * inlc.inl_amplitude_z;
 		}
-
-		// Apply modal Transformation
-		modal_reducedInitialDisplacementMatrix = eigen_vectors_matrix_inverse * global_reducedInitialDisplacementMatrix;
-		modal_reducedInitialVelocityMatrix = eigen_vectors_matrix_inverse * global_reducedInitialVelocityMatrix;
-
 	}
-	else if (this->model_type == 1)
+
+	// Set the initial condition - Velocity
+	matrix_index = 0;
+	global_reducedInitialVelocityMatrix.setZero();
+
+	for (auto& inlc_m : node_inlvelo.inlcondMap)
 	{
-		// Fixed - Free Condition so skip the first node
-		Eigen::VectorXd global_reducedInitialDisplacementMatrix(reducedDOF);
-		Eigen::VectorXd global_reducedInitialVelocityMatrix(reducedDOF);
+		nodeinl_condition_data inlc = inlc_m.second;
 
-		int q = 0;
-		for (int i = 1; i < this->numDOF; i++)
+		if (this->constrained_node_map[inlc.node_id] == false)
 		{
-			global_reducedInitialDisplacementMatrix.coeffRef(q) = -1.0 * node_inldispl.inlcondMap.at(i).inl_amplitude_z;
-			global_reducedInitialVelocityMatrix.coeffRef(q) = -1.0 * node_inlvelo.inlcondMap.at(i).inl_amplitude_z;
+			// Node is un-constrained
+			// get the matrix index
+			matrix_index = this->nodeid_map[inlc.node_id]; // get the ordered map of the start node ID
 
-			q++;
+			global_reducedInitialVelocityMatrix.coeffRef(matrix_index) = -1.0 * inlc.inl_amplitude_z;
 		}
-
-		// Apply modal Transformation
-		modal_reducedInitialDisplacementMatrix = eigen_vectors_matrix_inverse * global_reducedInitialDisplacementMatrix;
-		modal_reducedInitialVelocityMatrix = eigen_vectors_matrix_inverse * global_reducedInitialVelocityMatrix;
-
 	}
-	else if (this->model_type == 3)
-	{
-		// Circular (No DOF) Free - Free
 
-		Eigen::VectorXd global_reducedInitialDisplacementMatrix(reducedDOF);
-		Eigen::VectorXd global_reducedInitialVelocityMatrix(reducedDOF);
 
-		int q = 0;
-		for (int i = 0; i < this->numDOF; i++)
-		{
-			global_reducedInitialDisplacementMatrix.coeffRef(q) =  node_inldispl.inlcondMap.at(i).inl_amplitude_z;
-			global_reducedInitialVelocityMatrix.coeffRef(q) =  node_inlvelo.inlcondMap.at(i).inl_amplitude_z;
-
-			q++;
-		}
-
-		// Apply modal Transformation
-		modal_reducedInitialDisplacementMatrix = eigen_vectors_matrix_inverse * global_reducedInitialDisplacementMatrix;
-		modal_reducedInitialVelocityMatrix = eigen_vectors_matrix_inverse * global_reducedInitialVelocityMatrix;
-
-	}
+	// Apply modal Transformation
+	modal_reducedInitialDisplacementMatrix = this->eigen_vectors_matrix_inverse * global_reducedInitialDisplacementMatrix;
+	modal_reducedInitialVelocityMatrix = this->eigen_vectors_matrix_inverse * global_reducedInitialVelocityMatrix;
 
 }
 
 
 void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_ld,
 	const load_data& ld,
-	const nodes_list_store& model_nodes,
-	const Eigen::MatrixXd& eigen_vectors_matrix_inverse)
+	const nodes_list_store& model_nodes)
 {
 	// Create Pulse load matrix
 	// Modal vector transformation
+	int matrix_index = 0;
+	Eigen::VectorXd global_reducedLoadMatrix(reducedDOF);
+	global_reducedLoadMatrix.setZero();
 
-
-	if (this->model_type == 0)
+	if (this->constrained_node_map[ld.node_id] == false)
 	{
-		// Fixed  - Fixed Condition so skip the first and last node
-		Eigen::VectorXd global_reducedLoadMatrix(reducedDOF);
+		// Node is un-constrained
+		// get the matrix index
+		matrix_index = this->nodeid_map[ld.node_id]; // get the ordered map of the start node ID
 
-		int q = 0;
-		for (int i = 1; i < this->numDOF - 1; i++)
-		{
-			global_reducedLoadMatrix.coeffRef(q) = 0.0;
-
-			// Apply the loads which are applied to the nodes (based on the node id)
-			if (i == ld.node_id)
-			{
-				global_reducedLoadMatrix.coeffRef(q) = ld.load_value;
-			}
-			q++;
-		}
-
-		// Apply modal Transformation
-		Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
-
-		modal_reducedLoadMatrix = eigen_vectors_matrix_inverse * global_reducedLoadMatrix;
-		
-		// Store the modal amplitude matrix
-		pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
-
-	}
-	else if (this->model_type == 1)
-	{
-		// Fixed - Free Condition so skip the first node
-		Eigen::VectorXd global_reducedLoadMatrix(reducedDOF);
-
-		int q = 0;
-		for (int i = 1; i < this->numDOF; i++)
-		{
-			global_reducedLoadMatrix.coeffRef(q) = 0.0;
-
-			// Apply the loads which are applied to the nodes (based on the node id)
-			if (i == ld.node_id)
-			{
-				global_reducedLoadMatrix.coeffRef(q) = ld.load_value;
-			}
-			q++;
-		}
-		// Apply modal Transformation
-		Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
-
-		modal_reducedLoadMatrix = eigen_vectors_matrix_inverse * global_reducedLoadMatrix;
-
-		// Store the modal amplitude matrix
-		pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
-
-	}
-	else if (this->model_type == 3)
-	{
-		// Circular (No DOF)
-		// Fixed - Free Condition so skip the first node
-		Eigen::VectorXd global_reducedLoadMatrix(reducedDOF);
-
-		int q = 0;
-		for (int i = 0; i < this->numDOF; i++)
-		{
-			global_reducedLoadMatrix.coeffRef(q) = 0.0;
-
-			// Apply the loads which are applied to the nodes (based on the node id)
-			if (i == ld.node_id)
-			{
-				global_reducedLoadMatrix.coeffRef(q) = -1.0 * ld.load_value;
-			}
-			q++;
-		}
-		// Apply modal Transformation
-		Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
-
-		modal_reducedLoadMatrix = eigen_vectors_matrix_inverse * global_reducedLoadMatrix;
-
-		// Store the modal amplitude matrix
-		pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
-
+		global_reducedLoadMatrix.coeffRef(matrix_index) = ld.load_value;
 	}
 
+	// Apply modal Transformation
+	Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
+
+	modal_reducedLoadMatrix = eigen_vectors_matrix.transpose() * global_reducedLoadMatrix;
+
+	// Store the modal amplitude matrix
+	pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
 
 }
 
@@ -770,7 +691,7 @@ double pulse_analysis_solver::get_total_harmonic_soln(const double& time_t,
 	else
 	{
 		// Regular case
-		double force_factor = (modal_force_ampl /  modal_stiff);
+		double force_factor = (modal_force_ampl / modal_stiff);
 		double freq_ratio = modal_omega_f / modal_omega_n;
 		double freq_factor = (1.0 - (freq_ratio * freq_ratio));
 
@@ -784,66 +705,133 @@ double pulse_analysis_solver::get_total_harmonic_soln(const double& time_t,
 	return (transient_displ_resp + steady_state_displ_resp);
 }
 
-//void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
-//	pulse_elementline_list_store& pulse_result_lineelements,
-//	const int& number_of_time_steps,
-//	const nodes_list_store& model_nodes,
-//	const elementline_list_store& model_lineelements,
-//	const std::unordered_map<int, pulse_node_result>& node_results)
-//{
-//	// Map the pulse analysis results
-//		// map the node results
-//	pulse_result_nodes.clear_data();
-//
-//	for (auto& nd_m : model_nodes.nodeMap)
-//	{
-//		// Extract the model node
-//		node_store nd = nd_m.second;
-//
-//		// Add to the pulse node results store
-//		pulse_result_nodes.add_result_node(nd.node_id, nd.node_pt, node_results.at(nd.node_id), number_of_time_steps);
-//	}
-//
-//	// map the line results
-//	pulse_result_lineelements.clear_data();
-//
-//	for (auto& ln_m : model_lineelements.elementlineMap)
-//	{
-//		// Extract the model lines
-//		elementline_store ln = ln_m.second;
-//
-//		// Extract the pulse node store -> start node and end node
-//		pulse_node_store* startNode = &pulse_result_nodes.pulse_nodeMap[ln.startNode->node_id];
-//		pulse_node_store* endNode = &pulse_result_nodes.pulse_nodeMap[ln.endNode->node_id];
-//
-//		// Add to the pulse element results store
-//		pulse_result_lineelements.add_pulse_elementline(ln.line_id, startNode, endNode);
-//	}
-//
-//	//_________________________________________________________________________________________________________________
-//	double maximum_displacement = 0.0;
-//
-//	for (auto& ln_m : pulse_result_lineelements.pulse_elementlineMap)
-//	{
-//		pulse_elementline_store ln = ln_m.second;
-//
-//		//get all the two points
-//		// Point 1 displacement
-//		for (auto& startpt_displ : ln.startpt_displ_magnitude)
-//		{
-//			maximum_displacement = std::max(maximum_displacement, startpt_displ);
-//		}
-//
-//		// Point 2 displacement
-//		for (auto& endpt_displ : ln.endpt_displ_magnitude)
-//		{
-//			maximum_displacement = std::max(maximum_displacement, endpt_displ);
-//		}
-//	}
-//
-//	// Set the maximim displacement
-//	pulse_result_nodes.max_node_displ = maximum_displacement;
-//	pulse_result_lineelements.max_line_displ = maximum_displacement;
-//
-//
-//}
+void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
+	pulse_elementline_list_store& pulse_result_lineelements,
+	pulse_elementquad_list_store& pulse_result_quadelements,
+	const int& number_of_time_steps,
+	const nodes_list_store& model_nodes,
+	const elementline_list_store& model_lineelements,
+	const elementquad_list_store& model_quadelements,
+	const std::unordered_map<int, pulse_node_result>& node_results)
+{
+	// Map the pulse analysis results
+	// map the node results
+	pulse_result_nodes.clear_data();
+
+	for (auto& nd_m : model_nodes.nodeMap)
+	{
+		// Extract the model node
+		node_store nd = nd_m.second;
+
+		// Add to the pulse node results store
+		pulse_result_nodes.add_result_node(nd.node_id, nd.node_pt, node_results.at(nd.node_id), number_of_time_steps);
+	}
+
+	//_________________________________________________________________________________________________________________
+
+	double maximum_displacement = 0.0;
+
+	for (auto& nd_m : pulse_result_nodes.pulse_nodeMap)
+	{
+		pulse_node_store nd = nd_m.second;
+
+		//get all the two points
+		// Point displacement
+		for (auto& nodept_displ : nd.node_pulse_result.node_displ_magnitude)
+		{
+			maximum_displacement = std::max(maximum_displacement, std::abs(nodept_displ));
+		}
+	}
+
+
+	// map the line results
+	pulse_result_lineelements.clear_data();
+
+	for (auto& ln_m : model_lineelements.elementlineMap)
+	{
+		// Extract the model lines
+		elementline_store ln = ln_m.second;
+
+		// Extract the pulse node store -> start node and end node
+		pulse_node_store* startNode = &pulse_result_nodes.pulse_nodeMap[ln.startNode->node_id];
+		pulse_node_store* endNode = &pulse_result_nodes.pulse_nodeMap[ln.endNode->node_id];
+
+		// Add to the pulse element line results store
+		pulse_result_lineelements.add_pulse_elementline(ln.line_id, startNode, endNode);
+	}
+
+
+
+	// map the quad results
+	pulse_result_quadelements.clear_data();
+
+	std::unordered_map<int, quad_midnode_eigenvector_store> quad_midnode;
+
+	// Create the quad mid interpolation
+	for (auto& quad_m : model_quadelements.elementquadMap)
+	{
+		elementquad_store quad = quad_m.second;
+
+		int quad_id = quad.quad_id; // get the quad id
+
+		// Extract the pulse node store -> nd1, nd2, nd3 & nd4
+		pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[quad.nd1->node_id];
+		pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[quad.nd2->node_id];
+		pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[quad.nd3->node_id];
+		pulse_node_store* nd4 = &pulse_result_nodes.pulse_nodeMap[quad.nd4->node_id];
+
+		glm::vec3 quad_midpt = geom_parameters::findGeometricCenter(nd1->node_pt, nd2->node_pt, nd3->node_pt, nd4->node_pt); // quad mid pt
+		std::vector<glm::vec3> quad_midpt_displ; // displacement at mid pt of quad
+		std::vector<double> quad_midpt_displ_mag; // displacement magnitude at mid pt of quad
+
+		for (int i = 0; i < static_cast<int>(nd1->node_pulse_result.node_displ_magnitude.size()); i++)
+		{
+			// Displacement node pt
+			glm::vec3 nd1_displ = nd1->node_pulse_result.node_displ[i]; // nd1 displ
+			glm::vec3 nd2_displ = nd2->node_pulse_result.node_displ[i]; // nd2 displ
+			glm::vec3 nd3_displ = nd3->node_pulse_result.node_displ[i]; // nd3 displ
+			glm::vec3 nd4_displ = nd4->node_pulse_result.node_displ[i]; // nd4 displ
+
+			// mid point displacement
+			glm::vec3 midpt_displ = geom_parameters::findGeometricCenter(nd1_displ, nd2_displ, nd3_displ, nd4_displ);
+
+			// mid point displacement magnitude
+			double displ_mag = glm::length(midpt_displ);
+
+
+			quad_midpt_displ.push_back(midpt_displ);
+			quad_midpt_displ_mag.push_back(displ_mag);
+		}
+
+		// Add to the quad mid node eigenvector list
+		quad_midnode[quad_id].quad_id = quad_id;
+		quad_midnode[quad_id].mid_pt = quad_midpt;
+		quad_midnode[quad_id].midpt_displ = quad_midpt_displ;
+		quad_midnode[quad_id].midpt_displ_mag = quad_midpt_displ_mag;
+	}
+
+	for (auto& quad_m : model_quadelements.elementquadMap)
+	{
+		// Extract the model lines
+		elementquad_store quad = quad_m.second;
+		int quad_id = quad.quad_id;
+
+		// Extract the pulse node store -> nd1, nd2, nd3 & nd4
+		pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[quad.nd1->node_id];
+		pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[quad.nd2->node_id];
+		pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[quad.nd3->node_id];
+		pulse_node_store* nd4 = &pulse_result_nodes.pulse_nodeMap[quad.nd4->node_id];
+
+
+		// Add to the pulse element quad results store
+		pulse_result_quadelements.add_pulse_elementquadrilateral(quad.quad_id, nd1, nd2, nd3, nd4,
+			quad_midnode[quad_id].mid_pt, quad_midnode[quad_id].midpt_displ, quad_midnode[quad_id].midpt_displ_mag);
+	}
+
+
+	// Set the maximim displacement
+	pulse_result_nodes.max_node_displ = maximum_displacement;
+	pulse_result_lineelements.max_line_displ = maximum_displacement;
+	pulse_result_quadelements.max_quad_displ = maximum_displacement;
+
+}
