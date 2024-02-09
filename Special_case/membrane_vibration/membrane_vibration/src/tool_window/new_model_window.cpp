@@ -27,7 +27,8 @@ void new_model_window::render_window()
 	//_____________________________________________________________________________________________________________________________________________________________________
 	// Create three radio buttons for model options
 
-	ImGui::RadioButton("Circular Membrane", &option_model_type, 0);
+	ImGui::RadioButton("Circular Membrane quad mesh", &option_model_type, 0);
+	ImGui::RadioButton("Circular Membrane tri mesh",&option_model_type,4);
 	ImGui::RadioButton("Rectangular Membrane 1:1", &option_model_type, 1);
 	ImGui::RadioButton("Rectangular Membrane 1:2", &option_model_type, 2);
 	ImGui::RadioButton("Rectangular Membrane 1:3", &option_model_type, 3);

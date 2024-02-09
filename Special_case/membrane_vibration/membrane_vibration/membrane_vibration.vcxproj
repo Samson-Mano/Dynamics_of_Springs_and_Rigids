@@ -177,9 +177,11 @@
     <ClCompile Include="src\geometry_store\geom_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\modal_elementline_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\modal_elementquad_list_store.cpp" />
+    <ClCompile Include="src\geometry_store\result_objects\modal_elementtri_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\modal_nodes_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\pulse_elementline_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\pulse_elementquad_list_store.cpp" />
+    <ClCompile Include="src\geometry_store\result_objects\pulse_elementtri_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\pulse_node_list_store.cpp" />
     <ClCompile Include="src\ImGui\imgui.cpp" />
     <ClCompile Include="src\ImGui\imgui_draw.cpp" />
@@ -265,9 +267,11 @@
     <ClInclude Include="src\geometry_store\geom_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\modal_elementline_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\modal_elementquad_list_store.h" />
+    <ClInclude Include="src\geometry_store\result_objects\modal_elementtri_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\modal_nodes_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\pulse_elementline_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\pulse_elementquad_list_store.h" />
+    <ClInclude Include="src\geometry_store\result_objects\pulse_elementtri_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\pulse_node_list_store.h" />
     <ClInclude Include="src\ImGui\imconfig.h" />
     <ClInclude Include="src\ImGui\imgui.h" />
@@ -291,6 +295,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="circle_mesh.txt" />
+    <Text Include="circle_mesh_tri.txt" />
     <Text Include="rect1_mesh.txt" />
     <Text Include="rect2_mesh.txt" />
     <Text Include="rect3_mesh.txt" />

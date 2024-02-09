@@ -4,6 +4,7 @@
 #include "../geometry_store/fe_objects/nodeinlcond_list_store.h"
 #include "../geometry_store/result_objects/pulse_node_list_store.h"
 #include "../geometry_store/result_objects/pulse_elementline_list_store.h"
+#include "../geometry_store/result_objects/pulse_elementtri_list_store.h"
 #include "../geometry_store/result_objects/pulse_elementquad_list_store.h"
 
 
@@ -39,6 +40,7 @@ public:
 	void clear_results();
 	void pulse_analysis_start(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
+		const elementtri_list_store& model_trielements,
 		const elementquad_list_store& model_quadelements,
 		const nodeload_list_store& node_loads,
 		const nodeinlcond_list_store& node_inldispl,
@@ -51,6 +53,7 @@ public:
 		const int selected_pulse_option,
 		pulse_node_list_store& pulse_result_nodes,
 		pulse_elementline_list_store& pulse_result_lineelements,
+		pulse_elementtri_list_store& pulse_result_trielements,
 		pulse_elementquad_list_store& pulse_result_quadelements);
 
 private:
@@ -62,7 +65,6 @@ private:
 
 	Eigen::VectorXd eigen_values_vector; // omega n squared
 	Eigen::MatrixXd eigen_vectors_matrix;
-	Eigen::MatrixXd eigen_vectors_matrix_inverse;
 
 	void create_initial_condition_matrices(Eigen::VectorXd& modal_reducedInitialDisplacementMatrix,
 		Eigen::VectorXd& modal_reducedInitialVelocityMatrix,
@@ -123,10 +125,12 @@ private:
 
 	void map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
 		pulse_elementline_list_store& pulse_result_lineelements,
+		pulse_elementtri_list_store& pulse_result_trielements,
 		pulse_elementquad_list_store& pulse_result_quadelements,
 		const int& number_of_time_steps,
 		const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
+		const elementtri_list_store& model_trielements,
 		const elementquad_list_store& model_quadelements,
 		const std::unordered_map<int, pulse_node_result>& node_results);
 

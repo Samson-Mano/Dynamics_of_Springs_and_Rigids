@@ -26,9 +26,8 @@ public:
 	void set_buffer();
 	void paint_elementtriangles();
 	void paint_selected_elementtriangles();
-	void paint_tri_material_id();
-
 	void paint_elementtriangles_shrunk();
+
 	std::vector<int> is_tri_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2);
 
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
@@ -36,7 +35,7 @@ public:
 
 private:
 	geom_parameters* geom_param_ptr = nullptr;
-	label_list_store element_materialid;
+
 	tri_list_store element_tris;
 	tri_list_store element_tris_shrunk;
 	tri_list_store selected_element_tris_shrunk;

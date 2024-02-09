@@ -177,6 +177,12 @@
     <ClCompile Include="src\geometry_store\result_objects\pulse_elementquad_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\geometry_store\result_objects\modal_elementtri_list_store.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\geometry_store\result_objects\pulse_elementtri_list_store.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\dlls\freetype.dll" />
@@ -391,6 +397,12 @@
     <ClInclude Include="src\geometry_store\result_objects\pulse_elementquad_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\geometry_store\result_objects\modal_elementtri_list_store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\geometry_store\result_objects\pulse_elementtri_list_store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\junk\junk_code.txt" />
@@ -399,5 +411,6 @@
     <Text Include="rect2_mesh.txt" />
     <Text Include="rect1_mesh.txt" />
     <Text Include="circle_mesh.txt" />
+    <Text Include="circle_mesh_tri.txt" />
   </ItemGroup>
 </Project>

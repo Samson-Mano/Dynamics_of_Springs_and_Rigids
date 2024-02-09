@@ -26,10 +26,12 @@ void modal_analysis_solver::clear_results()
 
 void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
+	const elementtri_list_store& model_trielements,
 	const elementquad_list_store& model_quadelements,
 	const material_data& mat_data,
 	modal_nodes_list_store& modal_result_nodes,
 	modal_elementline_list_store& modal_result_lineelements,
+	modal_elementtri_list_store& modal_result_trielements,
 	modal_elementquad_list_store& modal_result_quadelements)
 {
 	// Main solver call
@@ -42,8 +44,14 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 		return;
 	}
 
-	// Number of elements
+	// Number of lines
 	if (model_lineelements.elementline_count == 0)
+	{
+		return;
+	}
+
+	// Number of quads/ tris
+	if ((model_quadelements.elementquad_count  + model_trielements.elementtri_count)== 0)
 	{
 		return;
 	}
@@ -91,6 +99,13 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 		// Number of fixed nodes = 400
 		this->matrix_size = node_count - 400;
 	}
+	else if(this->model_type == 4)
+	{
+		// Circular Membrane Triangles
+		// Number of fixed nodes = 64
+		// Radius = 100
+		this->matrix_size = node_count - 64;
+	}
 
 	// Clear the angular frequency matrix
 	angular_freq_vector.resize(matrix_size);
@@ -118,18 +133,20 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 	}
 
 
-	if (mat_data.model_type == 0)
+	if (mat_data.model_type == 0 || mat_data.model_type == 4)
 	{
 		// Circular membrane
 		double c_radius = 100.0;
 
 		modal_analysis_model_circular(model_nodes,
 			model_lineelements,
+			model_trielements,
 			model_quadelements,
 			mat_data,
 			c_radius,
 			modal_result_nodes,
 			modal_result_lineelements,
+			modal_result_trielements,
 			modal_result_quadelements);
 
 		this->is_modal_analysis_complete = true;
@@ -202,11 +219,13 @@ void modal_analysis_solver::modal_analysis_start(const nodes_list_store& model_n
 
 void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
+	const elementtri_list_store& model_trielements,
 	const elementquad_list_store& model_quadelements,
 	const material_data& mat_data,
 	const double& c_radius,
 	modal_nodes_list_store& modal_result_nodes,
 	modal_elementline_list_store& modal_result_lineelements,
+	modal_elementtri_list_store& modal_result_trielements,
 	modal_elementquad_list_store& modal_result_quadelements)
 {
 	// Circular string
@@ -362,6 +381,9 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 	std::cout << "Node maping completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	//________________________________________________________________________________________________________________
+	int num_intervals = this->matrix_size;
+	double progress_interval = num_intervals / 10.0;
+	int last_printed_progress = -1; // Initialize with an invalid value
 
 	for (int i =0; i<this->matrix_size; i++)
 	{
@@ -437,6 +459,17 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 
 			}
 		}
+
+		// Calculate percentage progress
+		int progress_percentage = static_cast<int>((i / static_cast<float>(this->matrix_size)) * 100);
+		// Check if it's a new 10% interval
+		if ((progress_percentage / 10) > last_printed_progress)
+		{
+			stopwatch_elapsed_str.str("");
+			stopwatch_elapsed_str << stopwatch.elapsed();
+			std::cout << progress_percentage << "% modal analysis completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+			last_printed_progress = (progress_percentage / 10);
+		}
 	}
 
 
@@ -499,6 +532,24 @@ void modal_analysis_solver::modal_analysis_model_circular(const nodes_list_store
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Results mapped to model Line Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+	// Add the modal tri element result
+	for (auto& tri_m : model_trielements.elementtriMap)
+	{
+		elementtri_store tri = tri_m.second;
+		int tri_id = tri.tri_id;
+
+		modal_result_trielements.add_modal_elementtriangle(tri_id,
+			&modal_result_nodes.modal_nodeMap[tri.nd1->node_id],
+			&modal_result_nodes.modal_nodeMap[tri.nd2->node_id],
+			&modal_result_nodes.modal_nodeMap[tri.nd3->node_id]);
+	}
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model Tri Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	//____________________________________________________________________________________________________________________
 
 	// Add the modal quad element result

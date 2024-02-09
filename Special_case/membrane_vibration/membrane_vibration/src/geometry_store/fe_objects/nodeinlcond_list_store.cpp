@@ -18,8 +18,9 @@ void nodeinlcond_list_store::init(geom_parameters* geom_param_ptr)
 	// Set the geometry parameter for the points
 	inlcond_points.init(geom_param_ptr);
 	inlcond_lines.init(geom_param_ptr);
-	// inl_condition_labels.init(geom_param_ptr);
 
+	inlcondMap.clear();
+	inlcond_count = 0;
 }
 
 void nodeinlcond_list_store::set_zero_condition(int inlcond_type,const int& model_type)
@@ -158,7 +159,7 @@ void nodeinlcond_list_store::set_buffer()
 
 	inlcond_points.set_buffer();
 	inlcond_lines.set_buffer();
-	// inl_condition_labels.set_buffer();
+
 }
 
 void nodeinlcond_list_store::paint_inlcond()
@@ -166,6 +167,7 @@ void nodeinlcond_list_store::paint_inlcond()
 	// Paint the initial displacement points
 	inlcond_points.paint_points();
 	inlcond_lines.paint_lines();
+
 }
 
 void nodeinlcond_list_store::paint_inlcond_label()
@@ -180,5 +182,5 @@ void nodeinlcond_list_store::update_geometry_matrices(bool set_modelmatrix, bool
 	// Update model openGL uniforms
 	inlcond_points.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
 	inlcond_lines.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	// inl_condition_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	
 }

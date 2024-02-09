@@ -37,7 +37,6 @@ private:
 	geom_parameters* geom_param_ptr = nullptr;
 	point_list_store inlcond_points;
 	line_list_store inlcond_lines;
-	// label_list_store inl_condition_labels;
 
 };
 

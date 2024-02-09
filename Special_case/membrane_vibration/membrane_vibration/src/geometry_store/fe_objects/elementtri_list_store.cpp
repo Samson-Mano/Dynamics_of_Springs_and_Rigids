@@ -18,7 +18,6 @@ void elementtri_list_store::init(geom_parameters* geom_param_ptr)
 	// Set the geometry parameters for the labels (and clear the labels)
 	element_tris.init(geom_param_ptr);
 	element_tris_shrunk.init(geom_param_ptr);
-	element_materialid.init(geom_param_ptr);
 	selected_element_tris_shrunk.init(geom_param_ptr);
 
 	// Clear the triangles
@@ -130,12 +129,6 @@ void elementtri_list_store::paint_elementtriangles_shrunk()
 	element_tris_shrunk.paint_triangles();
 }
 
-void elementtri_list_store::paint_tri_material_id()
-{
-	// Paint the element material ID
-	element_materialid.paint_text();
-}
-
 std::vector<int> elementtri_list_store::is_tri_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2)
 {
 	// Return the node id of node which is inside the rectangle
@@ -204,7 +197,6 @@ void elementtri_list_store::update_geometry_matrices(bool set_modelmatrix, bool 
 	// Update model openGL uniforms
 	element_tris.update_opengl_uniforms(set_modelmatrix, set_pantranslation,set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
 	element_tris_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	element_materialid.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation,  set_zoomtranslation, set_transparency, set_deflscale);
 	selected_element_tris_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
 }
 

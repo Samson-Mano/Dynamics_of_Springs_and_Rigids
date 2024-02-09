@@ -24,7 +24,9 @@ public:
 
 	// analysis results
 	bool show_undeformed_model = true; // show undeformed model 
-	bool show_result_text_values = true; // show the result text values
+	bool show_result_nodes = true; // show result nodes
+	bool show_result_lines = true; // show result elements
+	bool show_result_quads = true; // show result quads
 
 	// Animation control
 	bool animate_play = true;

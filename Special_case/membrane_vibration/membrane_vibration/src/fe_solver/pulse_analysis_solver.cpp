@@ -22,6 +22,7 @@ void pulse_analysis_solver::clear_results()
 
 void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
+	const elementtri_list_store& model_trielements,
 	const elementquad_list_store& model_quadelements,
 	const nodeload_list_store& node_loads,
 	const nodeinlcond_list_store& node_inldispl,
@@ -34,6 +35,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	const int selected_pulse_option,
 	pulse_node_list_store& pulse_result_nodes,
 	pulse_elementline_list_store& pulse_result_lineelements,
+	pulse_elementtri_list_store& pulse_result_trielements,
 	pulse_elementquad_list_store& pulse_result_quadelements)
 {
 	// Main solver call
@@ -66,23 +68,15 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	this->eigen_values_vector = modal_solver.eigen_values_vector;
 	this->eigen_vectors_matrix = modal_solver.eigen_vectors_matrix;
 
+	//std::ofstream output_file;
+	//output_file.open("pulse_analysis_results.txt");
 
-	// Eigen vector inverse
-	this->eigen_vectors_matrix_inverse.resize(this->reducedDOF, this->reducedDOF);
-	this->eigen_vectors_matrix_inverse.setZero();
+	//output_file << "Eigen vector matrix:" << std::endl;
+	//output_file << this->eigen_vectors_matrix << std::endl;
+	//output_file << std::endl;
 
-	// Create Eigen vector inverse
-	if (static_cast<int>(node_inldispl.inlcondMap.size()) != 0 ||
-		static_cast<int>(node_inlvelo.inlcondMap.size()) != 0)
-	{
-		// Initial condition is applied
-		// Inverting eigen vector matrix take 120 seconds for (2000 x 2000 matrix)
-		this->eigen_vectors_matrix_inverse = this->eigen_vectors_matrix.inverse();
-
-		stopwatch_elapsed_str.str("");
-		stopwatch_elapsed_str << stopwatch.elapsed();
-		std::cout << "Eigen vector inversion completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-	}
+	//output_file.close();
+	
 
 	//____________________________________________________________________________________________________________________
 	// Step: 1 Create the initial displacement matrix (Modal Transformed initial displacement matrix)
@@ -139,8 +133,16 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	// Time step count
 	this->time_step_count = 0;
 
-	for (double time_t = 0.0; time_t <= total_simulation_time; time_t = time_t + time_interval)
+	int num_intervals = static_cast<int>(total_simulation_time / time_interval);
+	double progress_interval = num_intervals / 10.0;
+	int last_printed_progress = -1; // Initialize with an invalid value
+
+	for (int i = 0; i <= num_intervals; i++)
 	{
+
+		// time at 
+		double time_t = i * time_interval;
+
 		// Displacement amplitude matrix
 		Eigen::VectorXd modal_displ_ampl_respMatrix(reducedDOF);
 		modal_displ_ampl_respMatrix.setZero();
@@ -247,6 +249,17 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 			// Store the displacement result
 			modal_displ_ampl_respMatrix.coeffRef(i) = displ_resp_initial + displ_resp_force;
 
+
+			// Calculate percentage progress
+			int progress_percentage = static_cast<int>((time_t / total_simulation_time) * 100);
+			// Check if it's a new 10% interval
+			if (progress_percentage / 10 > last_printed_progress) 
+			{
+				stopwatch_elapsed_str.str("");
+				stopwatch_elapsed_str << stopwatch.elapsed();
+				std::cout << progress_percentage << "% pulse analysis completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+				last_printed_progress = progress_percentage / 10;
+			}
 		}
 
 
@@ -298,10 +311,12 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 
 	map_pulse_analysis_results(pulse_result_nodes,
 		pulse_result_lineelements,
+		pulse_result_trielements,
 		pulse_result_quadelements,
 		this->time_step_count,
 		model_nodes,
 		model_lineelements,
+		model_trielements,
 		model_quadelements,
 		node_results);
 
@@ -329,7 +344,6 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	stopwatch_elapsed_str.clear();
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Results storage completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-	std::cout << "Pulse analysis complete " << std::endl;
 
 	// Analysis complete
 	this->is_pulse_analysis_complete = true;
@@ -389,8 +403,8 @@ void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& m
 
 
 	// Apply modal Transformation
-	modal_reducedInitialDisplacementMatrix = this->eigen_vectors_matrix_inverse * global_reducedInitialDisplacementMatrix;
-	modal_reducedInitialVelocityMatrix = this->eigen_vectors_matrix_inverse * global_reducedInitialVelocityMatrix;
+	modal_reducedInitialDisplacementMatrix = this->eigen_vectors_matrix.transpose() * global_reducedInitialDisplacementMatrix;
+	modal_reducedInitialVelocityMatrix = this->eigen_vectors_matrix.transpose() * global_reducedInitialVelocityMatrix;
 
 }
 
@@ -417,7 +431,7 @@ void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_ld
 	// Apply modal Transformation
 	Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
 
-	modal_reducedLoadMatrix = eigen_vectors_matrix.transpose() * global_reducedLoadMatrix;
+	modal_reducedLoadMatrix = this->eigen_vectors_matrix.transpose() * global_reducedLoadMatrix;
 
 	// Store the modal amplitude matrix
 	pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
@@ -707,10 +721,12 @@ double pulse_analysis_solver::get_total_harmonic_soln(const double& time_t,
 
 void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
 	pulse_elementline_list_store& pulse_result_lineelements,
+	pulse_elementtri_list_store& pulse_result_trielements,
 	pulse_elementquad_list_store& pulse_result_quadelements,
 	const int& number_of_time_steps,
 	const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
+	const elementtri_list_store& model_trielements,
 	const elementquad_list_store& model_quadelements,
 	const std::unordered_map<int, pulse_node_result>& node_results)
 {
@@ -743,7 +759,7 @@ void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pu
 		}
 	}
 
-
+	//_________________________________________________________________________________________________________________
 	// map the line results
 	pulse_result_lineelements.clear_data();
 
@@ -760,8 +776,27 @@ void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pu
 		pulse_result_lineelements.add_pulse_elementline(ln.line_id, startNode, endNode);
 	}
 
+	//_________________________________________________________________________________________________________________
+	// map the tri results
+	pulse_result_trielements.clear_data();
+
+	for (auto& tri_m : model_trielements.elementtriMap)
+	{
+		// Extract the model tris
+		elementtri_store tri = tri_m.second;
+		int tri_id = tri.tri_id;
+
+		// Extract the pulse node store -> nd1, nd2 & nd3
+		pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[tri.nd1->node_id];
+		pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[tri.nd2->node_id];
+		pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[tri.nd3->node_id];
 
 
+		// Add to the pulse element tri results store
+		pulse_result_trielements.add_pulse_elementtriangle(tri.tri_id, nd1, nd2, nd3);
+	}
+
+	//_________________________________________________________________________________________________________________
 	// map the quad results
 	pulse_result_quadelements.clear_data();
 
@@ -828,10 +863,11 @@ void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pu
 			quad_midnode[quad_id].mid_pt, quad_midnode[quad_id].midpt_displ, quad_midnode[quad_id].midpt_displ_mag);
 	}
 
-
+	//_________________________________________________________________________________________________________________
 	// Set the maximim displacement
 	pulse_result_nodes.max_node_displ = maximum_displacement;
 	pulse_result_lineelements.max_line_displ = maximum_displacement;
+	pulse_result_trielements.max_tri_displ = maximum_displacement;
 	pulse_result_quadelements.max_quad_displ = maximum_displacement;
 
 }

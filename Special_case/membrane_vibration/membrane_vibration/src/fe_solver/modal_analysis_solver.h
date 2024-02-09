@@ -5,11 +5,13 @@
 // FE Objects
 #include "../geometry_store/fe_objects/nodes_list_store.h"
 #include "../geometry_store/fe_objects/elementline_list_store.h"
+#include "../geometry_store/fe_objects/elementtri_list_store.h"
 #include "../geometry_store/fe_objects/elementquad_list_store.h"
 
 // FE Results Modal Analysis
 #include "../geometry_store/result_objects/modal_nodes_list_store.h"
 #include "../geometry_store/result_objects/modal_elementline_list_store.h"
+#include "../geometry_store/result_objects/modal_elementtri_list_store.h"
 #include "../geometry_store/result_objects/modal_elementquad_list_store.h"
 
 // Stop watch
@@ -102,10 +104,12 @@ public:
 
 	void modal_analysis_start(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
+		const elementtri_list_store& model_trielements,
 		const elementquad_list_store& model_quadelements,
 		const material_data& mat_data,
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements,
+		modal_elementtri_list_store& modal_result_trielements,
 		modal_elementquad_list_store& modal_result_quadelements);
 private:
 	const double m_pi = 3.14159265358979323846;
@@ -118,11 +122,13 @@ private:
 
 	void modal_analysis_model_circular(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
+		const elementtri_list_store& model_trielements,
 		const elementquad_list_store& model_quadelements,
 		const material_data& mat_data,
 		const double& c_radius,
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements,
+		modal_elementtri_list_store& modal_result_trielements,
 		modal_elementquad_list_store& modal_result_quadelements);
 
 	double bessel_eigen_vec(const bessel_function_Frequency& bessel_root_i, const glm::vec3& nodept, const double& c_radius);
