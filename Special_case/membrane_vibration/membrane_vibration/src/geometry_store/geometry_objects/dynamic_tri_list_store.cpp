@@ -110,7 +110,6 @@ void dynamic_tri_list_store::paint_triangles(const int& dyn_index)
 }
 
 
-
 void dynamic_tri_list_store::paint_triangles()
 {
 	// Paint all the triangles

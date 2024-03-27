@@ -40,7 +40,7 @@ private:
 	gBuffers tri_buffer;
 	Shader tri_shader;
 
-	void get_line_buffer(tri_store& tri, float* tri_vertices, unsigned int& tri_v_index, unsigned int* tri_vertex_indices, unsigned int& tri_i_index);
+	void get_tri_buffer(tri_store& tri, float* tri_vertices, unsigned int& tri_v_index, unsigned int* tri_vertex_indices, unsigned int& tri_i_index);
 
 
 };

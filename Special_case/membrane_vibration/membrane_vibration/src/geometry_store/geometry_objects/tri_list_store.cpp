@@ -29,7 +29,7 @@ void tri_list_store::init(geom_parameters* geom_param_ptr)
 void tri_list_store::add_tri(int& tri_id, const glm::vec3& tript1_loc, const glm::vec3& tript2_loc, const glm::vec3& tript3_loc, 
 	glm::vec3& tript1_color, glm::vec3& tript2_color, glm::vec3& tript3_color)
 {
-	// Create a temporary points
+	// Create a temporary triangle
 	tri_store temp_tri;
 	temp_tri.tri_id = tri_id;
 
@@ -67,7 +67,7 @@ void tri_list_store::set_buffer()
 	for (auto& tri : triMap)
 	{
 		// Add triangle buffers
-		get_line_buffer(tri, tri_vertices, tri_v_index, tri_vertex_indices, tri_i_index);
+		get_tri_buffer(tri, tri_vertices, tri_v_index, tri_vertex_indices, tri_i_index);
 	}
 
 	VertexBufferLayout tri_pt_layout;
@@ -147,7 +147,7 @@ void tri_list_store::update_opengl_uniforms(bool set_modelmatrix, bool set_pantr
 	}
 }
 
-void tri_list_store::get_line_buffer(tri_store& tri, float* tri_vertices, unsigned int& tri_v_index, unsigned int* tri_vertex_indices, unsigned int& tri_i_index)
+void tri_list_store::get_tri_buffer(tri_store& tri, float* tri_vertices, unsigned int& tri_v_index, unsigned int* tri_vertex_indices, unsigned int& tri_i_index)
 {
 	// Get the three node buffer for the shader
 	// Point 1

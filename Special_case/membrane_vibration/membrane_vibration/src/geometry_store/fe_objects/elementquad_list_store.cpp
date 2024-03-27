@@ -16,13 +16,8 @@ void elementquad_list_store::init(geom_parameters* geom_param_ptr)
 	this->geom_param_ptr = geom_param_ptr;
 
 	// Set the geometry parameters for the labels (and clear the labels)
-	element_tris123.init(geom_param_ptr); // Tri 123
-	element_tris134.init(geom_param_ptr); // Tri 134
-	element_tris123_shrunk.init(geom_param_ptr); // Tri shrunk 123
-	element_tris134_shrunk.init(geom_param_ptr); // Tri shrunk 134
-	element_materialid.init(geom_param_ptr);
-	selected_element_tris123_shrunk.init(geom_param_ptr); // Selected tri 123
-	selected_element_tris134_shrunk.init(geom_param_ptr); // Selected tri 134
+	element_quads.init(geom_param_ptr); // Quadrilaterals
+	element_quads_shrunk.init(geom_param_ptr); // Quadrilaterals shrunk
 
 	// Clear the triangles
 	elementquad_count = 0;
@@ -50,22 +45,18 @@ void elementquad_list_store::add_elementquadrilateral(int& quad_id, node_store* 
 	elementquadMap.insert({ quad_id, temp_quad });
 	elementquad_count++;
 
-	//__________________________ Add the Triangle
-	int tri_id123 = element_tris123.tri_count;
-	int tri_id134 = element_tris134.tri_count;
-	glm::vec3 node_pt1 = (*nd1).node_pt; // Node pt 1
+	//__________________________ Add the Quadrilaterals
+	int temp_quad_id = element_quads.quad_count;
+		glm::vec3 node_pt1 = (*nd1).node_pt; // Node pt 1
 	glm::vec3 node_pt2 = (*nd2).node_pt; // Node pt 2
 	glm::vec3 node_pt3 = (*nd3).node_pt; // Node pt 3
 	glm::vec3 node_pt4 = (*nd4).node_pt; // Node pt 4
 
 	glm::vec3 temp_tri_color = geom_param_ptr->geom_colors.triangle_color;
-	// Main triangle 123
-	element_tris123.add_tri(tri_id123, node_pt1, node_pt2, node_pt3,
-										temp_tri_color, temp_tri_color, temp_tri_color);
-
-	// Main triangle 134
-	element_tris134.add_tri(tri_id134, node_pt1, node_pt3, node_pt4,
-										temp_tri_color, temp_tri_color, temp_tri_color);
+	
+	// Quadrialterals
+	element_quads.add_quad(temp_quad_id, node_pt1, node_pt2, node_pt3, node_pt4,
+										temp_tri_color, temp_tri_color, temp_tri_color, temp_tri_color);
 
 	// Find the shrunk vertices
 	glm::vec3 midpt = glm::vec3((node_pt1.x + node_pt2.x + node_pt3.x + node_pt4.x) / 4.0f,
@@ -78,57 +69,16 @@ void elementquad_list_store::add_elementquadrilateral(int& quad_id, node_store* 
 	glm::vec3 shrunk_node_pt3 = geom_parameters::linear_interpolation3d(midpt, node_pt3, shrink_factor);
 	glm::vec3 shrunk_node_pt4 = geom_parameters::linear_interpolation3d(midpt, node_pt4, shrink_factor);
 
-	// Main triangle123 as shrunk
-	element_tris123_shrunk.add_tri(tri_id123, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-												temp_tri_color, temp_tri_color, temp_tri_color);
-
-	// Main triangle134 as shrunk
-	element_tris134_shrunk.add_tri(tri_id134, shrunk_node_pt1, shrunk_node_pt3, shrunk_node_pt4,
-												temp_tri_color, temp_tri_color, temp_tri_color);
-
+	// Quadrilaterals shrunk
+	element_quads_shrunk.add_quad(temp_quad_id, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3, shrunk_node_pt4,
+												temp_tri_color, temp_tri_color, temp_tri_color, temp_tri_color);
 
 }
 
 void elementquad_list_store::add_selection_quadrilaterals(const std::vector<int>& selected_element_ids)
 {
-	// Clear the existing selected triangles
-	selected_element_tris123_shrunk.clear_triangles();
-	selected_element_tris134_shrunk.clear_triangles();
-
-	// Add to Selected Element triangles
-	glm::vec3 temp_color = geom_param_ptr->geom_colors.selection_color;
-
-	for (const auto& it : selected_element_ids)
-	{
-		int tri_id123 = selected_element_tris123_shrunk.tri_count;
-		int tri_id134 = selected_element_tris134_shrunk.tri_count;
-		glm::vec3 node_pt1 = elementquadMap[it].nd1->node_pt; // Node pt 1
-		glm::vec3 node_pt2 = elementquadMap[it].nd2->node_pt; // Node pt 2
-		glm::vec3 node_pt3 = elementquadMap[it].nd3->node_pt; // Node pt 3
-		glm::vec3 node_pt4 = elementquadMap[it].nd3->node_pt; // Node pt 4
-
-
-		glm::vec3 midpt = glm::vec3((node_pt1.x + node_pt2.x + node_pt3.x + node_pt4.x) / 4.0f, // mid pt x
-			(node_pt1.y + node_pt2.y + node_pt3.y + node_pt4.y) / 4.0f, // mid pt y
-			(node_pt1.z + node_pt2.z + node_pt3.z + node_pt4.z) / 4.0f); // mid pt z
-		double shrink_factor = geom_param_ptr->traingle_shrunk_factor;
-
-		glm::vec3 shrunk_node_pt1 = geom_parameters::linear_interpolation3d(midpt, node_pt1, shrink_factor);
-		glm::vec3 shrunk_node_pt2 = geom_parameters::linear_interpolation3d(midpt, node_pt2, shrink_factor);
-		glm::vec3 shrunk_node_pt3 = geom_parameters::linear_interpolation3d(midpt, node_pt3, shrink_factor);
-		glm::vec3 shrunk_node_pt4 = geom_parameters::linear_interpolation3d(midpt, node_pt4, shrink_factor);
-
-		selected_element_tris123_shrunk.add_tri(tri_id123, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-															temp_color, temp_color, temp_color);
-
-		selected_element_tris134_shrunk.add_tri(tri_id134, shrunk_node_pt1, shrunk_node_pt2, shrunk_node_pt3,
-															temp_color, temp_color, temp_color);
-	}
-
-	// Set the selected element triangles buffer
-	selected_element_tris123_shrunk.set_buffer();
-	selected_element_tris134_shrunk.set_buffer();
-
+	// Not implemeted 
+	
 
 }
 
@@ -136,33 +86,30 @@ void elementquad_list_store::set_buffer()
 {
 	// Set the buffers for the Model
 	// Quad
-	element_tris123.set_buffer();
-	element_tris134.set_buffer();
+	element_quads.set_buffer();
 	// shrunk quad
-	element_tris123_shrunk.set_buffer();
-	element_tris134_shrunk.set_buffer();
+	element_quads_shrunk.set_buffer();
 }
 
 void elementquad_list_store::paint_elementquadrilaterals()
 {
 	// Paint the Quadrilaterals
-	element_tris123.paint_triangles();
-	element_tris134.paint_triangles();
+	element_quads.paint_quadrilaterals();
+
 }
 
 void elementquad_list_store::paint_selected_elementquadrilaterals()
 {
-	// Paint the selected Quadrilaterals
-	selected_element_tris123_shrunk.paint_triangles();
-	selected_element_tris134_shrunk.paint_triangles();
+	// Not implemented
+
 }
 
 
 void elementquad_list_store::paint_elementquadrilaterals_shrunk()
 {
 	// Paint the quadrilaterals shrunk
-	element_tris123_shrunk.paint_triangles();
-	element_tris134_shrunk.paint_triangles();
+	element_quads_shrunk.paint_quadrilaterals();
+
 }
 
 std::vector<int> elementquad_list_store::is_quad_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2)
@@ -238,11 +185,7 @@ void elementquad_list_store::update_geometry_matrices(bool set_modelmatrix, bool
 	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
 	// Update model openGL uniforms
-	element_tris123.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	element_tris134.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	element_tris123_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	element_tris134_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	element_materialid.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	selected_element_tris123_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
-	selected_element_tris134_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	element_quads.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	element_quads_shrunk.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
+
 }

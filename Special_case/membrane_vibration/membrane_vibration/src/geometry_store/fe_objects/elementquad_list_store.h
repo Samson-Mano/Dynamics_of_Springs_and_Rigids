@@ -1,6 +1,6 @@
 #pragma once
 #include "elementline_list_store.h"
-#include "../geometry_objects/tri_list_store.h"
+#include "../geometry_objects/quad_list_store.h"
 
 
 struct elementquad_store
@@ -42,13 +42,7 @@ private:
 	//   |      |     | /     /   | 
 	//   1______2     1      1____2      
 
-	tri_list_store element_tris123; // Tri 123
-	tri_list_store element_tris134; // Tri 134
-
-	tri_list_store element_tris123_shrunk; // Tri shrunk 123
-	tri_list_store element_tris134_shrunk; // Tri shrunk 134
-
-	tri_list_store selected_element_tris123_shrunk;
-	tri_list_store selected_element_tris134_shrunk;
+	quad_list_store element_quads; // Quadrilaterals
+	quad_list_store element_quads_shrunk; // Quadrilaterals shrunk
 
 };
