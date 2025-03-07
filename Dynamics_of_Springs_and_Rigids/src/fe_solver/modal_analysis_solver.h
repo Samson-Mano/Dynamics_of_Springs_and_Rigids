@@ -56,7 +56,8 @@ public:
 	Eigen::VectorXd reduced_modalStiff;
 	Eigen::VectorXi globalDOFMatrix;
 	Eigen::MatrixXd globalSupportInclinationMatrix;
-	Eigen::MatrixXd reduced_eigenvectors_transformed;
+	Eigen::MatrixXd reduced_eigenvectors;
+	Eigen::MatrixXd global_eigenvectors;
 	Eigen::MatrixXd global_eigenvectors_transformed;
 
 	modal_analysis_solver();
@@ -80,7 +81,7 @@ public:
 		modal_elementline_list_store& modal_result_lineelements);
 private:
 	const double m_pi = 3.14159265358979323846;
-	bool print_matrix = false;
+	bool print_matrix = true;
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
@@ -123,7 +124,6 @@ private:
 
 	void get_reduced_global_matrices(Eigen::MatrixXd& reduced_globalStiffnessMatrix,
 		Eigen::MatrixXd& reduced_globalPointMassMatrix,
-		Eigen::MatrixXd& reduced_globalSupportInclinationMatrix,
 		const Eigen::MatrixXd& globalStiffnessMatrix,
 		const Eigen::MatrixXd& globalPointMassMatrix,
 		const Eigen::MatrixXd& globalSupportInclinationMatrix,
@@ -226,7 +226,7 @@ private:
 
 	void get_modal_matrices(Eigen::VectorXd& reduced_modalMass,
 		Eigen::VectorXd& reduced_modalStiff,
-		const Eigen::MatrixXd& reduced_eigenvectors_transformed,
+		const Eigen::MatrixXd& reduced_eigenvectors,
 		const Eigen::MatrixXd& reduced_globalPointMassMatrix,
 		const Eigen::MatrixXd& reduced_globalStiffnessMatrix,
 		const int& reducedDOF,

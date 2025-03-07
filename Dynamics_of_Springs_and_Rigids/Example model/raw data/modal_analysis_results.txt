@@ -1,0 +1,105 @@
+Global Stiffness Matrix
+ 499999       0 -250000 -433013 -250000  433013
+      0 1.5e+06 -433013 -750000  433013 -750000
+-250000 -433013  250100  433013    -100       0
+-433013 -750000  433013  750000       0       0
+-250000  433013    -100       0  250100 -433013
+ 433013 -750000       0       0 -433013  750000
+
+Global Support Inclination Matrix
+6.12323e-17           1           0           0           0           0
+         -1 6.12323e-17           0           0           0           0
+          0           0           1          -0           0           0
+          0           0           0           1           0           0
+          0           0           0           0           1          -0
+          0           0           0           0           0           1
+
+Global Stiffness Matrix transformed for support inclination
+     1.5e+06 -6.12324e-11       433013       750000      -433013       750000
+-6.12324e-11       499999      -250000      -433013      -250000       433013
+      433013      -250000       250100       433013         -100            0
+      750000      -433013       433013       750000            0            0
+     -433013      -250000         -100            0       250100      -433013
+      750000       433013            0            0      -433013       750000
+
+Global Point Mass Matrix
+100   0   0   0   0   0
+  0 100   0   0   0   0
+  0   0  50   0   0   0
+  0   0   0  50   0   0
+  0   0   0   0  50   0
+  0   0   0   0   0  50
+
+Global Point Mass Matrix transformed for support inclination
+100   0   0   0   0   0
+  0 100   0   0   0   0
+  0   0  50   0   0   0
+  0   0   0  50   0   0
+  0   0   0   0  50   0
+  0   0   0   0   0  50
+
+Global DOF Matrix
+1
+0
+1
+0
+1
+0
+
+Reduced Global Stiffness Matrix
+1.5e+06  433013 -433013
+ 433013  250100    -100
+-433013    -100  250100
+
+Reduced Global Mass Matrix
+100   0   0
+  0  50   0
+  0   0  50
+
+Reduced Inverse Square Root Point Mass Matrix
+     0.1        0        0
+       0 0.141421        0
+       0        0 0.141421
+
+Standard Eigen Value Z - matrix:
+   15000  6123.72 -6123.72
+ 6123.72  5001.99       -2
+-6123.72       -2  5001.99
+
+Modal Analysis Success !!!!! 
+Eigen Values 
+2.99985
+4999.99
+  20001
+
+Eigen Vectors of the Reduced matrix 
+ 0.577465         0         1
+       -1         1  0.577465
+        1         1 -0.577465
+
+Global Eigen Vector Matrix
+ 0.577465         0         1
+        0         0         0
+       -1         1  0.577465
+        0         0         0
+        1         1 -0.577465
+        0         0         0
+
+Global Participation Factors
+25.0075
+    100
+74.9925
+
+Cumulative Participation Factors
+200
+
+Reduced Modal Mass Matrix
+133.347
+    100
+133.347
+
+Reduced Modal Stiffness Matrix
+     400.02
+     499999
+2.66707e+06
+

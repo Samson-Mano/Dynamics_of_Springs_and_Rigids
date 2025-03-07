@@ -73,7 +73,7 @@ void pulse_analysis_solver::pulse_analysis_start(const nodes_list_store& model_n
 	Eigen::VectorXi globalDOFMatrix = modal_solver.globalDOFMatrix; // retrive the global DOF matrix from the modal solver
 	Eigen::MatrixXd globalSupportInclinationMatrix = modal_solver.globalSupportInclinationMatrix; // retrive the global Support Inclination matrix from the modal solver
 	Eigen::MatrixXd global_eigenVectorsMatrix = modal_solver.global_eigenvectors_transformed; // Retrive the global EigenVectors matrix 
-	Eigen::MatrixXd reduced_eigenVectorsMatrix = modal_solver.reduced_eigenvectors_transformed; // Retrive the reduced EigenVectors matrix 
+	Eigen::MatrixXd reduced_eigenVectorsMatrix = modal_solver.reduced_eigenvectors; // Retrive the reduced EigenVectors matrix 
 
 	if (print_matrix == true)
 	{

@@ -1,0 +1,14 @@
+node, 0, 0, -433.013
+node, 1, -500, 433.013
+node, 2, 500, 433.013
+line, 0, 0, 1, 0
+line, 1, 1, 2, 1
+line, 2, 2, 0, 0
+cnst, 1, 1, 90
+cnst, 2, 1, 90
+cnst, 0, 1, 0
+ptms, 0, 100, 100
+ptms, 1, 50, 50
+ptms, 2, 50, 50
+mtrl, 0, Default Rigid, inf
+mtrl, 1, Default Spring, 100
