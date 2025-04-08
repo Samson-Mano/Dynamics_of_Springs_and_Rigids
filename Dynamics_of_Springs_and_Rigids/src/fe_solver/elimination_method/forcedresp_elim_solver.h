@@ -1,5 +1,5 @@
 #pragma once
-#include "pulse_analysis_solver.h"
+#include "pulse_elim_solver.h"
 
 
 struct forceresp_load_data
@@ -12,7 +12,7 @@ struct forceresp_load_data
 };
 
 
-class forcedresp_analysis_solver
+class forcedresp_elim_solver
 {
 public:
 	const double m_pi = 3.14159265358979323846;
@@ -24,8 +24,8 @@ public:
 	bool is_forcedresp_analysis_complete = false;
 
 
-	forcedresp_analysis_solver();
-	~forcedresp_analysis_solver();
+	forcedresp_elim_solver();
+	~forcedresp_elim_solver();
 	void clear_results();
 	void forcedresp_analysis_start(std::vector<frequency_reponse_data>& frf_data,
 		std::vector<chart_setting_data>& frf_chart_setting,
@@ -35,7 +35,7 @@ public:
 		const nodeload_list_store& node_loads,
 		const nodepointmass_list_store& node_ptmass,
 		const std::unordered_map<int, material_data>& material_list,
-		const modal_analysis_solver& modal_solver,
+		const modal_elim_solver& modal_solver,
 		const std::vector<int> selected_nodes,
 		const double start_frequency,
 		const double end_frequency,

@@ -18,9 +18,9 @@
 #include "../tool_window/forcedresp_analysis_window.h"
 
 // Solver
-#include "../fe_solver/modal_analysis_solver.h"
-#include "../fe_solver/pulse_analysis_solver.h"
-#include "../fe_solver/forcedresp_analysis_solver.h"
+#include "../fe_solver/elimination_method/modal_elim_solver.h"
+#include "../fe_solver/elimination_method/pulse_elim_solver.h"
+#include "../fe_solver/elimination_method/forcedresp_elim_solver.h"
 
 // FE Objects
 #include "fe_objects/nodes_list_store.h"
@@ -105,10 +105,9 @@ private:
 	pulse_elementline_list_store pulse_result_lineelements;
 
 	// Solver object
-	modal_analysis_solver modal_solver;
-	pulse_analysis_solver pulse_solver;
-	forcedresp_analysis_solver freq_solver;
-
+	modal_elim_solver modal_elim_s;
+	pulse_elim_solver pulse_elim_s;
+	forcedresp_elim_solver freq_elim_s;
 
 	// Window pointers
 	options_window* op_window = nullptr;
@@ -122,6 +121,9 @@ private:
 	modal_analysis_window* modal_solver_window = nullptr;
 	pulse_analysis_window* pulse_solver_window = nullptr;
 	forcedresp_analysis_window* forcedresp_solver_window = nullptr;
+
+	// Analysis results
+	bool is_modal_analysis_complete = false;
 
 
 	void paint_model(); // Paint the model
