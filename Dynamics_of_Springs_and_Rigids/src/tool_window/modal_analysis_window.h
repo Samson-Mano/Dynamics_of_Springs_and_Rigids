@@ -16,6 +16,8 @@ public:
 	bool execute_modal_open = false; // Solver window execute opening event flag
 	bool execute_modal_close = false; // Closing of solution window event flag
 
+	int solver_type = 0; // Solver type 0 - Penalty method, 1 - Lagrange method, 2 - Elimination method
+
 	// Modal analysis result list
 	int selected_modal_option = 0;
 	std::vector<std::string> mode_result_str;

@@ -18,9 +18,21 @@
 #include "../tool_window/forcedresp_analysis_window.h"
 
 // Solver
+// 1) Penalty method
+#include "../fe_solver/penalty_method/modal_penalty_solver.h"
+
+
+// 2) Lagrange method
+
+
+
+// 3) Elimination method
 #include "../fe_solver/elimination_method/modal_elim_solver.h"
 #include "../fe_solver/elimination_method/pulse_elim_solver.h"
 #include "../fe_solver/elimination_method/forcedresp_elim_solver.h"
+
+
+
 
 // FE Objects
 #include "fe_objects/nodes_list_store.h"
@@ -105,9 +117,20 @@ private:
 	pulse_elementline_list_store pulse_result_lineelements;
 
 	// Solver object
+	int solver_type = -1;
+
+	// 1) Penalty method
+	modal_penalty_solver modal_penalty_s;
+
+
+
+	// 3) Elimination method 
 	modal_elim_solver modal_elim_s;
 	pulse_elim_solver pulse_elim_s;
 	forcedresp_elim_solver freq_elim_s;
+
+
+
 
 	// Window pointers
 	options_window* op_window = nullptr;

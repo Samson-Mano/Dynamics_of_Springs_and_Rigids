@@ -127,8 +127,8 @@ void modal_elim_solver::modal_analysis_elimmethod_start(const nodes_list_store& 
 
 	if (print_matrix == true)
 	{
-		output_file << "Modal using Elimination method" << std::endl;
-		output_file << "_________________________________" << std::endl;
+		output_file << "Modal Analysis using Elimination method" << std::endl;
+		output_file << "____________________________________________" << std::endl;
 
 	}
 
@@ -385,8 +385,7 @@ void modal_elim_solver::modal_analysis_elimmethod_start(const nodes_list_store& 
 
 	//_____________________________________________________________________________________________
 	// Calculate the effective mass participation factor & Cummulative effective mass participation factor
-	// effective mass participation factor = = percentage of the system mass that participates in a particular mode
-	// Remove modes which contributes to less than 2% of the total effective mass
+	// effective mass participation factor = percentage of the system mass that participates in a particular mode
 
 	Eigen::VectorXd participation_factor(reducedDOF);
 	participation_factor.setZero();
@@ -705,7 +704,7 @@ void modal_elim_solver::get_global_dof_matrix(Eigen::VectorXi& globalDOFMatrix,
 
 		if (model_constarints.constraintMap.find(nd.node_id) != model_constarints.constraintMap.end())
 		{
-			// Nodes have point mass
+			// Nodes have constraints
 			constraint_data cd = model_constarints.constraintMap.at(nd.node_id);
 
 			if (cd.constraint_type == 0)

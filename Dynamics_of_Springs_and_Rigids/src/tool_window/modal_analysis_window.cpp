@@ -28,6 +28,37 @@ void modal_analysis_window::render_window()
 
 	ImGui::Begin("Modal Analysis Solver");
 
+
+	// Option to select the types of solver
+	// Define an array of options
+	const int options_count = 3;
+	const char* options[] = { "Penalty approach", "Lagrange approach", "Elimination approach" };
+
+	// Define a string to hold the label for the popup select button
+	std::string popupLabel = "Solver: ";
+
+	if (ImGui::Button((popupLabel + options[solver_type]).c_str()))
+	{
+		ImGui::OpenPopup("Select an option");
+	}
+
+	if (ImGui::BeginPopup("Select an option")) {
+		ImGui::Text("- Solver Type -");
+		ImGui::Separator();
+
+		for (int i = 0; i < options_count; i++)
+		{
+			if (ImGui::Selectable(options[i], solver_type == i))
+			{
+				solver_type = i;
+			}
+		}
+
+		ImGui::EndPopup();
+	}
+	//_________________________________________________________________________________________
+
+
 	// Add a Modal Analysis button
 	if (ImGui::Button("Modal Analysis"))
 	{
