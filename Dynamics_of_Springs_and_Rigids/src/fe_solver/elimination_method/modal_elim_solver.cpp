@@ -105,13 +105,13 @@ void modal_elim_solver::modal_analysis_elimmethod_start(const nodes_list_store& 
 		nodepointmass_data pt_mass = pt_m.second;
 
 		// Find the minimum point mass
-		if (min_pointmass > pt_mass.ptmass_x)
+		if (min_pointmass > pt_mass.ptmass_x && pt_mass.ptmass_x !=0)
 		{
 			min_pointmass = pt_mass.ptmass_x;
 			zero_ptmass = min_pointmass * (1.0 / penalty_scale_factor);
 		}
 
-		if (min_pointmass > pt_mass.ptmass_y)
+		if (min_pointmass > pt_mass.ptmass_y && pt_mass.ptmass_y != 0)
 		{
 			min_pointmass = pt_mass.ptmass_y;
 			zero_ptmass = min_pointmass * (1.0 / penalty_scale_factor);

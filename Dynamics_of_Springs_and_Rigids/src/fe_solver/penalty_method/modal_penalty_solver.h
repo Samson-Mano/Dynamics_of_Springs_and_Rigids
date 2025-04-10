@@ -83,7 +83,7 @@ private:
 
 	// Penalty stiffness
 	double max_stiffness = 0.0;
-	const double penalty_factor = 1E+6;
+	const double penalty_factor = 1E+4;
 
 	double zero_ptmass = 0.0; // pt mass for nodes with no pt mass assignment
 
@@ -110,6 +110,7 @@ private:
 
 	void get_boundary_condition_penalty_matrix(Eigen::MatrixXd& globalPenalty_SPC_StiffnessMatrix,
 		Eigen::MatrixXd& globalPenalty_MPC_StiffnessMatrix,
+		int& constraint_count,
 		const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const nodeconstraint_list_store& node_constraints,

@@ -108,13 +108,13 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 		nodepointmass_data pt_mass = pt_m.second;
 
 		// Find the minimum point mass
-		if (min_pointmass > pt_mass.ptmass_x)
+		if (min_pointmass > pt_mass.ptmass_x && pt_mass.ptmass_x != 0)
 		{
 			min_pointmass = pt_mass.ptmass_x;
 			this->zero_ptmass = min_pointmass * (1.0 / penalty_factor);
 		}
 
-		if (min_pointmass > pt_mass.ptmass_y)
+		if (min_pointmass > pt_mass.ptmass_y && pt_mass.ptmass_y != 0)
 		{
 			min_pointmass = pt_mass.ptmass_y;
 			this->zero_ptmass = min_pointmass * (1.0 / penalty_factor);
@@ -181,8 +181,11 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 	Eigen::MatrixXd globalPenalty_MPC_StiffnessMatrix(numDOF, numDOF);
 	globalPenalty_MPC_StiffnessMatrix.setZero();
 
+	int constraint_count = 0;
+
 	get_boundary_condition_penalty_matrix(globalPenalty_SPC_StiffnessMatrix, 
 		globalPenalty_MPC_StiffnessMatrix, 
+		constraint_count,
 		model_nodes, 
 		model_lineelements, 
 		node_constraints, 
@@ -246,7 +249,8 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 	// Solve the Eigen value problem: Compute the eigenvalues and eigenvectors
 	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(Z_matrix);
 
-	if (eigenSolver.info() != Eigen::Success) {
+	if (eigenSolver.info() != Eigen::Success) 
+	{
 		// Eigenvalue problem failed to converge
 		std::cout << "Eigenvalue problem failed to converge !!!!! " << std::endl;
 		output_file << "Eigenvalue problem failed to converge !!!!! " << std::endl;
@@ -316,13 +320,13 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 	// Store the results
 
 	// Clear the modal results
-	this->number_of_modes = 0; // Number of modes
+	this->number_of_modes = numDOF - constraint_count; // Number of modes
 	this->mode_result_str.clear(); // Result string list
 	this->m_eigenvalues.clear(); // Eigen values
 	this->m_eigenvectors.clear(); // Eigen vectors
 
 	// Add the eigen values and eigen vectors
-	for (int i = 0; i < numDOF; i++)
+	for (int i = 0; i < this->number_of_modes; i++)
 	{
 		std::vector<double> eigen_vec; // Eigen vectors of all nodes (including constrainded)
 
@@ -349,7 +353,6 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz , Modal mass = " + mf.str());
 	}
 
-	number_of_modes = numDOF; // total number of modes
 
 
 	stopwatch_elapsed_str.str("");
@@ -390,12 +393,52 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 		globalStiffnessMatrix,
 		output_file);
 
+	// resize the results with number of mode
+	this->modalMass.conservativeResize(this->number_of_modes);
+	this->modalStiff.conservativeResize(this->number_of_modes);
+
+	int n_count = 0;
+
+	// Remove the eigen values (of constraints)
+	for (auto it = m_eigenvalues.begin(); it != m_eigenvalues.end(); ) 
+	{
+		if (n_count++ >= this->number_of_modes) 
+		{
+			it = m_eigenvalues.erase(it);
+		}
+		else 
+		{
+			++it;
+		}
+	}
+
+	// Remove the eigen vectors (of constraints)
+	n_count = 0;
+
+	for (auto it = m_eigenvectors.begin(); it != m_eigenvectors.end(); ) 
+	{
+		if (n_count++ >= this->number_of_modes) 
+		{
+			it = m_eigenvectors.erase(it);
+		}
+		else 
+		{
+			++it;
+		}
+	}
+
+	// resize the modal string
+	mode_result_str.resize(this->number_of_modes);
+
+
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str.clear();
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Modal mass and stiffness storage completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	std::cout << "Modal analysis complete " << std::endl;
+
+
 
 	//____________________________________________________________________________________________________________________
 	stopwatch.stop();
@@ -529,8 +572,26 @@ void modal_penalty_solver::get_global_pointmass_matrix(Eigen::MatrixXd& globalPo
 			// Nodes have point mass
 			nodepointmass_data ptm = model_ptmass.ptmassMap.at(nd.node_id);
 
-			globalPointMassMatrix((nd_map * 2) + 0, (nd_map * 2) + 0) = ptm.ptmass_x;
-			globalPointMassMatrix((nd_map * 2) + 1, (nd_map * 2) + 1) = ptm.ptmass_y;
+			// Point mass y
+			if (ptm.ptmass_x != 0)
+			{
+				globalPointMassMatrix((nd_map * 2) + 0, (nd_map * 2) + 0) = ptm.ptmass_x;
+			}
+			else
+			{
+				globalPointMassMatrix((nd_map * 2) + 0, (nd_map * 2) + 0) = zero_ptmass;
+			}
+			
+			// Point mass x
+			if (ptm.ptmass_y != 0)
+			{
+				globalPointMassMatrix((nd_map * 2) + 1, (nd_map * 2) + 1) = ptm.ptmass_y;
+			}
+			else
+			{
+				globalPointMassMatrix((nd_map * 2) + 1, (nd_map * 2) + 1) = zero_ptmass;
+			}
+
 		}
 		else
 		{
@@ -554,6 +615,7 @@ void modal_penalty_solver::get_global_pointmass_matrix(Eigen::MatrixXd& globalPo
 
 void modal_penalty_solver::get_boundary_condition_penalty_matrix(Eigen::MatrixXd& globalPenalty_SPC_StiffnessMatrix,
 	Eigen::MatrixXd& globalPenalty_MPC_StiffnessMatrix,
+	int& constraint_count,
 	const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements,
 	const nodeconstraint_list_store& node_constraints,
@@ -566,6 +628,7 @@ void modal_penalty_solver::get_boundary_condition_penalty_matrix(Eigen::MatrixXd
 
 	Eigen::MatrixXd global_penalty_SPC_AMatrix(numDOF, 0); // Start with zero columns
 
+	constraint_count = 0;
 
 	for (auto& nd_m : model_nodes.nodeMap)
 	{
@@ -601,6 +664,8 @@ void modal_penalty_solver::get_boundary_condition_penalty_matrix(Eigen::MatrixXd
 				global_penalty_SPC_AMatrix.conservativeResize(numDOF, currentCols + 1); // Add one column
 				global_penalty_SPC_AMatrix.col(currentCols) = penalty_SPC_AVector;       // Insert the new vector (X fixed)
 
+				constraint_count++;
+
 				penalty_SPC_AVector[(nd_map * 2) + 0] = 0.0;
 				penalty_SPC_AVector[(nd_map * 2) + 1] = 1.0;
 
@@ -608,6 +673,8 @@ void modal_penalty_solver::get_boundary_condition_penalty_matrix(Eigen::MatrixXd
 				currentCols = global_penalty_SPC_AMatrix.cols();
 				global_penalty_SPC_AMatrix.conservativeResize(numDOF, currentCols + 1); // Add one column
 				global_penalty_SPC_AMatrix.col(currentCols) = penalty_SPC_AVector;       // Insert the new vector (Y fixed)
+
+				constraint_count++;
 
 			}
 			else if (constraint_type == 1)
@@ -620,6 +687,8 @@ void modal_penalty_solver::get_boundary_condition_penalty_matrix(Eigen::MatrixXd
 				currentCols = global_penalty_SPC_AMatrix.cols();
 				global_penalty_SPC_AMatrix.conservativeResize(numDOF, currentCols + 1); // Add one column
 				global_penalty_SPC_AMatrix.col(currentCols) = penalty_SPC_AVector;       // Insert the new vector
+
+				constraint_count++;
 
 			}
 
@@ -676,6 +745,8 @@ void modal_penalty_solver::get_boundary_condition_penalty_matrix(Eigen::MatrixXd
 			int currentCols = global_penalty_MPC_AMatrix.cols();
 			global_penalty_MPC_AMatrix.conservativeResize(numDOF, currentCols + 1); // Add one column
 			global_penalty_MPC_AMatrix.col(currentCols) = penalty_MPC_AVector;       // Insert the new vector
+
+			// constraint_count++;
 
 		}
 
