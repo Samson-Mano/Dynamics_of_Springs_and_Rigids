@@ -83,7 +83,7 @@ private:
 
 	// Penalty stiffness
 	double max_stiffness = 0.0;
-	const double penalty_factor = 1E+4;
+	const double penalty_scale_factor = 1E+6;
 
 	double zero_ptmass = 0.0; // pt mass for nodes with no pt mass assignment
 

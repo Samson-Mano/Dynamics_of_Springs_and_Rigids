@@ -78,7 +78,7 @@ void modal_elim_solver::modal_analysis_elimmethod_start(const nodes_list_store& 
 
 	//____________________________________________________________________________________________________________________
 	// set the penalty stiffness for rigid element
-	double max_stiffness = 0.0;
+	this->max_stiffness = 0.0;
 	for (const auto& mat_m : material_list)
 	{
 		if (mat_m.first == 0)
@@ -90,12 +90,13 @@ void modal_elim_solver::modal_analysis_elimmethod_start(const nodes_list_store& 
 		material_data mat = mat_m.second;
 
 		// Find the maximum material stiffness
-		if (max_stiffness < mat.material_stiffness)
+		if (this->max_stiffness < mat.material_stiffness)
 		{
-			max_stiffness = mat.material_stiffness;
-			rigid_stiffness = penalty_scale_factor * max_stiffness; // Rigid stiffness
+			this->max_stiffness = mat.material_stiffness;
 		}
 	}
+
+
 
 	//____________________________________________________________________________________________________________________
 	// set the penalty mass for zero mass node
@@ -570,7 +571,7 @@ void modal_elim_solver::get_element_stiffness_matrix(Eigen::MatrixXd& elementSti
 	if (elementline_material.material_id == 0)
 	{
 		// Line is rigid
-		k1 = rigid_stiffness; // penalty Rigid stiffness
+		k1 = penalty_scale_factor * max_stiffness; // Rigid stiffness
 	}
 	else
 	{

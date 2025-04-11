@@ -80,8 +80,9 @@ private:
 	std::stringstream stopwatch_elapsed_str;
 
 	// Penalty stiffness and mass
-	const double penalty_scale_factor = 10000.0;
-	double rigid_stiffness = 0.0;
+	double max_stiffness = 0.0;
+	const double penalty_scale_factor = 1E+6;
+	
 	double zero_ptmass = 0.0;
 
 	const double smallValue = 1.0E-12;

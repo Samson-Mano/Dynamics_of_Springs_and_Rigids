@@ -94,9 +94,9 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 		material_data mat = mat_m.second;
 
 		// Find the maximum material stiffness
-		if (max_stiffness < mat.material_stiffness)
+		if (this->max_stiffness < mat.material_stiffness)
 		{
-			max_stiffness = mat.material_stiffness;
+			this->max_stiffness = mat.material_stiffness;
 		}
 	}
 
@@ -111,13 +111,13 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 		if (min_pointmass > pt_mass.ptmass_x && pt_mass.ptmass_x != 0)
 		{
 			min_pointmass = pt_mass.ptmass_x;
-			this->zero_ptmass = min_pointmass * (1.0 / penalty_factor);
+			this->zero_ptmass = min_pointmass * (1.0 / penalty_scale_factor);
 		}
 
 		if (min_pointmass > pt_mass.ptmass_y && pt_mass.ptmass_y != 0)
 		{
 			min_pointmass = pt_mass.ptmass_y;
-			this->zero_ptmass = min_pointmass * (1.0 / penalty_factor);
+			this->zero_ptmass = min_pointmass * (1.0 / penalty_scale_factor);
 		}
 
 	}
@@ -390,7 +390,7 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 		modalStiff,
 		eigenvectors,
 		globalPointMassMatrix,
-		globalStiffnessMatrix,
+		globalPenaltyAugmentedStiffnessMatrix,
 		output_file);
 
 	// resize the results with number of mode
@@ -520,7 +520,7 @@ void modal_penalty_solver::get_element_stiffness_matrix(Eigen::MatrixXd& element
 	if (elementline_material.material_id == 0)
 	{
 		// Line is rigid
-		k1 = 0.0; // penalty Rigid stiffness
+		k1 = 0.0; // penalty_scale_factor * max_stiffness; // Rigid stiffness
 	}
 	else
 	{
@@ -753,16 +753,28 @@ void modal_penalty_solver::get_boundary_condition_penalty_matrix(Eigen::MatrixXd
 	}
 
 
-	globalPenalty_SPC_StiffnessMatrix = (this->max_stiffness * this->penalty_factor) * (global_penalty_SPC_AMatrix * global_penalty_SPC_AMatrix.transpose());
+	globalPenalty_SPC_StiffnessMatrix = (this->max_stiffness * this->penalty_scale_factor) * (global_penalty_SPC_AMatrix * global_penalty_SPC_AMatrix.transpose());
 
 	if (global_penalty_MPC_AMatrix.cols() > 0)
 	{
-		globalPenalty_MPC_StiffnessMatrix = (this->max_stiffness * this->penalty_factor) * (global_penalty_MPC_AMatrix * global_penalty_MPC_AMatrix.transpose());
+		globalPenalty_MPC_StiffnessMatrix = (this->max_stiffness * this->penalty_scale_factor) * (global_penalty_MPC_AMatrix * global_penalty_MPC_AMatrix.transpose());
 	}
 
 
 	if (print_matrix == true)
 	{
+		// Print the SPC matrix
+		output_file << "Global Penalty SPC Matrix" << std::endl;
+		output_file << std::fixed << std::setprecision(6) << global_penalty_SPC_AMatrix << std::endl;  // Set decimal precision to 6 
+		output_file << std::endl;
+
+		// Print the MPC matrix
+		output_file << "Global Penalty MPC Matrix" << std::endl;
+		output_file << std::fixed << std::setprecision(6) << global_penalty_MPC_AMatrix << std::endl;  // Set decimal precision to 6 
+		output_file << std::endl;
+
+
+
 		// Print the Global Penalty Stiffness matrix
 		output_file << "Global Penalty Stiffness Matrix" << std::endl;
 		output_file << std::fixed << std::setprecision(6) << (globalPenalty_SPC_StiffnessMatrix + globalPenalty_MPC_StiffnessMatrix) << std::endl;  // Set decimal precision to 6 

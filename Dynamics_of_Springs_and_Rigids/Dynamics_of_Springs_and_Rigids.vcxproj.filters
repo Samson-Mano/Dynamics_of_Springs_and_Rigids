@@ -153,16 +153,10 @@
     <ClCompile Include="src\tool_window\pulse_analysis_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe_solver\modal_elim_solver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\geometry_store\analysis_result_objects\modal_elementline_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\geometry_store\analysis_result_objects\modal_nodes_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe_solver\pulse_elim_solver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\geometry_store\analysis_result_objects\pulse_node_list_store.cpp">
@@ -174,9 +168,6 @@
     <ClCompile Include="src\tool_window\forcedresp_analysis_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe_solver\forcedresp_elim_solver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\fe_solver\elimination_method\forcedresp_elim_solver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -184,6 +175,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\fe_solver\elimination_method\pulse_elim_solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe_solver\lagrange_method\modal_lagrange_solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe_solver\penalty_method\modal_penalty_solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe_solver\penalty_method\pulse_penalty_solver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -335,16 +335,10 @@
     <ClInclude Include="src\tool_window\pulse_analysis_window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe_solver\modal_elim_solver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\geometry_store\analysis_result_objects\modal_nodes_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\analysis_result_objects\modal_elementline_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe_solver\pulse_elim_solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\analysis_result_objects\pulse_node_list_store.h">
@@ -356,9 +350,6 @@
     <ClInclude Include="src\tool_window\forcedresp_analysis_window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe_solver\forcedresp_elim_solver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\fe_solver\elimination_method\forcedresp_elim_solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -366,6 +357,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\fe_solver\elimination_method\pulse_elim_solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe_solver\lagrange_method\modal_lagrange_solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe_solver\penalty_method\modal_penalty_solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe_solver\penalty_method\pulse_penalty_solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
