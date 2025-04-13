@@ -55,11 +55,8 @@ public:
 	// Matrix stored
 	Eigen::VectorXd modalMass;
 	Eigen::VectorXd modalStiff;
-	//Eigen::VectorXi globalDOFMatrix;
-	//Eigen::MatrixXd globalSupportInclinationMatrix;
-	//Eigen::MatrixXd reduced_eigenvectors;
-	//Eigen::MatrixXd global_eigenvectors;
-	//Eigen::MatrixXd global_eigenvectors_transformed;
+	Eigen::MatrixXd global_eigenvectors;
+
 
 	modal_penalty_solver();
 	~modal_penalty_solver();
@@ -76,7 +73,7 @@ public:
 
 private:
 	const double m_pi = 3.14159265358979323846;
-	bool print_matrix = true;
+	bool print_matrix = false;
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 

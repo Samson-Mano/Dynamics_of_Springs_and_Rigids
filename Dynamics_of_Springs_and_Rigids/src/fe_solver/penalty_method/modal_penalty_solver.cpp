@@ -427,6 +427,8 @@ void modal_penalty_solver::modal_analysis_penaltymethod_start(const nodes_list_s
 		}
 	}
 
+	this->global_eigenvectors = eigenvectors;
+
 	// resize the modal string
 	mode_result_str.resize(this->number_of_modes);
 

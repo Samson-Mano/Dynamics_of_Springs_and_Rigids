@@ -20,7 +20,7 @@ void pulse_elim_solver::clear_results()
 
 }
 
-void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes, 
+void pulse_elim_solver::pulse_analysis_elimmethod_start(const nodes_list_store& model_nodes,
 	const elementline_list_store& model_lineelements, 
 	const nodeconstraint_list_store& node_constraints, 
 	const nodeload_list_store& node_loads, 
@@ -114,7 +114,7 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 
 	//____________________________________________________________________________________________________________________
 	// Create the Pulse force data for all the individual 
-	std::vector<pulse_load_data> pulse_loads(node_loads.load_count);
+	std::vector<pulse_load_elim_data> pulse_loads(node_loads.load_count);
 	k = 0;
 
 	for (auto& ld_m : node_loads.loadMap)
@@ -544,7 +544,7 @@ void pulse_elim_solver::get_global_resp_vector(Eigen::VectorXd& globalVector,
 
 
 
-void pulse_elim_solver::create_pulse_load_matrices(pulse_load_data& pulse_loads,
+void pulse_elim_solver::create_pulse_load_matrices(pulse_load_elim_data& pulse_loads,
 	const load_data& ld,
 	const nodes_list_store& model_nodes,
 	const Eigen::VectorXi& globalDOFMatrix,

@@ -20,6 +20,7 @@
 // Solver
 // 1) Penalty method
 #include "../fe_solver/penalty_method/modal_penalty_solver.h"
+#include "../fe_solver/penalty_method/pulse_penalty_solver.h"
 
 
 // 2) Lagrange method
@@ -121,7 +122,10 @@ private:
 
 	// 1) Penalty method
 	modal_penalty_solver modal_penalty_s;
+	pulse_penalty_solver pulse_penalty_s;
 
+
+	// 2) Lagrange method
 
 
 	// 3) Elimination method 
@@ -148,7 +152,7 @@ private:
 	// Analysis results
 	bool is_modal_analysis_complete = false;
 	bool is_pulse_analysis_complete = false;
-
+	bool is_forcedresp_analysis_complete = false;
 
 
 	void paint_model(); // Paint the model

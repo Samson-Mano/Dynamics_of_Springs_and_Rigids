@@ -5,14 +5,13 @@
 #include "../../geometry_store/analysis_result_objects/pulse_node_list_store.h"
 #include "../../geometry_store/analysis_result_objects/pulse_elementline_list_store.h"
 
-struct pulse_load_data
+struct pulse_load_penalty_data
 {
 	int load_id = 0;
 	double load_start_time = 0.0;
 	double load_end_time = 0.0;
-	Eigen::VectorXd modal_reducedLoadamplMatrix;
-	Eigen::VectorXd reducedLoadamplMatrix;
-	Eigen::VectorXd globalLoadamplMatrix;
+	Eigen::VectorXd modal_globalLoadamplMatrix;
+
 };
 
 
@@ -57,46 +56,19 @@ private:
 	std::unordered_map<int, int> nodeid_map;
 
 
-	void get_reduced_global_matrix(Eigen::MatrixXd& reducedglobalMatrix,
-		const Eigen::MatrixXd& globalMatrix,
-		const Eigen::VectorXi& globalDOFMatrix,
-		const int& numDOF,
-		const int& reducedDOF);
-
-
-	void create_initial_condition_matrices(Eigen::VectorXd& modal_reducedInitialDisplacementMatrix,
-		Eigen::VectorXd& modal_reducedInitialVelocityMatrix,
+	void create_initial_condition_matrices(Eigen::VectorXd& modal_InitialDisplacementMatrix,
+		Eigen::VectorXd& modal_InitialVelocityMatrix,
 		const nodeinlcond_list_store& node_inlcond,
-		const Eigen::VectorXi& globalDOFMatrix,
-		const Eigen::MatrixXd& globalSupportInclinationMatrix,
-		const Eigen::MatrixXd& reduced_eigenVectorsMatrix,
+		const Eigen::MatrixXd& global_eigenVectorsMatrix,
 		const int& numDOF,
-		const int& reducedDOF,
 		std::ofstream& output_file);
 
 
-	void get_reduced_global_vector(Eigen::VectorXd& reducedglobalVector,
-		const Eigen::VectorXd& globalVector,
-		const Eigen::VectorXi& globalDOFMatrix,
-		const int& numDOF,
-		const int& reducedDOF);
-
-
-	void get_global_resp_vector(Eigen::VectorXd& globalVector,
-		const Eigen::VectorXd& reducedglobalVector,
-		const Eigen::VectorXi& globalDOFMatrix,
-		const int& numDOF,
-		const int& reducedDOF);
-
-
-	void create_pulse_load_matrices(pulse_load_data& pulse_loads,
+	void create_pulse_load_matrices(pulse_load_penalty_data& pulse_loads,
 		const load_data& ld,
 		const nodes_list_store& model_nodes,
-		const Eigen::VectorXi& globalDOFMatrix,
-		const Eigen::MatrixXd& globalSupportInclinationMatrix,
-		const Eigen::MatrixXd& reduced_eigenVectorsMatrix_transpose,
+		const Eigen::MatrixXd& global_eigenVectorsMatrix,
 		const int& numDOF,
-		const int& reducedDOF,
 		std::ofstream& output_file);
 
 

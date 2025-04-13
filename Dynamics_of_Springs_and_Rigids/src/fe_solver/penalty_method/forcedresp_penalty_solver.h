@@ -1,18 +1,20 @@
 #pragma once
-#include "pulse_elim_solver.h"
+#include "pulse_penalty_solver.h"
 
 
-struct forceresp_load_elim_data
+
+struct forceresp_load_penalty_data
 {
 	int load_id = 0;
 	double load_phase = 0.0;
-	Eigen::VectorXd modal_reducedLoadamplMatrix;
-	Eigen::VectorXd reducedLoadamplMatrix;
-	Eigen::VectorXd globalLoadamplMatrix;
+	Eigen::VectorXd modal_globalLoadamplMatrix;
+
 };
 
 
-class forcedresp_elim_solver
+
+
+class forcedresp_penalty_solver
 {
 public:
 	const double m_pi = 3.14159265358979323846;
@@ -20,10 +22,13 @@ public:
 	bool print_matrix = false;
 
 
-	forcedresp_elim_solver();
-	~forcedresp_elim_solver();
+	// Analysis settings and results
+
+
+	forcedresp_penalty_solver();
+	~forcedresp_penalty_solver();
 	void clear_results();
-	void forcedresp_analysis_start(std::vector<frequency_reponse_data>& frf_data,
+	void forcedresp_analysis_penaltymethod_start(std::vector<frequency_reponse_data>& frf_data,
 		std::vector<chart_setting_data>& frf_chart_setting,
 		const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
@@ -31,7 +36,7 @@ public:
 		const nodeload_list_store& node_loads,
 		const nodepointmass_list_store& node_ptmass,
 		const std::unordered_map<int, material_data>& material_list,
-		const modal_elim_solver& modal_elim_s,
+		const modal_penalty_solver& modal_penalty_s,
 		const std::vector<int> selected_nodes,
 		const double start_frequency,
 		const double end_frequency,
@@ -45,28 +50,12 @@ public:
 private:
 	std::unordered_map<int, int> nodeid_map;
 
-	void create_forcedresp_load_matrices(forceresp_load_elim_data& forcedresp_loads,
+	void create_forcedresp_load_matrices(forceresp_load_penalty_data& forcedresp_loads,
 		const load_data& ld,
 		const nodes_list_store& model_nodes,
-		const Eigen::VectorXi& globalDOFMatrix,
-		const Eigen::MatrixXd& globalSupportInclinationMatrix,
-		const Eigen::MatrixXd& reduced_eigenVectorsMatrix_transpose,
+		const Eigen::MatrixXd& global_eigenVectorsMatrix,
 		const int& numDOF,
-		const int& reducedDOF,
 		std::ofstream& output_file);
-
-	void get_reduced_global_vector(Eigen::VectorXd& reducedglobalVector,
-		const Eigen::VectorXd& globalVector,
-		const Eigen::VectorXi& globalDOFMatrix,
-		const int& numDOF,
-		const int& reducedDOF);
-
-
-	void get_global_resp_vector(Eigen::VectorXd& globalVector,
-		const Eigen::VectorXd& reducedglobalVector,
-		const Eigen::VectorXi& globalDOFMatrix,
-		const int& numDOF,
-		const int& reducedDOF);
 
 
 	void get_steady_state_harmonic_periodic_soln(double& steady_state_displ_resp,

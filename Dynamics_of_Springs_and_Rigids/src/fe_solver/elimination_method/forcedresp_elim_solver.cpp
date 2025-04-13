@@ -13,7 +13,7 @@ forcedresp_elim_solver::~forcedresp_elim_solver()
 void forcedresp_elim_solver::clear_results()
 {
 	// Clear the analysis results
-	is_forcedresp_analysis_complete = false;
+
 }
 
 void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_reponse_data>& frf_data,
@@ -24,17 +24,18 @@ void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_rep
 	const nodeload_list_store& node_loads, 
 	const nodepointmass_list_store& node_ptmass, 
 	const std::unordered_map<int, material_data>& material_list, 
-	const modal_elim_solver& modal_solver, 
+	const modal_elim_solver& modal_elim_s, 
 	const std::vector<int> selected_nodes,
 	const double start_frequency, 
 	const double end_frequency, 
 	const double frequency_interval, 
 	const double damping_ratio, 
 	const int mode_range_startid, 
-	const int mode_range_endid)
+	const int mode_range_endid,
+	bool& is_forcedresp_analysis_complete)
 {
 	// Main solver call
-	this->is_forcedresp_analysis_complete = false;
+	is_forcedresp_analysis_complete = false;
 
 	// Check the model
 	// Number of loads (Exit if no load is present)
@@ -50,7 +51,7 @@ void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_rep
 	}
 
 	// Assign the node id map
-	this->nodeid_map = modal_solver.nodeid_map;
+	this->nodeid_map = modal_elim_s.nodeid_map;
 
 	//___________________________________________________________________________________
 	// Create a file to keep track of frequency response matrices
@@ -59,14 +60,14 @@ void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_rep
 
 	//___________________________________________________________________________________
 	// Get the modal vectors (within the range)
-	int numDOF = modal_solver.numDOF;
-	int reducedDOF = modal_solver.reducedDOF;
+	int numDOF = modal_elim_s.numDOF;
+	int reducedDOF = modal_elim_s.reducedDOF;
 	int k = 0;
 
-	Eigen::VectorXi globalDOFMatrix = modal_solver.globalDOFMatrix; // retrive the global DOF matrix from the modal solver
-	Eigen::MatrixXd globalSupportInclinationMatrix = modal_solver.globalSupportInclinationMatrix; // retrive the global Support Inclination matrix from the modal solver
-	Eigen::MatrixXd global_eigenVectorsMatrix = modal_solver.global_eigenvectors_transformed; // Retrive the global EigenVectors matrix 
-	Eigen::MatrixXd reduced_eigenVectorsMatrix = modal_solver.reduced_eigenvectors; // Retrive the reduced EigenVectors matrix 
+	Eigen::VectorXi globalDOFMatrix = modal_elim_s.globalDOFMatrix; // retrive the global DOF matrix from the modal solver
+	Eigen::MatrixXd globalSupportInclinationMatrix = modal_elim_s.globalSupportInclinationMatrix; // retrive the global Support Inclination matrix from the modal solver
+	Eigen::MatrixXd global_eigenVectorsMatrix = modal_elim_s.global_eigenvectors_transformed; // Retrive the global EigenVectors matrix 
+	Eigen::MatrixXd reduced_eigenVectorsMatrix = modal_elim_s.reduced_eigenvectors; // Retrive the reduced EigenVectors matrix 
 
 	if (print_matrix == true)
 	{
@@ -78,7 +79,7 @@ void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_rep
 
 	//____________________________________________________________________________________________________________________
 	// Create the Pulse force data for all the individual 
-	std::vector<forceresp_load_data> forcedresp_loads(node_loads.load_count);
+	std::vector<forceresp_load_elim_data> forcedresp_loads(node_loads.load_count);
 	k = 0;
 
 	for (auto& ld_m : node_loads.loadMap)
@@ -146,8 +147,8 @@ void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_rep
 
 				get_steady_state_harmonic_periodic_soln(at_force_displ_resp,
 					at_force_phase,
-					modal_solver.reduced_modalMass(i),
-					modal_solver.reduced_modalStiff(i),
+					modal_elim_s.reduced_modalMass(i),
+					modal_elim_s.reduced_modalStiff(i),
 					damping_ratio,
 					force_load.modal_reducedLoadamplMatrix(i),
 					freq_x);
@@ -280,10 +281,9 @@ void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_rep
 	frf_chart_setting[0].data_pt_count = static_cast<int>(frf_data[0].displ_magnitude.size());
 
 
-	this->is_forcedresp_analysis_complete = true;
+	is_forcedresp_analysis_complete = true;
 
 	//____________________________________________________________________________________________________________________
-
 
 
 
@@ -291,7 +291,7 @@ void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_rep
 
 
 
-void forcedresp_elim_solver::create_forcedresp_load_matrices(forceresp_load_data& forcedresp_loads,
+void forcedresp_elim_solver::create_forcedresp_load_matrices(forceresp_load_elim_data& forcedresp_loads,
 	const load_data& ld,
 	const nodes_list_store& model_nodes,
 	const Eigen::VectorXi& globalDOFMatrix,
