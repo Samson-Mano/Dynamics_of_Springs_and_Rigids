@@ -15,7 +15,6 @@ pulse_penalty_solver::~pulse_penalty_solver()
 void pulse_penalty_solver::clear_results()
 {
 	// Clear the analysis results
-	is_pulse_analysis_complete = false;
 	time_step_count = 0;
 	time_interval = 0.0;
 	total_simulation_time = 0.0;
@@ -30,7 +29,7 @@ void pulse_penalty_solver::pulse_analysis_penaltymethod_start(const nodes_list_s
 	const nodepointmass_list_store& node_ptmass, 
 	const nodeinlcond_list_store& node_inlcond, 
 	const std::unordered_map<int, material_data>& material_list, 
-	const modal_penalty_solver& modal_solver, 
+	const modal_penalty_solver& modal_pulse_s, 
 	const double total_simulation_time, 
 	const double time_interval, 
 	const double damping_ratio, 
@@ -38,8 +37,121 @@ void pulse_penalty_solver::pulse_analysis_penaltymethod_start(const nodes_list_s
 	const int mode_range_endid, 
 	const int selected_pulse_option, 
 	pulse_node_list_store& pulse_result_nodes, 
-	pulse_elementline_list_store& pulse_result_lineelements)
+	pulse_elementline_list_store& pulse_result_lineelements,
+	bool& is_pulse_analysis_complete)
 {
+
+	// Main solver call
+	is_pulse_analysis_complete = false;
+
+	// Check the model
+	// Number of loads, initial condition (Exit if no load and no initial condition is present)
+	if (node_loads.load_count == 0 && node_inlcond.inlcond_count == 0)
+	{
+		return;
+	}
+
+	//____________________________________________
+	Eigen::initParallel();  // Initialize Eigen's thread pool
+
+	stopwatch.start();
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << std::fixed << std::setprecision(6);
+	std::cout << "Pulse analysis - Penalty method started" << std::endl;
+
+	// Assign the node id map
+	this->nodeid_map = modal_pulse_s.nodeid_map;
+
+	//___________________________________________________________________________________
+	// Create a file to keep track of frequency response matrices
+	std::ofstream output_file;
+	output_file.open("pulse_analysis_results.txt");
+
+
+	if (print_matrix == true)
+	{
+		output_file << "Pulse Analysis using Penalty method" << std::endl;
+		output_file << "____________________________________________" << std::endl;
+
+	}
+
+
+
+	//___________________________________________________________________________________
+	// Get the modal vectors (within the range)
+	int numDOF = modal_pulse_s.numDOF;
+	int number_of_modes = modal_pulse_s.number_of_modes;
+	int k = 0;
+
+	Eigen::VectorXi globalDOFMatrix = modal_solver.globalDOFMatrix; // retrive the global DOF matrix from the modal solver
+	Eigen::MatrixXd globalSupportInclinationMatrix = modal_solver.globalSupportInclinationMatrix; // retrive the global Support Inclination matrix from the modal solver
+	Eigen::MatrixXd global_eigenVectorsMatrix = modal_solver.global_eigenvectors_transformed; // Retrive the global EigenVectors matrix 
+	Eigen::MatrixXd reduced_eigenVectorsMatrix = modal_solver.reduced_eigenvectors; // Retrive the reduced EigenVectors matrix 
+
+	if (print_matrix == true)
+	{
+		// Print the Reduced eigen vectors 
+		output_file << "Reduced Eigen vectors matrix" << std::endl;
+		output_file << reduced_eigenVectorsMatrix << std::endl;
+		output_file << std::endl;
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Reduced Eigen vectors retrived at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//--------------------------------------------------------------------------------------------------------------------
+	// Create modal reduced intial condition matrices
+	Eigen::VectorXd modal_reducedInitialDisplacementMatrix(reducedDOF);
+	Eigen::VectorXd modal_reducedInitialVelocityMatrix(reducedDOF);
+
+	create_initial_condition_matrices(modal_reducedInitialDisplacementMatrix,
+		modal_reducedInitialVelocityMatrix,
+		node_inlcond,
+		globalDOFMatrix,
+		globalSupportInclinationMatrix,
+		reduced_eigenVectorsMatrix,
+		numDOF,
+		reducedDOF,
+		output_file);
+
+	//____________________________________________________________________________________________________________________
+	// Create the Pulse force data for all the individual 
+	std::vector<pulse_load_data> pulse_loads(node_loads.load_count);
+	k = 0;
+
+	for (auto& ld_m : node_loads.loadMap)
+	{
+		load_data ld = ld_m.second; // get the load data
+
+		pulse_loads[k].load_id = k;
+		create_pulse_load_matrices(pulse_loads[k],
+			ld,
+			model_nodes,
+			globalDOFMatrix,
+			globalSupportInclinationMatrix,
+			reduced_eigenVectorsMatrix.transpose(),
+			numDOF,
+			reducedDOF,
+			output_file);
+
+		k++; // iterate load id
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Pulse loads matrices created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -105,6 +217,28 @@ void pulse_penalty_solver::create_pulse_load_matrices(pulse_load_data& pulse_loa
 	const int& reducedDOF, 
 	std::ofstream& output_file)
 {
+	// Create the global load amplitude matrix
+	// Extract the line in which the load is applied
+	node_store nd = model_nodes.nodeMap.at(ld.node_id);
+
+	// Get the Matrix row ID
+	int n_id = nodeid_map[nd.node_id]; // get the ordered map of the start node ID
+
+	// Create a matrix for element load matrix
+	double load_val = ld.load_value; // Load value
+	double load_angle_rad = ld.load_angle * (m_pi / 180.0f);
+
+	double f_x = load_val * std::cos(load_angle_rad);
+	double f_y = load_val * std::sin(load_angle_rad);
+
+	// global load matrix
+	Eigen::VectorXd globalLoadamplMatrix(numDOF);
+	globalLoadamplMatrix.setZero();
+
+	globalLoadamplMatrix.coeffRef((n_id * 2) + 0) += f_x;
+	globalLoadamplMatrix.coeffRef((n_id * 2) + 1) += f_y;
+
+
 
 
 

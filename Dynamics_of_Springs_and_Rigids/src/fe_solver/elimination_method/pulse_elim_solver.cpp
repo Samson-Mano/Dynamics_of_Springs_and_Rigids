@@ -13,7 +13,7 @@ pulse_elim_solver::~pulse_elim_solver()
 void pulse_elim_solver::clear_results()
 {
 	// Clear the analysis results
-	is_pulse_analysis_complete = false;
+	// is_pulse_analysis_complete = false;
 	time_step_count = 0;
 	time_interval = 0.0;
 	total_simulation_time = 0.0;
@@ -27,7 +27,7 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 	const nodepointmass_list_store& node_ptmass, 
 	const nodeinlcond_list_store& node_inlcond, 
 	const std::unordered_map<int, material_data>& material_list, 
-	const modal_elim_solver& modal_solver, 
+	const modal_elim_solver& modal_elim_s,
 	const double total_simulation_time, 
 	const double time_interval, 
 	const double damping_ratio, 
@@ -35,10 +35,11 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 	const int mode_range_endid,
 	const int selected_pulse_option,
 	pulse_node_list_store& pulse_result_nodes, 
-	pulse_elementline_list_store& pulse_result_lineelements)
+	pulse_elementline_list_store& pulse_result_lineelements,
+	bool& is_pulse_analysis_complete)
 {
 	// Main solver call
-	this->is_pulse_analysis_complete = false;
+	is_pulse_analysis_complete = false;
 
 	// Check the model
 	// Number of loads, initial condition (Exit if no load and no initial condition is present)
@@ -54,26 +55,35 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << std::fixed << std::setprecision(6);
-	std::cout << "Pulse analysis started" << std::endl;
+	std::cout << "Pulse analysis - Elimination method started" << std::endl;
 
 	// Assign the node id map
-	this->nodeid_map = modal_solver.nodeid_map;
+	this->nodeid_map = modal_elim_s.nodeid_map;
 
 	//___________________________________________________________________________________
 	// Create a file to keep track of frequency response matrices
 	std::ofstream output_file;
 	output_file.open("pulse_analysis_results.txt");
 
+
+	if (print_matrix == true)
+	{
+		output_file << "Pulse Analysis using Elimination method" << std::endl;
+		output_file << "____________________________________________" << std::endl;
+
+	}
+
+
 	//___________________________________________________________________________________
 	// Get the modal vectors (within the range)
-	int numDOF = modal_solver.numDOF;
-	int reducedDOF = modal_solver.reducedDOF;
+	int numDOF = modal_elim_s.numDOF;
+	int reducedDOF = modal_elim_s.reducedDOF;
 	int k = 0;
 
-	Eigen::VectorXi globalDOFMatrix = modal_solver.globalDOFMatrix; // retrive the global DOF matrix from the modal solver
-	Eigen::MatrixXd globalSupportInclinationMatrix = modal_solver.globalSupportInclinationMatrix; // retrive the global Support Inclination matrix from the modal solver
-	Eigen::MatrixXd global_eigenVectorsMatrix = modal_solver.global_eigenvectors_transformed; // Retrive the global EigenVectors matrix 
-	Eigen::MatrixXd reduced_eigenVectorsMatrix = modal_solver.reduced_eigenvectors; // Retrive the reduced EigenVectors matrix 
+	Eigen::VectorXi globalDOFMatrix = modal_elim_s.globalDOFMatrix; // retrive the global DOF matrix from the modal solver
+	Eigen::MatrixXd globalSupportInclinationMatrix = modal_elim_s.globalSupportInclinationMatrix; // retrive the global Support Inclination matrix from the modal solver
+	Eigen::MatrixXd global_eigenVectorsMatrix = modal_elim_s.global_eigenvectors_transformed; // Retrive the global EigenVectors matrix 
+	Eigen::MatrixXd reduced_eigenVectorsMatrix = modal_elim_s.reduced_eigenvectors; // Retrive the reduced EigenVectors matrix 
 
 	if (print_matrix == true)
 	{
@@ -146,8 +156,8 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 
 			get_steady_state_initial_condition_soln(displ_resp_initial,
 				time_t,
-				modal_solver.reduced_modalMass(i),
-				modal_solver.reduced_modalStiff(i),
+				modal_elim_s.reduced_modalMass(i),
+				modal_elim_s.reduced_modalStiff(i),
 				modal_reducedInitialDisplacementMatrix.coeff(i),
 				modal_reducedInitialVelocityMatrix.coeff(i));
 
@@ -166,8 +176,8 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 
 					get_steady_state_half_sine_pulse_soln(at_force_displ_resp,
 						time_t,
-						modal_solver.reduced_modalMass(i),
-						modal_solver.reduced_modalStiff(i),
+						modal_elim_s.reduced_modalMass(i),
+						modal_elim_s.reduced_modalStiff(i),
 						pulse_load.modal_reducedLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
@@ -179,8 +189,8 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 
 					get_steady_state_rectangular_pulse_soln(at_force_displ_resp,
 						time_t,
-						modal_solver.reduced_modalMass(i),
-						modal_solver.reduced_modalStiff(i),
+						modal_elim_s.reduced_modalMass(i),
+						modal_elim_s.reduced_modalStiff(i),
 						pulse_load.modal_reducedLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
@@ -192,8 +202,8 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 
 					get_steady_state_triangular_pulse_soln(at_force_displ_resp,
 						time_t,
-						modal_solver.reduced_modalMass(i),
-						modal_solver.reduced_modalStiff(i),
+						modal_elim_s.reduced_modalMass(i),
+						modal_elim_s.reduced_modalStiff(i),
 						pulse_load.modal_reducedLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
@@ -205,8 +215,8 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 
 					get_steady_state_stepforce_finiterise_soln(at_force_displ_resp,
 						time_t,
-						modal_solver.reduced_modalMass(i),
-						modal_solver.reduced_modalStiff(i),
+						modal_elim_s.reduced_modalMass(i),
+						modal_elim_s.reduced_modalStiff(i),
 						pulse_load.modal_reducedLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
@@ -218,8 +228,8 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 
 					get_total_harmonic_soln(at_force_displ_resp,
 						time_t,
-						modal_solver.reduced_modalMass(i),
-						modal_solver.reduced_modalStiff(i),
+						modal_elim_s.reduced_modalMass(i),
+						modal_elim_s.reduced_modalStiff(i),
 						pulse_load.modal_reducedLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
@@ -326,7 +336,7 @@ void pulse_elim_solver::pulse_analysis_start(const nodes_list_store& model_nodes
 	std::cout << "Pulse analysis complete " << std::endl;
 
 	// Analysis complete
-	this->is_pulse_analysis_complete = true;
+	is_pulse_analysis_complete = true;
 
 	//____________________________________________________________________________________________________________________
 	output_file.close();

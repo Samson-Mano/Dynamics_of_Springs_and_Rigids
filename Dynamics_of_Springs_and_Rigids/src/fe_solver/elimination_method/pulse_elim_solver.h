@@ -24,7 +24,7 @@ public:
 	bool print_matrix = false;
 
 	// Analysis settings and results
-	bool is_pulse_analysis_complete = false;
+	// bool is_pulse_analysis_complete = false;
 	int time_step_count = 0;
 	double time_interval = 0.0;
 	double total_simulation_time = 0.0;
@@ -39,7 +39,7 @@ public:
 		const nodepointmass_list_store& node_ptmass,
 		const nodeinlcond_list_store& node_inlcond,
 		const std::unordered_map<int, material_data>& material_list,
-		const modal_elim_solver& modal_solver,
+		const modal_elim_solver& modal_elim_s,
 		const double total_simulation_time,
 		const double time_interval,
 		const double damping_ratio,
@@ -47,7 +47,8 @@ public:
 		const int mode_range_endid,
 		const int selected_pulse_option,
 		pulse_node_list_store& pulse_result_nodes,
-		pulse_elementline_list_store& pulse_result_lineelements);
+		pulse_elementline_list_store& pulse_result_lineelements,
+		bool& is_pulse_analysis_complete);
 
 private:
 	Stopwatch_events stopwatch;

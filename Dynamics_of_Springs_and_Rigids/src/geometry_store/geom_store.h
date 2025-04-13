@@ -147,6 +147,8 @@ private:
 
 	// Analysis results
 	bool is_modal_analysis_complete = false;
+	bool is_pulse_analysis_complete = false;
+
 
 
 	void paint_model(); // Paint the model
