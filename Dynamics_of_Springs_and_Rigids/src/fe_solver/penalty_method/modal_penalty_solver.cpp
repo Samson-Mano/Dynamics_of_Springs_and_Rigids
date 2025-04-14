@@ -632,6 +632,8 @@ void modal_penalty_solver::get_boundary_condition_penalty_matrix(Eigen::MatrixXd
 
 	constraint_count = 0;
 
+	int currentCols = 0;
+
 	for (auto& nd_m : model_nodes.nodeMap)
 	{
 		// Get the node data
@@ -652,7 +654,6 @@ void modal_penalty_solver::get_boundary_condition_penalty_matrix(Eigen::MatrixXd
 			Eigen::VectorXd penalty_SPC_AVector(numDOF);
 			penalty_SPC_AVector.setZero();
 
-			int currentCols = 0;
 
 			if (constraint_type == 0)
 			{

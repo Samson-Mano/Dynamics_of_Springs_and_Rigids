@@ -16,7 +16,7 @@ void forcedresp_elim_solver::clear_results()
 
 }
 
-void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_reponse_data>& frf_data,
+void forcedresp_elim_solver::forcedresp_analysis_elimmethod_start(std::vector<frequency_reponse_data>& frf_data,
 	std::vector<chart_setting_data>& frf_chart_setting,
 	const nodes_list_store& model_nodes, 
 	const elementline_list_store& model_lineelements, 
@@ -57,6 +57,15 @@ void forcedresp_elim_solver::forcedresp_analysis_start(std::vector<frequency_rep
 	// Create a file to keep track of frequency response matrices
 	std::ofstream output_file;
 	output_file.open("forcedresp_analysis_results.txt");
+
+
+	if (print_matrix == true)
+	{
+		output_file << "Forced Response Analysis using Elimination method" << std::endl;
+		output_file << "___________________________________________________" << std::endl;
+
+	}
+
 
 	//___________________________________________________________________________________
 	// Get the modal vectors (within the range)

@@ -21,9 +21,10 @@
 // 1) Penalty method
 #include "../fe_solver/penalty_method/modal_penalty_solver.h"
 #include "../fe_solver/penalty_method/pulse_penalty_solver.h"
-
+#include "../fe_solver/penalty_method/forcedresp_penalty_solver.h"
 
 // 2) Lagrange method
+#include "../fe_solver/lagrange_method/modal_lagrange_solver.h"
 
 
 
@@ -31,8 +32,6 @@
 #include "../fe_solver/elimination_method/modal_elim_solver.h"
 #include "../fe_solver/elimination_method/pulse_elim_solver.h"
 #include "../fe_solver/elimination_method/forcedresp_elim_solver.h"
-
-
 
 
 // FE Objects
@@ -123,9 +122,10 @@ private:
 	// 1) Penalty method
 	modal_penalty_solver modal_penalty_s;
 	pulse_penalty_solver pulse_penalty_s;
-
+	forcedresp_penalty_solver freq_penalty_s;
 
 	// 2) Lagrange method
+	modal_lagrange_solver modal_lagrange_s;
 
 
 	// 3) Elimination method 

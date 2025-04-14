@@ -296,12 +296,12 @@ void app_window::menu_events()
 				pulse_solver_window.execute_pulse_open = true;
 				pulse_solver_window.is_show_window = true;
 			}
-			if (ImGui::MenuItem("Forced Response Analysis Solve"))
-			{
-				// Forced Response Analysis Solve
-				forcedresp_solver_window.execute_forcedresp_open = true;
-				forcedresp_solver_window.is_show_window = true;
-			}
+			//if (ImGui::MenuItem("Forced Response Analysis Solve"))
+			//{
+			//	// Forced Response Analysis Solve
+			//	forcedresp_solver_window.execute_forcedresp_open = true;
+			//	forcedresp_solver_window.is_show_window = true;
+			//}
 
 			ImGui::EndMenu();
 		}

@@ -81,7 +81,6 @@ void pulse_penalty_solver::pulse_analysis_penaltymethod_start(const nodes_list_s
 	//___________________________________________________________________________________
 	// Get the modal vectors (within the range)
 	int numDOF = modal_pulse_s.numDOF;
-	// int number_of_modes = modal_pulse_s.number_of_modes;
 	int k = 0;
 
 	Eigen::MatrixXd global_eigenVectorsMatrix = modal_pulse_s.global_eigenvectors; // Retrive the global EigenVectors matrix 
