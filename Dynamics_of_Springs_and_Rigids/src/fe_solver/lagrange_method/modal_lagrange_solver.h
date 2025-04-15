@@ -61,7 +61,18 @@ public:
 	~modal_lagrange_solver();
 	void clear_results();
 
+
 	void modal_analysis_lagrangemethod_start(const nodes_list_store& model_nodes,
+		const elementline_list_store& model_lineelements,
+		const nodeconstraint_list_store& node_constraints,
+		const nodepointmass_list_store& node_ptmass,
+		const std::unordered_map<int, material_data>& material_list,
+		modal_nodes_list_store& modal_result_nodes,
+		modal_elementline_list_store& modal_result_lineelements,
+		bool& is_modal_analysis_complete);
+
+
+	void modal_analysis_lagrangemethod_start_test(const nodes_list_store& model_nodes,
 		const elementline_list_store& model_lineelements,
 		const nodeconstraint_list_store& node_constraints,
 		const nodepointmass_list_store& node_ptmass,
@@ -118,7 +129,6 @@ private:
 
 	void get_invsqrt_PointMassMatrix(Eigen::MatrixXd& invsqrt_globalPointMassMatrix,
 		const Eigen::MatrixXd& globalPointMassMatrix,
-		const int LagrageAugmentedMatrixSize,
 		std::ofstream& output_file);
 
 

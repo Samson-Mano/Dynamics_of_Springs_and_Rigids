@@ -5,10 +5,15 @@ modal_lagrange_solver::modal_lagrange_solver()
 	// Empty constructor
 }
 
+
+
+
 modal_lagrange_solver::~modal_lagrange_solver()
 {
 	// Empty destructor
 }
+
+
 
 void modal_lagrange_solver::clear_results()
 {
@@ -22,13 +27,15 @@ void modal_lagrange_solver::clear_results()
 
 }
 
-void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list_store& model_nodes, 
-	const elementline_list_store& model_lineelements, 
-	const nodeconstraint_list_store& node_constraints, 
-	const nodepointmass_list_store& node_ptmass, 
-	const std::unordered_map<int, material_data>& material_list, 
-	modal_nodes_list_store& modal_result_nodes, 
-	modal_elementline_list_store& modal_result_lineelements, 
+
+
+void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list_store& model_nodes,
+	const elementline_list_store& model_lineelements,
+	const nodeconstraint_list_store& node_constraints,
+	const nodepointmass_list_store& node_ptmass,
+	const std::unordered_map<int, material_data>& material_list,
+	modal_nodes_list_store& modal_result_nodes,
+	modal_elementline_list_store& modal_result_lineelements,
 	bool& is_modal_analysis_complete)
 {
 
@@ -177,8 +184,8 @@ void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list
 	Eigen::MatrixXd globalConstraint_SPC_AMatrix; // resize inside the function
 
 
-	get_global_constraint_A_matrix(globalConstraint_SPC_AMatrix, 
-		globalConstraint_MPC_AMatrix, 
+	get_global_constraint_A_matrix(globalConstraint_SPC_AMatrix,
+		globalConstraint_MPC_AMatrix,
 		model_nodes,
 		model_lineelements,
 		node_constraints,
@@ -197,7 +204,7 @@ void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list
 	int LagrageAugmentedMatrixSize = numDOF + constraintEqnSize;
 
 	globalConstraint_AMatrix.conservativeResize(MPCconstraintEqnSize + SPCconstraintEqnSize, numDOF); // where the row size is SPC A matrix + MPC A matrix
-	
+
 	if (MPCconstraintEqnSize > 0)
 	{
 		globalConstraint_AMatrix.topRows(MPCconstraintEqnSize) = globalConstraint_MPC_AMatrix;
@@ -218,61 +225,66 @@ void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list
 	}
 
 
-	//____________________________________________________________________________________________________________________
-	// Lagrange Augmentation of global stiffness matrix with global constratint A matrix
+	//___________________________________________________________________________________________________________________
+	// Compute the Null Space matrix N 
+	// SVD (Singular Value Decomposition) to get the null space
 
-	Eigen::MatrixXd globalLagrangeAugmentedStiffnessMatrix(LagrageAugmentedMatrixSize, LagrageAugmentedMatrixSize);
-	globalLagrangeAugmentedStiffnessMatrix.setZero();
+	// Compute SVD
+	Eigen::JacobiSVD<Eigen::MatrixXd> svd(globalConstraint_AMatrix, Eigen::ComputeFullV);
+	Eigen::MatrixXd V_Matrix = svd.matrixV(); // n x n
 
-	// Top-left block: K
-	globalLagrangeAugmentedStiffnessMatrix.topLeftCorner(numDOF, numDOF) = globalStiffnessMatrix;
+	int constraintCount = svd.rank(); // Number of independent constraints
+	int unconstrainedDOF = numDOF - constraintCount; // Number of unconstrained DOFs
 
-	// Top-right block: A^T
-	globalLagrangeAugmentedStiffnessMatrix.topRightCorner(numDOF, constraintEqnSize) = globalConstraint_AMatrix.transpose();
-
-	// Bottom-left block: A
-	globalLagrangeAugmentedStiffnessMatrix.bottomLeftCorner(constraintEqnSize, numDOF) = globalConstraint_AMatrix;
-
-	// Bottom-right block: zero matrix (already zero-initialized)
+	// Null space basis (N is n x r)
+	Eigen::MatrixXd Null_N_Matrix = V_Matrix.rightCols(constraintCount);
 
 
 	if (print_matrix == true)
 	{
-		// Print the Reduced Global Displacement matrix
-		output_file << "Global Lagrange Augmented Stiffness Matrix" << std::endl;
-		output_file << globalLagrangeAugmentedStiffnessMatrix << std::endl;
+		// Print the Null Space N matrix
+		output_file << "Global Null Space N Matrix" << std::endl;
+		output_file << std::fixed << std::setprecision(6) << Null_N_Matrix << std::endl;  // Set decimal precision to 6 
 		output_file << std::endl;
 	}
 
-	//____________________________________________________________________________________________________________________
-	// Lagrange Augmentation of global mass matrix with zero
+	//___________________________________________________________________________________________________________________
+	// Null Space Mass matrix and Siffness matrix
 
-	Eigen::MatrixXd globalLagrangeAugmentedMassMatrix(LagrageAugmentedMatrixSize, LagrageAugmentedMatrixSize);
-	globalLagrangeAugmentedMassMatrix.setZero();
+	Eigen::MatrixXd	nulltransformed_StiffnessMatrix = Null_N_Matrix.transpose() * globalStiffnessMatrix * Null_N_Matrix;
 
-	// Top-left block: M
-	globalLagrangeAugmentedMassMatrix.topLeftCorner(numDOF, numDOF) = globalPointMassMatrix;
+	Eigen::MatrixXd	nulltransformed_PointMassMatrix = Null_N_Matrix.transpose() * globalPointMassMatrix * Null_N_Matrix;
 
-	// Top-right block: zero matrix (already zero-initialized)
-	
+	int rDOF = Null_N_Matrix.cols();
 
-	// Bottom-left block: zero matrix (already zero-initialized)
-	
 
-	// Bottom-right block: zero matrix (already zero-initialized)
+	if (print_matrix == true)
+	{
+		// Print the Null Space Stiffness matrix
+		output_file << "Null Space transformed Stiffness Matrix" << std::endl;
+		output_file << std::fixed << std::setprecision(6) << nulltransformed_StiffnessMatrix << std::endl;  // Set decimal precision to 6 
+		output_file << std::endl;
+		
+		// Print the Null Space Mass matrix
+		output_file << "Null Space transformed Mass Matrix" << std::endl;
+		output_file << std::fixed << std::setprecision(6) << nulltransformed_PointMassMatrix << std::endl;  // Set decimal precision to 6 
+		output_file << std::endl;
+
+	}
 
 
 	//___________________________________________________________________________________________________________________
 	// Convert generalized eigen value problem -> standard eigen value problem
 	// Find the inverse square root of diagonal mass matrix (which is the inverse of cholesky decomposition L-matrix)
 
-	Eigen::MatrixXd invsqrt_globalLagrangeAugmentedMassMatrix(LagrageAugmentedMatrixSize, LagrageAugmentedMatrixSize);
-	invsqrt_globalLagrangeAugmentedMassMatrix.setZero();
+	Eigen::MatrixXd invsqrt_nulltransformed_PointMassMatrix(rDOF, rDOF);
+	invsqrt_nulltransformed_PointMassMatrix.setZero();
 
-	get_invsqrt_PointMassMatrix(invsqrt_globalLagrangeAugmentedMassMatrix,
-		globalLagrangeAugmentedMassMatrix,
-		LagrageAugmentedMatrixSize,
-		output_file);
+	for (int i = 0; i < rDOF; i++)
+	{
+		invsqrt_nulltransformed_PointMassMatrix.coeffRef(i, i) = (1.0 / sqrt(nulltransformed_PointMassMatrix.coeff(i, i)));
+
+	}
 
 
 	stopwatch_elapsed_str.str("");
@@ -283,20 +295,11 @@ void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list
 	//___________________________________________________________________________________________________________________
 	// Standard eigen value problem
 
-	Eigen::MatrixXd Z_matrix(LagrageAugmentedMatrixSize, LagrageAugmentedMatrixSize);
+	Eigen::MatrixXd Z_matrix(rDOF, rDOF);
 	Z_matrix.setZero();
 
-	Z_matrix = invsqrt_globalLagrangeAugmentedMassMatrix * globalLagrangeAugmentedStiffnessMatrix * invsqrt_globalLagrangeAugmentedMassMatrix.transpose();
+	Z_matrix = invsqrt_nulltransformed_PointMassMatrix * nulltransformed_StiffnessMatrix * invsqrt_nulltransformed_PointMassMatrix.transpose();
 
-
-	if (print_matrix == true)
-	{
-		// Print the Standard Eigen Value problem
-		output_file << "Standard Eigen Value Z - matrix:" << std::endl;
-		output_file << Z_matrix << std::endl;
-		output_file << std::endl;
-
-	}
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
@@ -322,13 +325,15 @@ void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list
 
 	// Get the eigenvalues and eigenvectors
 	Eigen::VectorXd eigenvalues = eigenSolver.eigenvalues(); // Eigenvalues
-	Eigen::MatrixXd eigenvectors = invsqrt_globalLagrangeAugmentedMassMatrix.transpose() * eigenSolver.eigenvectors(); // Eigenvectors
+	Eigen::MatrixXd eigenvectors = invsqrt_nulltransformed_PointMassMatrix.transpose() * eigenSolver.eigenvectors(); // Eigenvectors
 
 
 	// Remove the augmented results
-	eigenvalues.conservativeResize(numDOF);
-	eigenvectors.conservativeResize(numDOF, numDOF);
+	eigenvalues = Null_N_Matrix * eigenvalues;
 
+	eigenvectors = Null_N_Matrix * eigenvectors;
+
+	eigenvectors.conservativeResize(numDOF, numDOF);
 
 	// sort the eigen value and eigen vector (ascending)
 	sort_eigen_values_vectors(eigenvalues, eigenvectors, numDOF);
@@ -517,6 +522,478 @@ void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list
 }
 
 
+
+
+
+void modal_lagrange_solver::modal_analysis_lagrangemethod_start_test(const nodes_list_store& model_nodes,
+	const elementline_list_store& model_lineelements,
+	const nodeconstraint_list_store& node_constraints,
+	const nodepointmass_list_store& node_ptmass,
+	const std::unordered_map<int, material_data>& material_list,
+	modal_nodes_list_store& modal_result_nodes,
+	modal_elementline_list_store& modal_result_lineelements,
+	bool& is_modal_analysis_complete)
+{
+
+	// Main solver call
+	is_modal_analysis_complete = false;
+
+	// Check the model
+	// Number of nodes
+	if (model_nodes.node_count == 0)
+	{
+		return;
+	}
+
+	// Number of elements
+	if (model_lineelements.elementline_count == 0)
+	{
+		return;
+	}
+
+	// Number of point mass
+	if (node_ptmass.ptmass_count == 0)
+	{
+		return;
+	}
+
+	//____________________________________________
+	Eigen::initParallel();  // Initialize Eigen's thread pool
+
+	stopwatch.start();
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << std::fixed << std::setprecision(6);
+
+	std::cout << "Modal analysis - Elimination method started" << std::endl;
+
+	// Create a node ID map (to create a nodes as ordered and numbered from 0,1,2...n)
+	int i = 0;
+	for (auto& nd : model_nodes.nodeMap)
+	{
+		nodeid_map[nd.first] = i;
+		i++;
+	}
+
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Node maping completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+
+	//____________________________________________________________________________________________________________________
+	// set the maximum stiffness
+
+	this->max_stiffness = 0.0;
+	for (const auto& mat_m : material_list)
+	{
+		if (mat_m.first == 0)
+		{
+			// First material is rigid with inf stiffness (so skip)
+			continue;
+		}
+
+		material_data mat = mat_m.second;
+
+		// Find the maximum material stiffness
+		if (this->max_stiffness < mat.material_stiffness)
+		{
+			this->max_stiffness = mat.material_stiffness;
+		}
+	}
+
+	//____________________________________________________________________________________________________________________
+	// set the mass for zero mass node (node without any pt mass assignment)
+	double min_pointmass = DBL_MAX;
+	for (const auto& pt_m : node_ptmass.ptmassMap)
+	{
+		nodepointmass_data pt_mass = pt_m.second;
+
+		// Find the minimum point mass
+		if (min_pointmass > pt_mass.ptmass_x && pt_mass.ptmass_x != 0)
+		{
+			min_pointmass = pt_mass.ptmass_x;
+			this->zero_ptmass = min_pointmass * (1.0 / penalty_scale_factor);
+		}
+
+		if (min_pointmass > pt_mass.ptmass_y && pt_mass.ptmass_y != 0)
+		{
+			min_pointmass = pt_mass.ptmass_y;
+			this->zero_ptmass = min_pointmass * (1.0 / penalty_scale_factor);
+		}
+
+	}
+
+
+
+	// Create a file to keep track of matrices
+	std::ofstream output_file;
+	output_file.open("modal_analysis_results.txt");
+
+	if (print_matrix == true)
+	{
+		output_file << "Modal Analysis using Lagrange method" << std::endl;
+		output_file << "____________________________________________" << std::endl;
+
+	}
+
+
+
+	//____________________________________________________________________________________________________________________
+	numDOF = model_nodes.node_count * 2; // Number of degrees of freedom (2 DOFs per node (2 translation))
+
+
+	//____________________________________________________________________________________________________________________
+	// Global Stiffness Matrix
+	Eigen::MatrixXd	globalStiffnessMatrix(numDOF, numDOF);
+	globalStiffnessMatrix.setZero();
+
+	get_global_stiffness_matrix(globalStiffnessMatrix,
+		model_lineelements,
+		node_constraints,
+		material_list,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Global stiffness matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+
+	//____________________________________________________________________________________________________________________
+	// Global Point Mass Matrix
+	Eigen::MatrixXd	globalPointMassMatrix(numDOF, numDOF);
+	globalPointMassMatrix.setZero();
+
+	get_global_pointmass_matrix(globalPointMassMatrix,
+		model_nodes,
+		node_ptmass,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Global point mass matrix completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+	//____________________________________________________________________________________________________________________
+	// Global Constraint A matrix
+	Eigen::MatrixXd globalConstraint_MPC_AMatrix; // resize inside the function
+	Eigen::MatrixXd globalConstraint_SPC_AMatrix; // resize inside the function
+
+
+	get_global_constraint_A_matrix(globalConstraint_SPC_AMatrix,
+		globalConstraint_MPC_AMatrix,
+		model_nodes,
+		model_lineelements,
+		node_constraints,
+		material_list,
+		output_file);
+
+
+	Eigen::MatrixXd globalConstraint_AMatrix; // resize inside the function
+
+	// Create the global constraint A matrix
+	int MPCconstraintEqnSize = globalConstraint_MPC_AMatrix.rows();
+	int SPCconstraintEqnSize = globalConstraint_SPC_AMatrix.rows();
+
+	int constraintEqnSize = SPCconstraintEqnSize + MPCconstraintEqnSize;
+
+	int LagrageAugmentedMatrixSize = numDOF + constraintEqnSize;
+
+	globalConstraint_AMatrix.conservativeResize(MPCconstraintEqnSize + SPCconstraintEqnSize, numDOF); // where the row size is SPC A matrix + MPC A matrix
+
+	if (MPCconstraintEqnSize > 0)
+	{
+		globalConstraint_AMatrix.topRows(MPCconstraintEqnSize) = globalConstraint_MPC_AMatrix;
+	}
+
+	if (SPCconstraintEqnSize > 0)
+	{
+		globalConstraint_AMatrix.bottomRows(SPCconstraintEqnSize) = globalConstraint_SPC_AMatrix;
+	}
+
+
+	if (print_matrix == true)
+	{
+		// Print the Global Constraint A matrix
+		output_file << "Global Constraint A Matrix" << std::endl;
+		output_file << std::fixed << std::setprecision(6) << globalConstraint_AMatrix << std::endl;  // Set decimal precision to 6 
+		output_file << std::endl;
+	}
+
+	//___________________________________________________________________________________________________________________
+	// Convert generalized eigen value problem -> standard eigen value problem
+	// Find the inverse square root of diagonal mass matrix (which is the inverse of cholesky decomposition L-matrix)
+
+	Eigen::MatrixXd invsqrt_globalPointMassMatrix(numDOF, numDOF);
+	invsqrt_globalPointMassMatrix.setZero();
+
+	get_invsqrt_PointMassMatrix(invsqrt_globalPointMassMatrix,
+		globalPointMassMatrix,
+		output_file);
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Inverse Squareroot Point mass matrices completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+	//___________________________________________________________________________________________________________________
+	// Standard eigen value problem
+
+	Eigen::MatrixXd Z_matrix(numDOF, numDOF);
+	Z_matrix.setZero();
+
+	Z_matrix = invsqrt_globalPointMassMatrix * globalStiffnessMatrix * invsqrt_globalPointMassMatrix.transpose();
+
+
+	//____________________________________________________________________________________________________________________
+	// Lagrange Augmentation of Standard eigen value problem with global constratint A matrix
+
+	Eigen::MatrixXd LagrangeAugmented_Z_matrix(LagrageAugmentedMatrixSize, LagrageAugmentedMatrixSize);
+	LagrangeAugmented_Z_matrix.setZero();
+
+	// Top-left block: K
+	LagrangeAugmented_Z_matrix.topLeftCorner(numDOF, numDOF) = Z_matrix;
+
+	// Top-right block: A^T
+	LagrangeAugmented_Z_matrix.topRightCorner(numDOF, constraintEqnSize) = globalConstraint_AMatrix.transpose();
+
+	// Bottom-left block: A
+	LagrangeAugmented_Z_matrix.bottomLeftCorner(constraintEqnSize, numDOF) = globalConstraint_AMatrix;
+
+	// Bottom-right block: zero matrix (already zero-initialized)
+
+
+	if (print_matrix == true)
+	{
+		// Print the Reduced Z matrix
+		output_file << "Standard Eigen Value Lagrange Augmented Z Matrix" << std::endl;
+		output_file << LagrangeAugmented_Z_matrix << std::endl;
+		output_file << std::endl;
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Standard Eigenvalue problem Z_matrix created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+	//___________________________________________________________________________________________________________________
+	// Solve the Eigen value problem: Compute the eigenvalues and eigenvectors
+	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(LagrangeAugmented_Z_matrix);
+
+	if (eigenSolver.info() != Eigen::Success)
+	{
+		// Eigenvalue problem failed to converge
+		std::cout << "Eigenvalue problem failed to converge !!!!! " << std::endl;
+		output_file << "Eigenvalue problem failed to converge !!!!! " << std::endl;
+		output_file.close();
+		return;
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen value problem solved at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	// Get the eigenvalues and eigenvectors
+	Eigen::VectorXd eigenvalues = eigenSolver.eigenvalues(); // Eigenvalues
+	Eigen::MatrixXd eigenvectors = eigenSolver.eigenvectors(); // Eigenvectors
+
+
+	// Remove the augmented results
+	eigenvalues = eigenvalues.bottomRows(numDOF);
+	// eigenvalues.conservativeResize(numDOF);
+
+	eigenvectors = eigenvectors.bottomRightCorner(numDOF, numDOF);
+	// eigenvectors.conservativeResize(numDOF, numDOF);
+
+	eigenvectors = invsqrt_globalPointMassMatrix * eigenvectors;
+
+
+	// sort the eigen value and eigen vector (ascending)
+	sort_eigen_values_vectors(eigenvalues, eigenvectors, numDOF);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen values and Eigen vectors are sorted at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	// Normailize eigen vectors
+	normalize_eigen_vectors(eigenvectors, numDOF);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen vectors are normalized at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	if (print_matrix == true)
+	{
+		// Eigenvalue problem solve successful
+		output_file << "Modal Analysis Success !!!!! " << std::endl;
+
+		// Print the Eigen values
+		output_file << "Eigen Values " << std::endl;
+		output_file << eigenvalues << std::endl;
+		output_file << std::endl;
+
+		// Print the Eigen vectors
+		output_file << "Eigen Vectors " << std::endl;
+		output_file << eigenvectors << std::endl;
+		output_file << std::endl;
+	}
+
+
+
+	//_____________________________________________________________________________________________
+	// Calculate the effective mass participation factor & Cummulative effective mass participation factor
+	// effective mass participation factor = percentage of the system mass that participates in a particular mode
+
+
+	Eigen::VectorXd participation_factor(numDOF);
+	participation_factor.setZero();
+
+	get_modal_participation_factor(participation_factor,
+		globalPointMassMatrix,
+		eigenvectors,
+		output_file);
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Modal Mass of Participation Factor completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+
+	//____________________________________________________________________________________________________________________
+	// Store the results
+
+	// Clear the modal results
+	this->number_of_modes = numDOF - SPCconstraintEqnSize; // Number of modes
+	this->mode_result_str.clear(); // Result string list
+	this->m_eigenvalues.clear(); // Eigen values
+	this->m_eigenvectors.clear(); // Eigen vectors
+
+	// Add the eigen values and eigen vectors
+	for (int i = 0; i < this->number_of_modes; i++)
+	{
+		std::vector<double> eigen_vec; // Eigen vectors of all nodes (including constrainded)
+
+		for (int j = 0; j < numDOF; j++)
+		{
+			eigen_vec.push_back(eigenvectors.coeff(j, i));
+		}
+
+		// Add to the Eigen values storage
+		m_eigenvalues.insert({ i, eigenvalues.coeff(i) });
+
+		// Add to the Eigen vectors storage 
+		m_eigenvectors.insert({ i, eigen_vec });
+
+		// Frequency
+		double nat_freq = std::sqrt(eigenvalues.coeff(i)) / (2.0 * m_pi);
+
+		// Modal results
+		std::stringstream ss, mf;
+		ss << std::fixed << std::setprecision(3) << nat_freq;
+		mf << std::fixed << std::setprecision(3) << participation_factor.coeff(i);
+
+		// Add to the string list
+		mode_result_str.push_back("Mode " + std::to_string(i + 1) + " = " + ss.str() + " Hz , Modal mass = " + mf.str());
+	}
+
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Eigen values/ vectors stored at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	is_modal_analysis_complete = true;
+
+	//_____________________________________________________________________________________________
+
+	// Add the modal analysis results to node & element
+	// Clear the modal node and modal element results
+	modal_result_nodes.clear_data();
+	modal_result_lineelements.clear_data();
+
+	map_modal_analysis_results(model_nodes,
+		model_lineelements,
+		modal_result_nodes,
+		modal_result_lineelements,
+		output_file);
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Modal analysis results maped to nodes and elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+	//____________________________________________________________________________________________________________________
+	// Modal Decomposition
+	// Create modal matrices
+	this->modalMass.resize(numDOF);
+	this->modalStiff.resize(numDOF);
+
+	get_modal_matrices(modalMass,
+		modalStiff,
+		eigenvectors,
+		globalPointMassMatrix,
+		globalStiffnessMatrix,
+		output_file);
+
+	// resize the results with number of mode
+	this->modalMass.conservativeResize(this->number_of_modes);
+	this->modalStiff.conservativeResize(this->number_of_modes);
+
+	int n_count = 0;
+
+	// Remove the eigen values (of constraints)
+	for (auto it = m_eigenvalues.begin(); it != m_eigenvalues.end(); )
+	{
+		if (n_count++ >= this->number_of_modes)
+		{
+			it = m_eigenvalues.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	// Remove the eigen vectors (of constraints)
+	n_count = 0;
+
+	for (auto it = m_eigenvectors.begin(); it != m_eigenvectors.end(); )
+	{
+		if (n_count++ >= this->number_of_modes)
+		{
+			it = m_eigenvectors.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	this->global_eigenvectors = eigenvectors;
+
+	// resize the modal string
+	mode_result_str.resize(this->number_of_modes);
+
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str.clear();
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Modal mass and stiffness storage completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	std::cout << "Modal analysis complete " << std::endl;
+
+
+
+	//____________________________________________________________________________________________________________________
+	stopwatch.stop();
+
+	output_file.close();
+
+
+
+}
 
 
 
@@ -829,21 +1306,13 @@ void modal_lagrange_solver::get_global_constraint_A_matrix(Eigen::MatrixXd& glob
 
 void modal_lagrange_solver::get_invsqrt_PointMassMatrix(Eigen::MatrixXd& invsqrt_globalPointMassMatrix,
 	const Eigen::MatrixXd& globalPointMassMatrix,
-	const int LagrageAugmentedMatrixSize,
 	std::ofstream& output_file)
 {
 	// Return the inverse square root of Point Mass matrix
-	for (int i = 0; i < LagrageAugmentedMatrixSize; i++)
+	for (int i = 0; i < numDOF; i++)
 	{
-		if (globalPointMassMatrix.coeff(i, i) != 0)
-		{
-			invsqrt_globalPointMassMatrix.coeffRef(i, i) = (1.0 / sqrt(globalPointMassMatrix.coeff(i, i)));
-		}
-		else
-		{
-			invsqrt_globalPointMassMatrix.coeffRef(i, i) = (1.0 / sqrt(zero_ptmass));
-		}
-		
+		invsqrt_globalPointMassMatrix.coeffRef(i, i) = (1.0 / sqrt(globalPointMassMatrix.coeff(i, i)));
+
 	}
 
 
