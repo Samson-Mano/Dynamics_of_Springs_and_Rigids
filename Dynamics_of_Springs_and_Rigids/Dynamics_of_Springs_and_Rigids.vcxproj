@@ -133,6 +133,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <OpenMPSupport>true</OpenMPSupport>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\openGL\glew-2.2.0\lib\Release\x64;C:\openGL\glfw-3.3.8.bin.WIN64\lib-vc2022;C:\openGL\freetype-windows-binaries\release dll\win64</AdditionalLibraryDirectories>

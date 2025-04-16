@@ -226,89 +226,55 @@ void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list
 
 
 	//___________________________________________________________________________________________________________________
-	// Compute the Null Space matrix N 
-	// SVD (Singular Value Decomposition) to get the null space
+	// Augmentation of Stiffness matrix with Constraint A Matrix
 
-	// Compute SVD
-	Eigen::JacobiSVD<Eigen::MatrixXd> svd(globalConstraint_AMatrix, Eigen::ComputeFullV);
-	Eigen::MatrixXd V_Matrix = svd.matrixV(); // n x n
+	Eigen::MatrixXd AugmentedStiffnessMatrix(LagrageAugmentedMatrixSize, LagrageAugmentedMatrixSize);
+	AugmentedStiffnessMatrix.setZero();
 
-	int constraintCount = svd.rank(); // Number of independent constraints
-	int unconstrainedDOF = numDOF - constraintCount; // Number of unconstrained DOFs
+	// Top-left block: K
+	AugmentedStiffnessMatrix.topLeftCorner(numDOF, numDOF) = globalStiffnessMatrix;
 
-	// Null space basis (N is n x r)
-	Eigen::MatrixXd Null_N_Matrix = V_Matrix.rightCols(constraintCount);
+	// Top-right block: A^T
+	AugmentedStiffnessMatrix.topRightCorner(numDOF, constraintEqnSize) = globalConstraint_AMatrix.transpose();
 
+	// Bottom-left block: A
+	AugmentedStiffnessMatrix.bottomLeftCorner(constraintEqnSize, numDOF) = globalConstraint_AMatrix;
 
-	if (print_matrix == true)
-	{
-		// Print the Null Space N matrix
-		output_file << "Global Null Space N Matrix" << std::endl;
-		output_file << std::fixed << std::setprecision(6) << Null_N_Matrix << std::endl;  // Set decimal precision to 6 
-		output_file << std::endl;
-	}
-
-	//___________________________________________________________________________________________________________________
-	// Null Space Mass matrix and Siffness matrix
-
-	Eigen::MatrixXd	nulltransformed_StiffnessMatrix = Null_N_Matrix.transpose() * globalStiffnessMatrix * Null_N_Matrix;
-
-	Eigen::MatrixXd	nulltransformed_PointMassMatrix = Null_N_Matrix.transpose() * globalPointMassMatrix * Null_N_Matrix;
-
-	int rDOF = Null_N_Matrix.cols();
+	// Bottom-right block: zero matrix (already zero-initialized)
 
 
 	if (print_matrix == true)
 	{
-		// Print the Null Space Stiffness matrix
-		output_file << "Null Space transformed Stiffness Matrix" << std::endl;
-		output_file << std::fixed << std::setprecision(6) << nulltransformed_StiffnessMatrix << std::endl;  // Set decimal precision to 6 
+		// Print the Global Constraint A matrix
+		output_file << "Augmented Stiffness matrix with global Constraint A Matrix" << std::endl;
+		output_file << std::fixed << std::setprecision(6) << AugmentedStiffnessMatrix << std::endl;  // Set decimal precision to 6 
 		output_file << std::endl;
-		
-		// Print the Null Space Mass matrix
-		output_file << "Null Space transformed Mass Matrix" << std::endl;
-		output_file << std::fixed << std::setprecision(6) << nulltransformed_PointMassMatrix << std::endl;  // Set decimal precision to 6 
-		output_file << std::endl;
-
 	}
 
 
 	//___________________________________________________________________________________________________________________
-	// Convert generalized eigen value problem -> standard eigen value problem
-	// Find the inverse square root of diagonal mass matrix (which is the inverse of cholesky decomposition L-matrix)
+	// Augmentation of Mass matrix with Zero matrix
 
-	Eigen::MatrixXd invsqrt_nulltransformed_PointMassMatrix(rDOF, rDOF);
-	invsqrt_nulltransformed_PointMassMatrix.setZero();
+	Eigen::MatrixXd AugmentedPointMatrix(LagrageAugmentedMatrixSize, LagrageAugmentedMatrixSize);
+	AugmentedPointMatrix.setZero();
 
-	for (int i = 0; i < rDOF; i++)
-	{
-		invsqrt_nulltransformed_PointMassMatrix.coeffRef(i, i) = (1.0 / sqrt(nulltransformed_PointMassMatrix.coeff(i, i)));
+	// Top-left block: M
+	AugmentedPointMatrix.topLeftCorner(numDOF, numDOF) = globalPointMassMatrix;
 
-	}
+	// Top-right block: zero matrix (already zero-initialized)
+	
 
-
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Inverse Squareroot Point mass matrices completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	// Bottom-left block: zero matrix (already zero-initialized)
 
 
-	//___________________________________________________________________________________________________________________
-	// Standard eigen value problem
-
-	Eigen::MatrixXd Z_matrix(rDOF, rDOF);
-	Z_matrix.setZero();
-
-	Z_matrix = invsqrt_nulltransformed_PointMassMatrix * nulltransformed_StiffnessMatrix * invsqrt_nulltransformed_PointMassMatrix.transpose();
-
-
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Standard Eigenvalue problem Z_matrix created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	// Bottom-right block: zero matrix (already zero-initialized)
 
 
 	//___________________________________________________________________________________________________________________
-	// Solve the Eigen value problem: Compute the eigenvalues and eigenvectors
-	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(Z_matrix);
+	// Solve the generalized eigenvalue problem: [K] * [phi] = lambda * [M] * [phi]
+	Eigen::GeneralizedEigenSolver<Eigen::MatrixXd> eigenSolver;
+	eigenSolver.compute(AugmentedStiffnessMatrix, AugmentedPointMatrix);
+
 
 	if (eigenSolver.info() != Eigen::Success)
 	{
@@ -324,26 +290,23 @@ void modal_lagrange_solver::modal_analysis_lagrangemethod_start(const nodes_list
 	std::cout << "Eigen value problem solved at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	// Get the eigenvalues and eigenvectors
-	Eigen::VectorXd eigenvalues = eigenSolver.eigenvalues(); // Eigenvalues
-	Eigen::MatrixXd eigenvectors = invsqrt_nulltransformed_PointMassMatrix.transpose() * eigenSolver.eigenvectors(); // Eigenvectors
+	Eigen::VectorXd eigenvalues = eigenSolver.eigenvalues().real(); // Eigenvalues
+	Eigen::MatrixXd eigenvectors = eigenSolver.eigenvectors().real(); // Eigenvectors
 
 
-	// Remove the augmented results
-	eigenvalues = Null_N_Matrix * eigenvalues;
 
-	eigenvectors = Null_N_Matrix * eigenvectors;
-
-	eigenvectors.conservativeResize(numDOF, numDOF);
+	//eigenvalues.conservativeResize(numDOF);
+	//eigenvectors.conservativeResize(numDOF, numDOF);
 
 	// sort the eigen value and eigen vector (ascending)
-	sort_eigen_values_vectors(eigenvalues, eigenvectors, numDOF);
+	sort_eigen_values_vectors(eigenvalues, eigenvectors, LagrageAugmentedMatrixSize);
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Eigen values and Eigen vectors are sorted at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	// Normailize eigen vectors
-	normalize_eigen_vectors(eigenvectors, numDOF);
+	normalize_eigen_vectors(eigenvectors, LagrageAugmentedMatrixSize);
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
