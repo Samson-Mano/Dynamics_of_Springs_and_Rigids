@@ -72,15 +72,6 @@ public:
 		bool& is_modal_analysis_complete);
 
 
-	void modal_analysis_lagrangemethod_start_test(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const nodeconstraint_list_store& node_constraints,
-		const nodepointmass_list_store& node_ptmass,
-		const std::unordered_map<int, material_data>& material_list,
-		modal_nodes_list_store& modal_result_nodes,
-		modal_elementline_list_store& modal_result_lineelements,
-		bool& is_modal_analysis_complete);
-
 private:
 	const double m_pi = 3.14159265358979323846;
 	bool print_matrix = true;
@@ -125,20 +116,11 @@ private:
 		std::ofstream& output_file);
 
 
+	void filter_eigenvalues_eigenvectors(Eigen::VectorXd& eigenvalues,
+		Eigen::MatrixXd& eigenvectors);
 
 
-	void get_invsqrt_PointMassMatrix(Eigen::MatrixXd& invsqrt_globalPointMassMatrix,
-		const Eigen::MatrixXd& globalPointMassMatrix,
-		std::ofstream& output_file);
-
-
-	void sort_eigen_values_vectors(Eigen::VectorXd& eigenvalues,
-		Eigen::MatrixXd& eigenvectors,
-		const int& m_size);
-
-
-	void normalize_eigen_vectors(Eigen::MatrixXd& eigenvectors,
-		const int& m_size);
+	void normalize_eigen_vectors(Eigen::MatrixXd& eigenvectors);
 
 
 

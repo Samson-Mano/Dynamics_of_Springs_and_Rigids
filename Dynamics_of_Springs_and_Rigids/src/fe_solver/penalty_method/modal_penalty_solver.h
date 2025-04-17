@@ -73,7 +73,7 @@ public:
 
 private:
 	const double m_pi = 3.14159265358979323846;
-	bool print_matrix = false;
+	bool print_matrix = true;
 	Stopwatch_events stopwatch;
 	std::stringstream stopwatch_elapsed_str;
 
