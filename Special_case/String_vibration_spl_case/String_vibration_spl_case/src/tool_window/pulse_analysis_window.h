@@ -52,6 +52,6 @@ private:
 	// Animation control
 	bool animate_play = true;
 	bool animate_pause = false;
-	double animation_speed = 1.0;
+	double animation_speed = 0.001;
 
 };

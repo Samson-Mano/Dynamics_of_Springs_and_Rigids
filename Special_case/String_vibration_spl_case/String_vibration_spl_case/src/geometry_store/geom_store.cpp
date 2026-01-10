@@ -102,23 +102,23 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 			fields.push_back(field);
 		}
 
-		if (fields[0] == "NodeCount")
+		if (fields[0] == "NodeCount (Nos)")
 		{
 			// Node count
 			node_count = std::stoi(fields[1]);
 		}
-		else if (fields[0] == "Tension")
+		else if (fields[0] == "Tension (N)")
 		{
 			// Tension
 			this->mat_data.line_tension = std::stod(fields[1]);
 
 		}
-		else if (fields[0] == "Length")
+		else if (fields[0] == "Length (mm)")
 		{
 			// Length
 			this->mat_data.line_length = std::stod(fields[1]);
 		}
-		else if (fields[0] == "Density")
+		else if (fields[0] == "Density (Tons/mm3)")
 		{
 			// Density
 			this->mat_data.material_density = std::stod(fields[1]);

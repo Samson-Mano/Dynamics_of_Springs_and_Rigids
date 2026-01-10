@@ -10,7 +10,7 @@ struct pulse_load_penalty_data
 	int load_id = 0;
 	double load_start_time = 0.0;
 	double load_end_time = 0.0;
-	Eigen::VectorXd modal_globalLoadamplMatrix;
+	Eigen::VectorXd global_modalLoadamplMatrix;
 
 };
 
