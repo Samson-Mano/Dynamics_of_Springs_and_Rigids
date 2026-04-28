@@ -173,7 +173,7 @@ void pulse_penalty_solver::pulse_analysis_penaltymethod_start(const nodes_list_s
 						time_t,
 						modal_pulse_s.modalMass(i),
 						modal_pulse_s.modalStiff(i),
-						pulse_load.modal_globalLoadamplMatrix(i),
+						pulse_load.global_modalLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
 
@@ -186,7 +186,7 @@ void pulse_penalty_solver::pulse_analysis_penaltymethod_start(const nodes_list_s
 						time_t,
 						modal_pulse_s.modalMass(i),
 						modal_pulse_s.modalStiff(i),
-						pulse_load.modal_globalLoadamplMatrix(i),
+						pulse_load.global_modalLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
 
@@ -199,7 +199,7 @@ void pulse_penalty_solver::pulse_analysis_penaltymethod_start(const nodes_list_s
 						time_t,
 						modal_pulse_s.modalMass(i),
 						modal_pulse_s.modalStiff(i),
-						pulse_load.modal_globalLoadamplMatrix(i),
+						pulse_load.global_modalLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
 
@@ -212,7 +212,7 @@ void pulse_penalty_solver::pulse_analysis_penaltymethod_start(const nodes_list_s
 						time_t,
 						modal_pulse_s.modalMass(i),
 						modal_pulse_s.modalStiff(i),
-						pulse_load.modal_globalLoadamplMatrix(i),
+						pulse_load.global_modalLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
 
@@ -225,7 +225,7 @@ void pulse_penalty_solver::pulse_analysis_penaltymethod_start(const nodes_list_s
 						time_t,
 						modal_pulse_s.modalMass(i),
 						modal_pulse_s.modalStiff(i),
-						pulse_load.modal_globalLoadamplMatrix(i),
+						pulse_load.global_modalLoadamplMatrix(i),
 						pulse_load.load_start_time,
 						pulse_load.load_end_time);
 
@@ -445,7 +445,7 @@ void pulse_penalty_solver::create_pulse_load_matrices(pulse_load_penalty_data& p
 	pulse_loads.load_id = ld.load_id;
 	pulse_loads.load_start_time = ld.load_start_time;
 	pulse_loads.load_end_time = ld.load_end_time;
-	pulse_loads.modal_globalLoadamplMatrix = modal_globalLoadamplMatrix; // Global load matrix for this load
+	pulse_loads.global_modalLoadamplMatrix = modal_globalLoadamplMatrix; // Global load matrix for this load
 
 
 	if (print_matrix == true)
