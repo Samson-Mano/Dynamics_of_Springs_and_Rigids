@@ -5,6 +5,8 @@
 #include "../geom_parameters.h"
 #include "../geometry_buffers/gBuffers.h"
 
+#include <set>
+#include <utility>
 
 
 
@@ -65,7 +67,7 @@ class model_mesh_store
 {
 public:
 	std::vector<node_store> nodes;
-	std::vector<elementline_store> wierframe;
+	std::vector<elementline_store> wireframe;
 	std::vector<elementtri_store> tris;
 	std::vector<elementquad_store> quads;
 
@@ -74,10 +76,55 @@ public:
 	~model_mesh_store() = default;
 
 
+	void init(geom_parameters* geom_param_ptr);
+
+	void add_mesh(std::vector<node_store> nodes,
+					std::vector<elementtri_store> tris,
+					std::vector<elementquad_store> quads);
+
+	void clear_mesh();
+
+	void create_buffer();
+
+	void paint_mesh();
+
+	void paint_mesh_wireframe();
+
+	void paint_mesh_points();
+
+
+	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
+		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
+
+
 
 private:
+	geom_parameters* geom_param_ptr = nullptr;
+
+	Shader mesh_shader;
+
+	// Vertex Buffer object and Vertex Array object 
+	VertexBuffer point_vbo;
+	VertexArray point_vao;
+
+	// Index buffer for the points, lines and triangles, quadrilaterals (EBO)
+	IndexBuffer point_ibo;
+	IndexBuffer selected_point_ibo;
+	IndexBuffer wireframe_ibo;
+	IndexBuffer triangle_ibo;
+	IndexBuffer quadrilateral_ibo;
+
+	// Geometry data for OpenGL
+	std::unordered_map<int, int> pointIdToIndex;
+
+	std::vector<float> vertexData;
+	std::vector<int> pointIndexData;
+	std::vector<int> selectedpointIndexData;
+	std::vector<int> wireframeIndexData;
+	std::vector<int> triangleIndexData;
+	std::vector<int> quadrilateralIndexData;
 
 
-
+	void create_wireframe();
 
 };

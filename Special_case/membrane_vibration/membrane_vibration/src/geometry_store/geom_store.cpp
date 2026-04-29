@@ -26,6 +26,9 @@ void geom_store::init(modal_analysis_window* modal_solver_window,
 
 	is_geometry_set = false;
 
+	// Initialize the mesh
+	model_mesh.clear_mesh();
+
 	// Initialize the solvers
 	modal_solver.clear_results();
 	pulse_solver.clear_results();
@@ -62,10 +65,12 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	int j = 0, i = 0;
 
 	// Initialize the model items
-	this->model_nodes.init(&geom_param);
-	this->model_lineelements.init(&geom_param);
-	this->model_trielements.init(&geom_param);
-	this->model_quadelements.init(&geom_param);
+	this->model_mesh.init(&geom_param);
+
+	//this->model_nodes.init(&geom_param);
+	//this->model_lineelements.init(&geom_param);
+	//this->model_trielements.init(&geom_param);
+	//this->model_quadelements.init(&geom_param);
 
 	// Node constraints
 	this->node_loads.init(&geom_param);
@@ -190,6 +195,10 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 
 	//Node Point list
 	std::vector<glm::vec3> node_pts_list;
+	std::vector<node_store> nodes;
+	std::vector<elementtri_store> tris;
+	std::vector<elementquad_store> quads;
+
 	j = 0;
 	// Process the lines
 	while (j < lines.size())
@@ -220,7 +229,7 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 			// Add to the node pt list
 			node_pts_list.push_back(node_pt);
 
-			model_nodes.add_node(node_id, node_pt);
+			nodes.emplace_back(node_id, x, y, z);
 		}
 		else if (type == "quad")
 		{
@@ -230,26 +239,9 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 			int nd3 = std::stoi(fields[4]); // quad node 3
 			int nd4 = std::stoi(fields[5]); // quad node 4
 
-			// Add to Quad Map (Note that Nodes needed to be added before the start of line addition !!!!)
-			this->model_quadelements.add_elementquadrilateral(quad_id, &model_nodes.nodeMap[nd1], &model_nodes.nodeMap[nd2],
-				&model_nodes.nodeMap[nd3], &model_nodes.nodeMap[nd4]);
-
-			// Edge 1
-			int line_id = this->model_lineelements.elementline_count;
-			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd1], &model_nodes.nodeMap[nd2]);
-
-			// Edge 2
-			line_id = this->model_lineelements.elementline_count;
-			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd2], &model_nodes.nodeMap[nd3]);
-
-			// Edge 3
-			line_id = this->model_lineelements.elementline_count;
-			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd3], &model_nodes.nodeMap[nd4]);
-
-			// Edge 2
-			line_id = this->model_lineelements.elementline_count;
-			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd4], &model_nodes.nodeMap[nd1]);
-
+			// Add to Quad element
+			quads.emplace_back(quad_id, nd1, nd2, nd3, nd4);
+		
 		}
 		else if (type == "tria")
 		{
@@ -258,21 +250,8 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 			int nd2 = std::stoi(fields[3]); // quad node 2
 			int nd3 = std::stoi(fields[4]); // quad node 3
 
-			// Add to Tri Map (Note that Nodes needed to be added before the start of line addition !!!!)
-			this->model_trielements.add_elementtriangle(tri_id, &model_nodes.nodeMap[nd1], &model_nodes.nodeMap[nd2],
-								&model_nodes.nodeMap[nd3]);
-
-			// Edge 1
-			int line_id = this->model_lineelements.elementline_count;
-			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd1], &model_nodes.nodeMap[nd2]);
-
-			// Edge 2
-			line_id = this->model_lineelements.elementline_count;
-			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd2], &model_nodes.nodeMap[nd3]);
-
-			// Edge 3
-			line_id = this->model_lineelements.elementline_count;
-			this->model_lineelements.add_elementline(line_id, &model_nodes.nodeMap[nd3], &model_nodes.nodeMap[nd1]);
+			// Add to Tri element
+			tris.emplace_back(tri_id, nd1, nd2, nd3);
 
 		}
 		
@@ -280,15 +259,16 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 		j++;
 	}
 
-	
-
 	// Input read failed??
-	if (model_nodes.node_count < 2 || model_lineelements.elementline_count < 1)
+	if (static_cast<int>(nodes.size()) < 3 || (static_cast<int>(tris.size()) + static_cast<int>(quads.size())) < 1)
 	{
 		is_geometry_set = false;
 		std::cerr << "Input error !!" << std::endl;
 		return;
 	}
+
+	// Add to the model mesh
+	model_mesh.add_mesh(nodes, tris, quads);
 
 	// Geometry is loaded
 	is_geometry_set = true;
@@ -307,10 +287,12 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	update_model_zoomfit();
 
 	// Set the geometry buffers
-	this->model_nodes.set_buffer();
-	this->model_lineelements.set_buffer();
-	this->model_trielements.set_buffer();
-	this->model_quadelements.set_buffer();
+	this->model_mesh.create_buffer();
+
+	//this->model_nodes.set_buffer();
+	//this->model_lineelements.set_buffer();
+	//this->model_trielements.set_buffer();
+	//this->model_quadelements.set_buffer();
 
 	// Set the constraints buffer
 	this->node_loads.set_buffer();

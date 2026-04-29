@@ -162,6 +162,7 @@
     <ClCompile Include="src\geometry_store\geometry_buffers\gBuffers.cpp" />
     <ClCompile Include="src\geometry_store\geometry_buffers\IndexBuffer.cpp" />
     <ClCompile Include="src\geometry_store\geometry_buffers\Shader.cpp" />
+    <ClCompile Include="src\geometry_store\geometry_buffers\ShaderLibrary.cpp" />
     <ClCompile Include="src\geometry_store\geometry_buffers\Texture.cpp" />
     <ClCompile Include="src\geometry_store\geometry_buffers\VertexArray.cpp" />
     <ClCompile Include="src\geometry_store\geometry_buffers\VertexBuffer.cpp" />
@@ -254,6 +255,7 @@
     <ClInclude Include="src\geometry_store\geometry_buffers\gBuffers.h" />
     <ClInclude Include="src\geometry_store\geometry_buffers\IndexBuffer.h" />
     <ClInclude Include="src\geometry_store\geometry_buffers\Shader.h" />
+    <ClInclude Include="src\geometry_store\geometry_buffers\ShaderLibrary.h" />
     <ClInclude Include="src\geometry_store\geometry_buffers\Texture.h" />
     <ClInclude Include="src\geometry_store\geometry_buffers\VertexArray.h" />
     <ClInclude Include="src\geometry_store\geometry_buffers\VertexBuffer.h" />

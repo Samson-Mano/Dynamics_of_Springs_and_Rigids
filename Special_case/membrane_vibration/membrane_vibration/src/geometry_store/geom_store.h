@@ -19,10 +19,11 @@
 #include "../fe_solver/pulse_analysis_solver.h"
 
 // FE Objects
-#include "fe_objects/nodes_list_store.h"
-#include "fe_objects/elementline_list_store.h"
-#include "fe_objects/elementtri_list_store.h"
-#include "fe_objects/elementquad_list_store.h"
+#include "fe_objects/model_mesh_store.h"
+//#include "fe_objects/nodes_list_store.h"
+//#include "fe_objects/elementline_list_store.h"
+//#include "fe_objects/elementtri_list_store.h"
+//#include "fe_objects/elementquad_list_store.h"
 #include "fe_objects/nodeload_list_store.h"
 #include "fe_objects/nodeinlcond_list_store.h"
 
@@ -84,10 +85,12 @@ private:
 	dynamic_selrectangle_store selection_rectangle;
 
 	// Geometry objects
-	nodes_list_store model_nodes;
-	elementline_list_store model_lineelements;
-	elementtri_list_store model_trielements;
-	elementquad_list_store model_quadelements;
+	model_mesh_store model_mesh;
+	
+	//nodes_list_store model_nodes;
+	//elementline_list_store model_lineelements;
+	//elementtri_list_store model_trielements;
+	//elementquad_list_store model_quadelements;
 
 	// Material data
 	material_data mat_data;
