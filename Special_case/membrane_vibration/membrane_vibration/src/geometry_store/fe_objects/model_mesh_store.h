@@ -92,6 +92,10 @@ public:
 
 	void paint_mesh_points();
 
+	void paint_selected_mesh_points();
+
+
+	std::vector<int> is_node_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2);
 
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
 		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
@@ -118,13 +122,18 @@ private:
 	std::unordered_map<int, int> pointIdToIndex;
 
 	std::vector<float> vertexData;
-	std::vector<int> pointIndexData;
-	std::vector<int> selectedpointIndexData;
-	std::vector<int> wireframeIndexData;
-	std::vector<int> triangleIndexData;
-	std::vector<int> quadrilateralIndexData;
+	std::vector<float> vertexnormalData;
+	std::vector<unsigned int> pointIndexData;
+	std::vector<unsigned int> selectedpointIndexData;
+	std::vector<unsigned int> wireframeIndexData;
+	std::vector<unsigned int> triangleIndexData;
+	std::vector<unsigned int> quadrilateralIndexData;
 
 
 	void create_wireframe();
+
+	void create_vertex_normals(std::vector<glm::vec3>& vnormals);
+
+	void create_buffer_data();
 
 };

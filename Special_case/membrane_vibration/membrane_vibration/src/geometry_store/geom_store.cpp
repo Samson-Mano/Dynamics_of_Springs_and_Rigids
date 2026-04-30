@@ -347,10 +347,13 @@ void geom_store::update_model_matrix()
 	geom_param.modelMatrix = g_transl * glm::scale(glm::mat4(1.0f), glm::vec3(static_cast<float>(geom_param.geom_scale)));
 
 	// Update the model matrix
-	model_nodes.update_geometry_matrices(true, false, false, false, true, false);
-	model_lineelements.update_geometry_matrices(true, false, false, false, true, false);
-	model_trielements.update_geometry_matrices(true, false, false, false, true, false);
-	model_quadelements.update_geometry_matrices(true, false, false, false, true, false);
+	model_mesh.update_geometry_matrices(true, false, false, false, true, false);
+
+	// model_nodes.update_geometry_matrices(true, false, false, false, true, false);
+	// model_lineelements.update_geometry_matrices(true, false, false, false, true, false);
+	// model_trielements.update_geometry_matrices(true, false, false, false, true, false);
+	// model_quadelements.update_geometry_matrices(true, false, false, false, true, false);
+	
 	//___________________
 	node_loads.update_geometry_matrices(true, false, false, false, true, false);
 	node_inldispl.update_geometry_matrices(true, false, false, false, true, false);
@@ -383,10 +386,13 @@ void geom_store::update_model_zoomfit()
 	geom_param.zoom_scale = 1.0f;
 
 	// Update the zoom scale and pan translation
-	model_nodes.update_geometry_matrices(false, true, true, true, false, false);
-	model_lineelements.update_geometry_matrices(false, true, true, true, false, false);
-	model_trielements.update_geometry_matrices(false, true, true, true, false, false);
-	model_quadelements.update_geometry_matrices(false, true, true, true, false, false);
+	model_mesh.update_geometry_matrices(false, true, true, true, false, false);
+
+	// model_nodes.update_geometry_matrices(false, true, true, true, false, false);
+	// model_lineelements.update_geometry_matrices(false, true, true, true, false, false);
+	// model_trielements.update_geometry_matrices(false, true, true, true, false, false);
+	// model_quadelements.update_geometry_matrices(false, true, true, true, false, false);
+	
 	//___________________
 	node_loads.update_geometry_matrices(false, true, true, true, false, false);
 	node_inldispl.update_geometry_matrices(false, true, true, true, false, false);
@@ -417,10 +423,13 @@ void geom_store::update_model_pan(glm::vec2& transl)
 	geom_param.panTranslation[1][3] = transl.y;
 
 	// Update the pan translation
-	model_nodes.update_geometry_matrices(false, true,false, false, false, false);
-	model_lineelements.update_geometry_matrices(false, true, false, false, false, false);
-	model_trielements.update_geometry_matrices(false, true, false, false, false, false);
-	model_quadelements.update_geometry_matrices(false, true, false, false, false, false);
+	model_mesh.update_geometry_matrices(false, true, false, false, false, false);
+
+	// model_nodes.update_geometry_matrices(false, true,false, false, false, false);
+	// model_lineelements.update_geometry_matrices(false, true, false, false, false, false);
+	// model_trielements.update_geometry_matrices(false, true, false, false, false, false);
+	// model_quadelements.update_geometry_matrices(false, true, false, false, false, false);
+
 	//___________________
 	node_loads.update_geometry_matrices(false, true, false, false, false, false);
 	node_inldispl.update_geometry_matrices(false, true, false, false, false, false);
@@ -448,10 +457,13 @@ void geom_store::update_model_rotate(glm::mat4& rotation_m)
 	geom_param.rotateTranslation = rotation_m;
 
 	// Update the rotate translation
-	model_nodes.update_geometry_matrices(false, false, true, false, false, false);
-	model_lineelements.update_geometry_matrices(false, false, true, false, false, false);
-	model_trielements.update_geometry_matrices(false, false, true, false, false, false);
-	model_quadelements.update_geometry_matrices(false, false, true, false, false, false);
+	model_mesh.update_geometry_matrices(false, false, true, false, false, false);
+
+	// model_nodes.update_geometry_matrices(false, false, true, false, false, false);
+	// model_lineelements.update_geometry_matrices(false, false, true, false, false, false);
+	// model_trielements.update_geometry_matrices(false, false, true, false, false, false);
+	// model_quadelements.update_geometry_matrices(false, false, true, false, false, false);
+	
 	//___________________
 	node_loads.update_geometry_matrices(false, false, true, false, false, false);
 	node_inldispl.update_geometry_matrices(false, false, true, false, false, false);
@@ -480,10 +492,13 @@ void geom_store::update_model_zoom(double& z_scale)
 	geom_param.zoom_scale = z_scale;
 
 	// Update the Zoom
-	model_nodes.update_geometry_matrices(false, false, false, true, false, false);
-	model_lineelements.update_geometry_matrices(false, false, false, true, false, false);
-	model_trielements.update_geometry_matrices(false, false, false, true, false, false);
-	model_quadelements.update_geometry_matrices(false, false, false, true, false, false);
+	model_mesh.update_geometry_matrices(false, false, false, true, false, false);
+
+	// model_nodes.update_geometry_matrices(false, false, false, true, false, false);
+	// model_lineelements.update_geometry_matrices(false, false, false, true, false, false);
+	// model_trielements.update_geometry_matrices(false, false, false, true, false, false);
+	// model_quadelements.update_geometry_matrices(false, false, false, true, false, false);
+
 	//___________________
 	node_loads.update_geometry_matrices(false, false, false, true, false, false);
 	node_inldispl.update_geometry_matrices(false, false, false, true, false, false);
@@ -519,10 +534,13 @@ void geom_store::update_model_transperency(bool is_transparent)
 	}
 
 	// Update the model transparency
-	model_nodes.update_geometry_matrices(false, false, false, false, true, false);
-	model_lineelements.update_geometry_matrices(false, false, false, false, true, false);
-	model_quadelements.update_geometry_matrices(false, false, false, false, true, false);
-	model_trielements.update_geometry_matrices(false, false, false, false, true, false);
+	model_mesh.update_geometry_matrices(false, false, false, false, true, false);
+
+	// model_nodes.update_geometry_matrices(false, false, false, false, true, false);
+	// model_lineelements.update_geometry_matrices(false, false, false, false, true, false);
+	// model_quadelements.update_geometry_matrices(false, false, false, false, true, false);
+	// model_trielements.update_geometry_matrices(false, false, false, false, true, false);
+
 	//___________________
 	node_loads.update_geometry_matrices(false, false, false, false, true, false);
 	node_inldispl.update_geometry_matrices(false, false, false, false, true, false);
@@ -545,7 +563,8 @@ void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::ve
 		if (nd_inlcond_window->is_show_window == true)
 		{
 			// Selected Node Index
-			std::vector<int> selected_node_ids = model_nodes.is_node_selected(o_pt, c_pt);
+			// std::vector<int> selected_node_ids = model_nodes.is_node_selected(o_pt, c_pt);
+			std::vector<int> selected_node_ids = model_mesh.is_node_selected(o_pt, c_pt);
 			nd_inlcond_window->add_to_node_list(selected_node_ids, is_rightbutton);
 		}
 
@@ -553,7 +572,8 @@ void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::ve
 		if (nd_load_window->is_show_window == true)
 		{
 			// Selected Node Index
-			std::vector<int> selected_node_ids = model_nodes.is_node_selected(o_pt, c_pt);
+			// std::vector<int> selected_node_ids = model_nodes.is_node_selected(o_pt, c_pt);
+			std::vector<int> selected_node_ids = model_mesh.is_node_selected(o_pt, c_pt);
 			nd_load_window->add_to_node_list(selected_node_ids, is_rightbutton);
 		}
 
@@ -618,14 +638,18 @@ void geom_store::paint_model()
 	if (op_window->is_show_modelelements == true)
 	{
 		// Show the model elements
-		model_trielements.paint_elementtriangles();
-		model_quadelements.paint_elementquadrilaterals();
+		// model_trielements.paint_elementtriangles();
+		// model_quadelements.paint_elementquadrilaterals();
+
+		model_mesh.paint_mesh();
 	}
 
 	if (op_window->is_show_modeledeges == true)
 	{
 		// Show the model edges
-		model_lineelements.paint_elementlines();
+		// model_lineelements.paint_elementlines();
+
+		model_mesh.paint_mesh_wireframe();
 	}
 
 
@@ -642,11 +666,16 @@ void geom_store::paint_model()
 
 	}
 
+
 	if (op_window->is_show_modelnodes == true)
 	{
 		// Show the model nodes
-		model_nodes.paint_model_nodes();
+		// model_nodes.paint_model_nodes();
+
+		model_mesh.paint_mesh_points();
+
 	}
+
 
 	if (op_window->is_show_loads == true)
 	{
