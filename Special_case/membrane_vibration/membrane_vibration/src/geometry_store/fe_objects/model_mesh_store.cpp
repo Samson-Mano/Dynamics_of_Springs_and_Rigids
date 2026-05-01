@@ -14,7 +14,7 @@ void model_mesh_store::init(geom_parameters* geom_param_ptr)
 	// Create the mesh shader
 	auto shaderSrc = ShaderLibrary::Get(ShaderLibrary::ShaderType::MeshShader);
 
-	mesh_shader.create_shader(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
+	mesh_shader.create_shader_data(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
 
 	// Clear mesh
 	clear_mesh();
@@ -279,7 +279,7 @@ void model_mesh_store::create_buffer()
 	// Define the node vertices of the model for a node (3 position, 3 color ) 
 	int node_count = static_cast<int>(this->nodes.size());
 	const unsigned int point_vertex_count = 6 * node_count;
-	std::vector<float>  pointVertices;
+	this->pointVertices.clear();
 
 	for (int i = 0; i < node_count; i++)
 	{
@@ -297,9 +297,13 @@ void model_mesh_store::create_buffer()
 		//
 	}
 
+	this->point_vao.createVertexArray();
 
 	//1.  Create the vertex buffer (VBO) for the points
-	this->point_vbo.createVertexBuffer(pointVertices.data(), point_vertex_count * sizeof(float));
+	// this->point_vbo.createVertexBuffer(pointVertices.data(), point_vertex_count * sizeof(float));
+	this->point_vbo.createDynamicVertexBuffer(point_vertex_count * sizeof(float));
+	this->point_vbo.updateVertexBuffer(pointVertices.data(), point_vertex_count * sizeof(float));
+
 
 	//2. Create and add to the buffer layout
 	VertexBufferLayout point_BufferLayout;
@@ -332,53 +336,104 @@ void model_mesh_store::create_buffer()
 
 void model_mesh_store::paint_mesh()
 {
+	this->mesh_shader.Bind();
+	this->mesh_shader.setUniform("vertexColor", geom_param_ptr->geom_colors.triangle_color);
+
 	// Paint the mesh triangles, quadrilaterals
 	this->point_vao.Bind();
+	// this->point_vbo.Bind();
+
+	// Paint the triangle mesh
+	this->triangle_ibo.Bind();
+	
 	glDrawElements(GL_TRIANGLES,
 		static_cast<int>(triangleIndexData.size()),
 		GL_UNSIGNED_INT,
-		nullptr);
-	this->point_vao.UnBind();
+		0);
 
-	this->point_vao.Bind();
+
+	this->triangle_ibo.UnBind();
+
+	// Paint the quadrilateral mesh
+	this->quadrilateral_ibo.Bind();
+
 	glDrawElements(GL_TRIANGLES,
 		static_cast<int>(quadrilateralIndexData.size()),
 		GL_UNSIGNED_INT,
-		nullptr);
+		0);
+
+	this->quadrilateral_ibo.UnBind();
 	this->point_vao.UnBind();
+	this->mesh_shader.UnBind();
 
 }
 
 
 void model_mesh_store::paint_mesh_wireframe()
 {
+	this->mesh_shader.Bind();
+	this->mesh_shader.setUniform("vertexColor", geom_param_ptr->geom_colors.line_color);
+
 	// Paint the mesh wireframe
 	this->point_vao.Bind();
+	this->wireframe_ibo.Bind();
+
 	glDrawElements(GL_LINES,
 		static_cast<int>(wireframeIndexData.size()),
 		GL_UNSIGNED_INT,
-		nullptr);
+		0);
+
+	this->wireframe_ibo.UnBind();
 	this->point_vao.UnBind();
+
+	this->mesh_shader.UnBind();
 }
 
 
 
 void model_mesh_store::paint_mesh_points()
 {
+	this->mesh_shader.Bind();
+	this->mesh_shader.setUniform("vertexColor", geom_param_ptr->geom_colors.node_color);
+
 	// Paint the mesh points
 	this->point_vao.Bind();
+	this->point_ibo.Bind();
+
 	glDrawElements(GL_POINTS,
 		static_cast<int>(pointIndexData.size()),
 		GL_UNSIGNED_INT,
-		nullptr);
+		0);
+
+	this->point_ibo.UnBind();
 	this->point_vao.UnBind();
+
+	this->mesh_shader.UnBind();
 
 }
 
 void model_mesh_store::paint_selected_mesh_points()
 {
+	this->mesh_shader.Bind();
+
+	// Paint the selected mesh points
+	this->point_vao.Bind();
+
+	mesh_shader.setUniform("vertexColor", geom_param_ptr->geom_colors.selection_color);
 
 
+	this->selected_point_ibo.Bind();
+
+	glDrawElements(GL_POINTS,
+		static_cast<int>(pointIndexData.size()),
+		GL_UNSIGNED_INT,
+		0);
+
+	this->selected_point_ibo.UnBind();
+
+	this->point_vao.UnBind();
+
+	this->mesh_shader.UnBind();
 }
 
 
@@ -469,6 +524,24 @@ void model_mesh_store::create_wireframe()
 }
 
 
+void model_mesh_store::add_selection_nodes(std::vector<int> selected_node_ids)
+{
+	this->selectedpointIndexData.clear();
+
+
+	for (int nd_id : selected_node_ids)
+	{
+		int index =	this->pointIdToIndex[nd_id];
+
+		this->selectedpointIndexData.push_back(index);
+	}
+
+
+	// Create the selected point index data 
+	this->selected_point_ibo.createIndexBuffer(this->selectedpointIndexData.data(),
+		static_cast<int>(this->selectedpointIndexData.size()));
+
+}
 
 
 std::vector<int> model_mesh_store::is_node_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2)

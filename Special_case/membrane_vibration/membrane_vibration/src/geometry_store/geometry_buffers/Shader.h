@@ -26,6 +26,9 @@ public:
 	~Shader(); // Destructor to clean up OpenGL resources
 
 	void create_shader(const char* vertexFile, const char* fragmentFile);// Function that takes vertex and fragment shader file path
+	
+	void create_shader_data(const char* vertexShaderData, const char* fragmentShaderData);
+	
 	// Shader usage functions
 	void Bind(); // Function to use the shader program
 	void UnBind(); // Function to unuse the shader program
@@ -50,6 +53,7 @@ private:
 
 	std::string loadShaderSource(const char* fileName); // Function to load shader source from file
 	unsigned int loadShader(GLenum type, const char* fileName); // Function to load a shader of given type
+	unsigned int loadShaderData(GLenum type, const char* shaderData); // Function to load a shader of given type
 	void linkProgram(unsigned int vertexShader, unsigned int fragmentShader); // Function to link the shader program
 	int get_uniform_location(const std::string uniform_name);
 };

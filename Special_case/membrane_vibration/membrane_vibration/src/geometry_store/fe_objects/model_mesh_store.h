@@ -87,15 +87,14 @@ public:
 	void create_buffer();
 
 	void paint_mesh();
-
 	void paint_mesh_wireframe();
-
 	void paint_mesh_points();
-
 	void paint_selected_mesh_points();
 
 
+	void add_selection_nodes(std::vector<int> selected_node_ids);
 	std::vector<int> is_node_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2);
+
 
 	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
 		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
@@ -129,6 +128,8 @@ private:
 	std::vector<unsigned int> triangleIndexData;
 	std::vector<unsigned int> quadrilateralIndexData;
 
+
+	std::vector<float> pointVertices;
 
 	void create_wireframe();
 

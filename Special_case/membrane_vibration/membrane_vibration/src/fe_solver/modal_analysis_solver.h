@@ -3,10 +3,13 @@
 #include <fstream>
 
 // FE Objects
-#include "../geometry_store/fe_objects/nodes_list_store.h"
-#include "../geometry_store/fe_objects/elementline_list_store.h"
-#include "../geometry_store/fe_objects/elementtri_list_store.h"
-#include "../geometry_store/fe_objects/elementquad_list_store.h"
+#include "../geometry_store/fe_objects/model_mesh_store.h"
+
+
+//#include "../geometry_store/fe_objects/nodes_list_store.h"
+//#include "../geometry_store/fe_objects/elementline_list_store.h"
+//#include "../geometry_store/fe_objects/elementtri_list_store.h"
+//#include "../geometry_store/fe_objects/elementquad_list_store.h"
 
 // FE Results Modal Analysis
 #include "../geometry_store/result_objects/modal_nodes_list_store.h"
@@ -102,10 +105,7 @@ public:
 	~modal_analysis_solver();
 	void clear_results();
 
-	void modal_analysis_start(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const elementtri_list_store& model_trielements,
-		const elementquad_list_store& model_quadelements,
+	void modal_analysis_start(const model_mesh_store& model_mesh,
 		const material_data& mat_data,
 		modal_nodes_list_store& modal_result_nodes,
 		modal_elementline_list_store& modal_result_lineelements,
@@ -120,10 +120,7 @@ private:
 
 	std::vector<bessel_function_Frequency> eigen_freq;
 
-	void modal_analysis_model_circular(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const elementtri_list_store& model_trielements,
-		const elementquad_list_store& model_quadelements,
+	void modal_analysis_model_circular(const model_mesh_store& model_mesh,
 		const material_data& mat_data,
 		const double& c_radius,
 		modal_nodes_list_store& modal_result_nodes,
@@ -133,9 +130,7 @@ private:
 
 	double bessel_eigen_vec(const bessel_function_Frequency& bessel_root_i, const glm::vec3& nodept, const double& c_radius);
 
-	void modal_analysis_model_rectangular(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const elementquad_list_store& model_quadelements,
+	void modal_analysis_model_rectangular(const model_mesh_store& model_mesh,
 		const material_data& mat_data,
 		const double& length_x,
 		const double& length_y,

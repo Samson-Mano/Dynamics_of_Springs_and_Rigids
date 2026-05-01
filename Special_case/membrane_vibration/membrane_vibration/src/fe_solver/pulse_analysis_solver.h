@@ -38,10 +38,7 @@ public:
 	pulse_analysis_solver();
 	~pulse_analysis_solver();
 	void clear_results();
-	void pulse_analysis_start(const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const elementtri_list_store& model_trielements,
-		const elementquad_list_store& model_quadelements,
+	void pulse_analysis_start(const model_mesh_store& model_mesh,
 		const nodeload_list_store& node_loads,
 		const nodeinlcond_list_store& node_inldispl,
 		const nodeinlcond_list_store& node_inlvelo,
@@ -68,13 +65,13 @@ private:
 
 	void create_initial_condition_matrices(Eigen::VectorXd& modal_reducedInitialDisplacementMatrix,
 		Eigen::VectorXd& modal_reducedInitialVelocityMatrix,
-		const nodes_list_store& model_nodes,
+		const std::vector<node_store>& model_nodes,
 		const nodeinlcond_list_store& node_inldispl,
 		const nodeinlcond_list_store& node_inlvelo);
 
 	void create_pulse_load_matrices(pulse_load_data& pulse_ld,
 		const load_data& ld,
-		const nodes_list_store& model_nodes);
+		const std::vector<node_store>& model_nodes);
 
 	double get_steady_state_initial_condition_soln(const double& time_t,
 		const double& modal_mass,
@@ -128,10 +125,7 @@ private:
 		pulse_elementtri_list_store& pulse_result_trielements,
 		pulse_elementquad_list_store& pulse_result_quadelements,
 		const int& number_of_time_steps,
-		const nodes_list_store& model_nodes,
-		const elementline_list_store& model_lineelements,
-		const elementtri_list_store& model_trielements,
-		const elementquad_list_store& model_quadelements,
+		const model_mesh_store& model_mesh, 
 		const std::unordered_map<int, pulse_node_result>& node_results);
 
 };

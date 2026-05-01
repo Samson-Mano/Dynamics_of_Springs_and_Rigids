@@ -282,12 +282,14 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	// Set the center of the geometry
 	this->geom_param.center = geom_parameters::findGeometricCenter(node_pts_list);
 
+	// Set the geometry buffers
+	this->model_mesh.create_buffer();
+
 	// Set the geometry
 	update_model_matrix();
 	update_model_zoomfit();
 
-	// Set the geometry buffers
-	this->model_mesh.create_buffer();
+
 
 	//this->model_nodes.set_buffer();
 	//this->model_lineelements.set_buffer();
@@ -813,10 +815,7 @@ void geom_store::paint_modal_analysis_results()
 	if (modal_solver_window->execute_modal_analysis == true)
 	{
 		// Execute the Modal Analysis
-		modal_solver.modal_analysis_start(model_nodes,
-			model_lineelements,
-			model_trielements,
-			model_quadelements,
+		modal_solver.modal_analysis_start(model_mesh,
 			mat_data,
 			modal_result_nodes,
 			modal_result_lineelements,
@@ -953,10 +952,7 @@ void geom_store::paint_pulse_analysis_results()
 	if (pulse_solver_window->execute_pulse_analysis == true)
 	{
 		// Execute the Pulse response Analysis
-		pulse_solver.pulse_analysis_start(model_nodes,
-			model_lineelements,
-			model_trielements,
-			model_quadelements,
+		pulse_solver.pulse_analysis_start(model_mesh,
 			node_loads,
 			node_inldispl,
 			node_inlvelo,
@@ -1003,14 +999,14 @@ void  geom_store::paint_node_load_operation()
 	if (nd_load_window->is_selected_count == true)
 	{
 		glPointSize(geom_param.selected_point_size);
-		model_nodes.paint_selected_model_nodes();
+		model_mesh.paint_selected_mesh_points();
 		glPointSize(geom_param.point_size);
 	}
 
 	// Check whether the selection changed
 	if (nd_load_window->is_selection_changed == true)
 	{
-		model_nodes.add_selection_nodes(nd_load_window->selected_nodes);
+		model_mesh.add_selection_nodes(nd_load_window->selected_nodes);
 		nd_load_window->is_selection_changed = false;
 	}
 
@@ -1024,7 +1020,7 @@ void  geom_store::paint_node_load_operation()
 		for (int& id : nd_load_window->selected_nodes)
 		{
 			// Add the loads
-			node_loads.add_loads(id, model_nodes.nodeMap[id].node_pt,
+			node_loads.add_loads(id, model_mesh.nodes[id].node_pt,
 								load_start_time, load_end_time, load_amplitude);
 		}
 
@@ -1070,14 +1066,14 @@ void geom_store::paint_node_inlcond_operation()
 	if (nd_inlcond_window->is_selected_count == true)
 	{
 		glPointSize(geom_param.selected_point_size);
-		model_nodes.paint_selected_model_nodes();
+		model_mesh.paint_selected_mesh_points();
 		glPointSize(geom_param.point_size);
 	}
 
 	// Check whether the selection changed
 	if (nd_inlcond_window->is_selection_changed == true)
 	{
-		model_nodes.add_selection_nodes(nd_inlcond_window->selected_nodes);
+		model_mesh.add_selection_nodes(nd_inlcond_window->selected_nodes);
 		nd_inlcond_window->is_selection_changed = false;
 	}
 
@@ -1099,7 +1095,7 @@ void geom_store::paint_node_inlcond_operation()
 					continue;
 				}
 
-				node_inldispl.add_inlcondition(id, model_nodes.nodeMap[id].node_pt, initial_displacement_z);
+				node_inldispl.add_inlcondition(id, model_mesh.nodes[id].node_pt, initial_displacement_z);
 
 			}
 			else if (nd_inlcond_window->selected_inl_option == 1)
@@ -1112,7 +1108,7 @@ void geom_store::paint_node_inlcond_operation()
 					continue;
 				}
 
-				node_inlvelo.add_inlcondition(id, model_nodes.nodeMap[id].node_pt, initial_velocity_z);
+				node_inlvelo.add_inlcondition(id, model_mesh.nodes[id].node_pt, initial_velocity_z);
 
 			}
 

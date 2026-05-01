@@ -1,5 +1,5 @@
 #pragma once
-#include "../fe_objects/nodes_list_store.h"
+#include "../fe_objects/model_mesh_store.h"
 #include "../geometry_objects/dynamic_point_list_store.h"
 
 struct modal_node_store

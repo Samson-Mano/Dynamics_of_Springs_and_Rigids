@@ -1,6 +1,9 @@
 #pragma once
-#include "nodes_list_store.h"
-#include "elementline_list_store.h"
+// #include "model_mesh_store.h"
+
+#include "../geometry_objects/point_list_store.h"
+#include "../geometry_objects/line_list_store.h"
+
 
 struct nodeinl_condition_data
 {

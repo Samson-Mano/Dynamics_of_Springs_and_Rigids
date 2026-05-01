@@ -28,6 +28,26 @@ void Shader::create_shader(const char* vertexFile, const char* fragmentFile)
 	glDeleteShader(fragmentShader);
 }
 
+
+
+void Shader::create_shader_data(const char* vertexShaderData, const char* fragmentShaderData)
+{
+	// Constructor that takes vertex and fragment shader file names
+	// Load and compile the vertex shader
+	unsigned int vertexShader = loadShaderData(GL_VERTEX_SHADER, vertexShaderData);
+
+	// Load and compile the fragment shader
+	unsigned int fragmentShader = loadShaderData(GL_FRAGMENT_SHADER, fragmentShaderData);
+
+	// Link the shader program
+	linkProgram(vertexShader, fragmentShader);
+
+	// Delete the individual shaders as they are no longer needed after linking
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+}
+
+
 void Shader::Bind()
 {
 	glUseProgram(this->s_id); // Bind the shader program
@@ -231,6 +251,29 @@ unsigned int Shader::loadShader(GLenum type, const char* fileName)
 	{
 		glGetShaderInfoLog(shader, 512, NULL, infoLog); // Get shader compilation error log
 		std::cout << "ERROR::SHADER::COULD_NOT_COMPILE_SHADER: " << fileName << "\n";
+		std::cout << infoLog << "\n"; // Print shader compilation error log
+	}
+
+	return shader; // Return compiled shader object
+}
+
+unsigned int Shader::loadShaderData(GLenum type, const char* shaderData)
+{
+	// Load shader source from file and compile shader
+	char infoLog[512];
+	int success;
+
+	unsigned int shader = glCreateShader(type); // Create a shader object of given type
+	// std::string str_src = shaderData; // Load shader source from file
+	// const char* src = str_src.c_str(); // Convert shader source to GLchar array
+	glShaderSource(shader, 1, &shaderData, NULL); // Set shader source
+	glCompileShader(shader); // Compile shader source
+
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &success); // Check shader compilation status
+	if (!success)
+	{
+		glGetShaderInfoLog(shader, 512, NULL, infoLog); // Get shader compilation error log
+		std::cout << "ERROR::SHADER::COULD_NOT_COMPILE_SHADER: " << "\n";
 		std::cout << infoLog << "\n"; // Print shader compilation error log
 	}
 

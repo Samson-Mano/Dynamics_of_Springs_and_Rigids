@@ -151,13 +151,9 @@
     <ClCompile Include="src\events_handler\Stopwatch_events.cpp" />
     <ClCompile Include="src\fe_solver\modal_analysis_solver.cpp" />
     <ClCompile Include="src\fe_solver\pulse_analysis_solver.cpp" />
-    <ClCompile Include="src\geometry_store\fe_objects\elementline_list_store.cpp" />
-    <ClCompile Include="src\geometry_store\fe_objects\elementquad_list_store.cpp" />
-    <ClCompile Include="src\geometry_store\fe_objects\elementtri_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\model_mesh_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\nodeinlcond_list_store.cpp" />
     <ClCompile Include="src\geometry_store\fe_objects\nodeload_list_store.cpp" />
-    <ClCompile Include="src\geometry_store\fe_objects\nodes_list_store.cpp" />
     <ClCompile Include="src\geometry_store\geometry_buffers\font_atlas.cpp" />
     <ClCompile Include="src\geometry_store\geometry_buffers\gBuffers.cpp" />
     <ClCompile Include="src\geometry_store\geometry_buffers\IndexBuffer.cpp" />
@@ -244,13 +240,9 @@
     <ClInclude Include="src\events_handler\Stopwatch_events.h" />
     <ClInclude Include="src\fe_solver\modal_analysis_solver.h" />
     <ClInclude Include="src\fe_solver\pulse_analysis_solver.h" />
-    <ClInclude Include="src\geometry_store\fe_objects\elementline_list_store.h" />
-    <ClInclude Include="src\geometry_store\fe_objects\elementquad_list_store.h" />
-    <ClInclude Include="src\geometry_store\fe_objects\elementtri_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\model_mesh_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\nodeinlcond_list_store.h" />
     <ClInclude Include="src\geometry_store\fe_objects\nodeload_list_store.h" />
-    <ClInclude Include="src\geometry_store\fe_objects\nodes_list_store.h" />
     <ClInclude Include="src\geometry_store\geometry_buffers\font_atlas.h" />
     <ClInclude Include="src\geometry_store\geometry_buffers\gBuffers.h" />
     <ClInclude Include="src\geometry_store\geometry_buffers\IndexBuffer.h" />
