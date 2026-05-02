@@ -23,6 +23,8 @@ void Shader::create_shader(const char* vertexFile, const char* fragmentFile)
 	// Link the shader program
 	linkProgram(vertexShader, fragmentShader);
 
+	int uniform_location_id = glGetUniformLocation(this->s_id, "viewMatrix");
+
 	// Delete the individual shaders as they are no longer needed after linking
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
@@ -259,25 +261,44 @@ unsigned int Shader::loadShader(GLenum type, const char* fileName)
 
 unsigned int Shader::loadShaderData(GLenum type, const char* shaderData)
 {
-	// Load shader source from file and compile shader
-	char infoLog[512];
-	int success;
-
-	unsigned int shader = glCreateShader(type); // Create a shader object of given type
-	// std::string str_src = shaderData; // Load shader source from file
-	// const char* src = str_src.c_str(); // Convert shader source to GLchar array
-	glShaderSource(shader, 1, &shaderData, NULL); // Set shader source
-	glCompileShader(shader); // Compile shader source
-
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success); // Check shader compilation status
-	if (!success)
+	if (shaderData == nullptr || strlen(shaderData) == 0)
 	{
-		glGetShaderInfoLog(shader, 512, NULL, infoLog); // Get shader compilation error log
-		std::cout << "ERROR::SHADER::COULD_NOT_COMPILE_SHADER: " << "\n";
-		std::cout << infoLog << "\n"; // Print shader compilation error log
+		std::cout << "ERROR::SHADER::EMPTY_SHADER_DATA\n";
+		return 0;
 	}
 
-	return shader; // Return compiled shader object
+	unsigned int shader = glCreateShader(type);
+	if (shader == 0)
+	{
+		std::cout << "ERROR::SHADER::COULD_NOT_CREATE_SHADER\n";
+		return 0;
+	}
+
+	// Compile shader
+	const GLchar* source = (const GLchar*)shaderData;
+	glShaderSource(shader, 1, &source, nullptr);
+	glCompileShader(shader);
+
+	// Check compilation
+	GLint success;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		GLchar infoLog[1024];
+		glGetShaderInfoLog(shader, sizeof(infoLog), nullptr, infoLog);
+		std::cout << "ERROR::SHADER::COMPILATION_FAILED\n";
+		std::cout << infoLog << "\n";
+
+		// Print first few lines of shader for debugging
+		std::string shaderStr(shaderData);
+		std::cout << "Shader source preview (first 500 chars):\n";
+		std::cout << shaderStr.substr(0, 500) << "\n";
+
+		glDeleteShader(shader);
+		return 0;
+	}
+
+	return shader;
 }
 
 void Shader::linkProgram(unsigned int vertexShader, unsigned int fragmentShader)
@@ -294,6 +315,7 @@ void Shader::linkProgram(unsigned int vertexShader, unsigned int fragmentShader)
 
 	glLinkProgram(this->s_id); // Link shader program
 
+
 	glGetProgramiv(this->s_id, GL_LINK_STATUS, &success); // Check shader program linking status
 	if (!success)
 	{
@@ -308,15 +330,15 @@ void Shader::linkProgram(unsigned int vertexShader, unsigned int fragmentShader)
 int Shader::get_uniform_location(const std::string uniform_name)
 {
 	// Return the uniform location
-	if (uniform_location_cache.find(uniform_name) != uniform_location_cache.end())
-	{
-		return uniform_location_cache[uniform_name];
-	}
+	// if (uniform_location_cache.find(uniform_name) != uniform_location_cache.end())
+	// {
+	// 	return uniform_location_cache[uniform_name];
+	// }
 
 	// Uniform is not found in the hashtable ? Dictionary
 	// So add it to the dictionary
 	int uniform_location_id = glGetUniformLocation(this->s_id, uniform_name.c_str());
-	uniform_location_cache[uniform_name] = uniform_location_id;
+	// uniform_location_cache[uniform_name] = uniform_location_id;
 
 	return uniform_location_id;
 }

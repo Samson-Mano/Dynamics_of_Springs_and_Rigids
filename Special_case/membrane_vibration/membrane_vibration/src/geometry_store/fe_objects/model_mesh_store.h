@@ -9,7 +9,6 @@
 #include <utility>
 
 
-
 struct node_store
 {
 	int node_id = 0;
@@ -71,7 +70,7 @@ public:
 	std::vector<elementtri_store> tris;
 	std::vector<elementquad_store> quads;
 
-
+	
 	model_mesh_store();
 	~model_mesh_store() = default;
 

@@ -46,6 +46,9 @@ public:
 	void setUniform(std::string name, glm::vec2 X); // Function to set a vec2 uniform
 	void setUniform(int i, unsigned int tid); // Function to set a texture uniform
 	inline unsigned int get_shader_id() const { return s_id; };
+
+	int get_uniform_location(const std::string uniform_name);
+
 private:
 	// Member variables
 	unsigned int s_id = 0; // OpenGL program ID
@@ -55,5 +58,5 @@ private:
 	unsigned int loadShader(GLenum type, const char* fileName); // Function to load a shader of given type
 	unsigned int loadShaderData(GLenum type, const char* shaderData); // Function to load a shader of given type
 	void linkProgram(unsigned int vertexShader, unsigned int fragmentShader); // Function to link the shader program
-	int get_uniform_location(const std::string uniform_name);
+
 };

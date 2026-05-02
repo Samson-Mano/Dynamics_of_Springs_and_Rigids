@@ -12,9 +12,16 @@ void model_mesh_store::init(geom_parameters* geom_param_ptr)
 	this->geom_param_ptr = geom_param_ptr;
 
 	// Create the mesh shader
-	auto shaderSrc = ShaderLibrary::Get(ShaderLibrary::ShaderType::MeshShader);
+	 auto shaderSrc = ShaderLibrary::Get(ShaderLibrary::ShaderType::MeshShader);
 
-	mesh_shader.create_shader_data(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
+	 mesh_shader.create_shader_data(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
+
+	//// Create the point shader
+	//std::filesystem::path shadersPath = geom_param_ptr->resourcePath;
+
+	//mesh_shader.create_shader((shadersPath.string() + "/resources/shaders/point_vert_shader.vert").c_str(),
+	//	(shadersPath.string() + "/resources/shaders/point_frag_shader.frag").c_str());
+
 
 	// Clear mesh
 	clear_mesh();
@@ -94,6 +101,9 @@ void model_mesh_store::create_buffer_data()
 		this->vertexData.push_back(pt.x);
 		this->vertexData.push_back(pt.y);
 		this->vertexData.push_back(pt.z);
+
+		int nd_id = node.node_id;
+		glm::vec3 ptcoord = pt;
 
 	}
 
@@ -297,12 +307,12 @@ void model_mesh_store::create_buffer()
 		//
 	}
 
-	this->point_vao.createVertexArray();
 
 	//1.  Create the vertex buffer (VBO) for the points
-	// this->point_vbo.createVertexBuffer(pointVertices.data(), point_vertex_count * sizeof(float));
-	this->point_vbo.createDynamicVertexBuffer(point_vertex_count * sizeof(float));
-	this->point_vbo.updateVertexBuffer(pointVertices.data(), point_vertex_count * sizeof(float));
+	unsigned int point_vertex_size = point_vertex_count * sizeof(float);
+	this->point_vbo.createVertexBuffer(pointVertices.data(), point_vertex_size);
+	// this->point_vbo.createDynamicVertexBuffer(point_vertex_count * sizeof(float));
+	// this->point_vbo.updateVertexBuffer(pointVertices.data(), point_vertex_count * sizeof(float));
 
 
 	//2. Create and add to the buffer layout
@@ -311,54 +321,60 @@ void model_mesh_store::create_buffer()
 	point_BufferLayout.AddFloat(3); // Normal layout
 
 	//3. Create the vertex Array VAO (Add vertexBuffer binds both the vertexbuffer and vertexarray)
+	this->point_vao.createVertexArray();
 	this->point_vao.AddBuffer(this->point_vbo, point_BufferLayout);
+
+	// Unbind VAO before creating IBOs!
+	this->point_vao.UnBind();
+
 
 	// 4. Create the index buffer object (IBO) for the points 
 	// 4A. Create the point index data 
-	this->point_ibo.createIndexBuffer(this->pointIndexData.data(),
-		static_cast<int>(this->pointIndexData.size()));
+	this->point_ibo.createIndexBuffer(this->pointIndexData.data(), 
+		static_cast<unsigned int>(this->pointIndexData.size()));
 
 	// 4B. Create the line index data 
 	this->wireframe_ibo.createIndexBuffer(this->wireframeIndexData.data(),
-		static_cast<int>(this->wireframeIndexData.size()));
+		static_cast<unsigned int>(this->wireframeIndexData.size()));
 
 	// 4C. Create the triangle index data
 	this->triangle_ibo.createIndexBuffer(this->triangleIndexData.data(),
-		static_cast<int>(this->triangleIndexData.size()));
+		static_cast<unsigned int>(this->triangleIndexData.size()));
 
 	// 4D. Create the quad index data (2 Triangles per quad)
 	this->quadrilateral_ibo.createIndexBuffer(this->quadrilateralIndexData.data(),
-		static_cast<int>(this->quadrilateralIndexData.size()));
-	//
+		static_cast<unsigned int>(this->quadrilateralIndexData.size()));
+
 
 }
 
 
 void model_mesh_store::paint_mesh()
 {
+	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.triangle_color, geom_param_ptr->geom_transparency);
+	this->mesh_shader.setUniform("vertexColor", vertexColor);// Updating uniforms unBinds shader
 	this->mesh_shader.Bind();
-	this->mesh_shader.setUniform("vertexColor", geom_param_ptr->geom_colors.triangle_color);
+
 
 	// Paint the mesh triangles, quadrilaterals
 	this->point_vao.Bind();
-	// this->point_vbo.Bind();
 
 	// Paint the triangle mesh
 	this->triangle_ibo.Bind();
 	
 	glDrawElements(GL_TRIANGLES,
-		static_cast<int>(triangleIndexData.size()),
+		static_cast<unsigned int>(triangleIndexData.size()),
 		GL_UNSIGNED_INT,
 		0);
 
-
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	this->triangle_ibo.UnBind();
 
 	// Paint the quadrilateral mesh
 	this->quadrilateral_ibo.Bind();
 
 	glDrawElements(GL_TRIANGLES,
-		static_cast<int>(quadrilateralIndexData.size()),
+		static_cast<unsigned int>(quadrilateralIndexData.size()),
 		GL_UNSIGNED_INT,
 		0);
 
@@ -371,21 +387,22 @@ void model_mesh_store::paint_mesh()
 
 void model_mesh_store::paint_mesh_wireframe()
 {
+	
+	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.line_color, geom_param_ptr->geom_transparency);
+	this->mesh_shader.setUniform("vertexColor", vertexColor);// Updating uniforms unBinds shader
 	this->mesh_shader.Bind();
-	this->mesh_shader.setUniform("vertexColor", geom_param_ptr->geom_colors.line_color);
 
 	// Paint the mesh wireframe
 	this->point_vao.Bind();
 	this->wireframe_ibo.Bind();
 
 	glDrawElements(GL_LINES,
-		static_cast<int>(wireframeIndexData.size()),
+		static_cast<unsigned int>(wireframeIndexData.size()),
 		GL_UNSIGNED_INT,
 		0);
 
 	this->wireframe_ibo.UnBind();
 	this->point_vao.UnBind();
-
 	this->mesh_shader.UnBind();
 }
 
@@ -393,35 +410,36 @@ void model_mesh_store::paint_mesh_wireframe()
 
 void model_mesh_store::paint_mesh_points()
 {
+
+	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.node_color, geom_param_ptr->geom_transparency);
+	this->mesh_shader.setUniform("vertexColor", vertexColor);// Updating uniforms unBinds shader
 	this->mesh_shader.Bind();
-	this->mesh_shader.setUniform("vertexColor", geom_param_ptr->geom_colors.node_color);
 
 	// Paint the mesh points
 	this->point_vao.Bind();
 	this->point_ibo.Bind();
 
 	glDrawElements(GL_POINTS,
-		static_cast<int>(pointIndexData.size()),
+		static_cast<unsigned int>(pointIndexData.size()),
 		GL_UNSIGNED_INT,
 		0);
 
+
 	this->point_ibo.UnBind();
 	this->point_vao.UnBind();
-
 	this->mesh_shader.UnBind();
 
 }
 
 void model_mesh_store::paint_selected_mesh_points()
 {
+
+	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.selection_color, geom_param_ptr->geom_transparency);
+	this->mesh_shader.setUniform("vertexColor", vertexColor);// Updating uniforms unBinds shader
 	this->mesh_shader.Bind();
 
 	// Paint the selected mesh points
 	this->point_vao.Bind();
-
-	mesh_shader.setUniform("vertexColor", geom_param_ptr->geom_colors.selection_color);
-
-
 	this->selected_point_ibo.Bind();
 
 	glDrawElements(GL_POINTS,
@@ -430,57 +448,91 @@ void model_mesh_store::paint_selected_mesh_points()
 		0);
 
 	this->selected_point_ibo.UnBind();
-
 	this->point_vao.UnBind();
-
 	this->mesh_shader.UnBind();
+
 }
 
 
 void model_mesh_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation,
 	bool set_rotatetranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
 {
-	if (set_modelmatrix == true)
-	{
-		// set the model matrix
-		mesh_shader.setUniform("geom_scale", static_cast<float>(geom_param_ptr->geom_scale));
-		mesh_shader.setUniform("transparency", 1.0f);
 
-		mesh_shader.setUniform("projectionMatrix", geom_param_ptr->projectionMatrix, false);
-		mesh_shader.setUniform("viewMatrix", geom_param_ptr->viewMatrix, false);
-		mesh_shader.setUniform("modelMatrix", geom_param_ptr->modelMatrix, false);
-	}
+	// Update the shader uniforms for the mesh shader
+	float zoomScale = static_cast<float>(geom_param_ptr->zoom_scale);
+	glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f),
+		glm::vec3(zoomScale, zoomScale, zoomScale));
 
-	if (set_pantranslation == true)
-	{
-		// set the pan translation
-		mesh_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
-	}
+	// Note: Matrix4.Transpose in C# - make sure this is what you want
+	glm::mat4 viewMatrix = glm::transpose(geom_param_ptr->panTranslation) * scalingMatrix;
 
-	if (set_rotatetranslation == true)
-	{
-		// set the rotate translation
-		mesh_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
-	}
+	// Compute MVP matrix
+	glm::mat4 mvp = geom_param_ptr->projectionMatrix *
+		viewMatrix *
+		geom_param_ptr->rotateTranslation *
+		geom_param_ptr->modelMatrix;
 
-	if (set_zoomtranslation == true)
-	{
-		// set the zoom translation
-		mesh_shader.setUniform("zoomscale", static_cast<float>(geom_param_ptr->zoom_scale));
-	}
+	// Compute normal matrix (inverse transpose of rotation * model)
+	glm::mat4 rotModel = geom_param_ptr->rotateTranslation * geom_param_ptr->modelMatrix;
+	glm::mat4 normalMatrix = glm::transpose(glm::inverse(rotModel));
 
-	if (set_transparency == true)
-	{
-		// set the alpha transparency
-		mesh_shader.setUniform("transparency", static_cast<float>(geom_param_ptr->geom_transparency));
-	}
+	mesh_shader.setUniform("uMVP", mvp, false);
+	mesh_shader.setUniform("uNormalMatrix", normalMatrix, false);
 
-	if (set_deflscale == true)
-	{
-		// set the deflection scale
-		mesh_shader.setUniform("normalized_deflscale", static_cast<float>(geom_param_ptr->normalized_defl_scale));
-		mesh_shader.setUniform("deflscale", static_cast<float>(geom_param_ptr->defl_scale));
-	}
+	//// Set all uniforms with CORRECT names matching shader
+	//mesh_shader.setUniform("uProjectionMatrix", geom_param_ptr->projectionMatrix, false);
+	//mesh_shader.setUniform("uViewMatrix", geom_param_ptr->viewMatrix, false);
+	//mesh_shader.setUniform("uModelMatrix", geom_param_ptr->modelMatrix, false);
+	//mesh_shader.setUniform("uPanTranslation", geom_param_ptr->panTranslation, false);
+	//mesh_shader.setUniform("uZoomScale", static_cast<float>(geom_param_ptr->zoom_scale));
+	//mesh_shader.setUniform("uGeomScale", static_cast<float>(geom_param_ptr->geom_scale));
+	//// mesh_shader.setUniform("uVertexColor", geom_param_ptr->geom_colors.triangle_color);
+	//mesh_shader.setUniform("uTransparency", static_cast<float>(geom_param_ptr->geom_transparency));
+
+
+
+	//if (set_modelmatrix == true)
+	//{
+	//	// set the model matrix
+	//	mesh_shader.setUniform("geom_scale", static_cast<float>(geom_param_ptr->geom_scale));
+	//	mesh_shader.setUniform("transparency", 1.0f);
+
+	//	mesh_shader.setUniform("projectionMatrix", geom_param_ptr->projectionMatrix, false);
+	//	mesh_shader.setUniform("viewMatrix", geom_param_ptr->viewMatrix, false);
+	//	mesh_shader.setUniform("modelMatrix", geom_param_ptr->modelMatrix, false);
+	//}
+
+	//if (set_pantranslation == true)
+	//{
+	//	// set the pan translation
+	//	mesh_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
+	//}
+
+	//if (set_rotatetranslation == true)
+	//{
+	//	// set the rotate translation
+	//	mesh_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
+	//}
+
+	//if (set_zoomtranslation == true)
+	//{
+	//	// set the zoom translation
+	//	mesh_shader.setUniform("zoomscale", static_cast<float>(geom_param_ptr->zoom_scale));
+	//}
+
+	//if (set_transparency == true)
+	//{
+	//	// set the alpha transparency
+	//	mesh_shader.setUniform("transparency", static_cast<float>(geom_param_ptr->geom_transparency));
+	//}
+
+	//if (set_deflscale == true)
+	//{
+	//	// set the deflection scale
+	//	// mesh_shader.setUniform("normalized_deflscale", static_cast<float>(geom_param_ptr->normalized_defl_scale));
+	//	// mesh_shader.setUniform("deflscale", static_cast<float>(geom_param_ptr->defl_scale));
+	//}
+
 	//
 }
 

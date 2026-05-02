@@ -173,6 +173,9 @@ void app_window::app_render()
 		// menu events
 		menu_events();
 
+		// Status bar
+		draw_status_bar();
+
 		// Render OpenGL graphics here
 		glClearColor(geom.geom_param.geom_colors.background_color.x,
 			geom.geom_param.geom_colors.background_color.y,
@@ -313,4 +316,38 @@ void app_window::GLFWwindow_set_icon(GLFWwindow* window)
 	icon.height = stb.image_height;
 	icon.pixels = stb.image;
 	glfwSetWindowIcon(window, 1, &icon);
+}
+
+
+
+
+void app_window::draw_status_bar()
+{
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+
+	float height = ImGui::GetFrameHeight();
+
+	ImGui::SetNextWindowPos(
+		ImVec2(viewport->Pos.x, viewport->Pos.y + viewport->Size.y - height));
+
+	ImGui::SetNextWindowSize(
+		ImVec2(viewport->Size.x, height));
+
+	ImGuiWindowFlags flags =
+		ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoSavedSettings;
+
+
+	ImGui::Begin("StatusBar", nullptr, flags);
+
+	float fps = ImGui::GetIO().Framerate;
+	float ms = 1000.0f / fps;
+
+	ImGui::Text("FPS: %.1f | Frame: %.2f ms", fps, ms);
+
+	ImGui::End();
 }

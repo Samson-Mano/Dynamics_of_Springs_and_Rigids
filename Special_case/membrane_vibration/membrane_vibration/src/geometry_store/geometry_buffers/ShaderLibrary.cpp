@@ -40,40 +40,23 @@ std::string ShaderLibrary::mesh_vertex_shader()
     return R"(
 
     #version 330 core
-
-    uniform mat4 modelMatrix;
-    uniform mat4 viewMatrix;
-    uniform mat4 projectionMatrix;
-    uniform vec3 vertexColor;
-
-    uniform mat4 panTranslation;
-    uniform mat4 rotateTranslation;
-    uniform float zoomscale = 1.0f;
-
-    uniform float transparency = 1.0f;
-    uniform float geom_scale;
-
-    layout(location = 0) in vec3 node_position;
-    layout(location = 1) in vec3 vertexNormal;
-
-    out vec4 v_Color;
-
+                    
+    // Pre-computed MVP matrix on CPU for better performance
+    uniform mat4 uMVP;           // Model-View-Projection matrix
+    uniform mat4 uNormalMatrix;  // For normal transformation
+    uniform vec4 vertexColor;
+                    
+    layout(location = 0) in vec3 aPosition;
+    layout(location = 1) in vec3 aNormal;
+                    
+    out vec3 vNormal;
+    out vec4 vColor;
+                    
     void main()
     {
-        // apply zoom scaling and Rotation to model matrix
-        mat4 scalingMatrix = mat4(1.0) * zoomscale;
-        scalingMatrix[3][3] = 1.0f;
-        mat4 scaledModelMatrix = rotateTranslation * scalingMatrix * modelMatrix;
-
-        // apply Translation to the final position 
-        vec4 finalPosition = scaledModelMatrix * vec4(node_position, 1.0f) * panTranslation;
-
-        // Final position passed to fragment shader
-        gl_Position = finalPosition;
-
-        // v_Color = vec4(vertexColor, transparency);
-        v_Color = vec4(0.0, 0.0, 1.0, 1.0);
-
+        gl_Position = uMVP * vec4(aPosition, 1.0);
+        vNormal = normalize(mat3(uNormalMatrix) * aNormal);
+        vColor = vertexColor;
     }
 
 )";
@@ -85,16 +68,18 @@ std::string ShaderLibrary::mesh_fragment_shader()
 {
     return R"(
 
-#version 330 core
-
-in vec4 v_Color;
-
-out vec4 f_Color; // fragment's final color (out to the fragment shader)
-
-void main()
-{
-	f_Color = v_Color;
-}
+  #version 330 core
+    
+    in vec3 vNormal;
+    in vec4 vColor;
+    out vec4 fColor;
+    
+    void main()
+    {
+        // Simple color output without lighting
+        fColor = vColor;
+    }
+    
 
 )";
 
