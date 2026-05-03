@@ -349,13 +349,8 @@ void geom_store::update_model_matrix()
 	geom_param.modelMatrix = g_transl * glm::scale(glm::mat4(1.0f), glm::vec3(static_cast<float>(geom_param.geom_scale)));
 
 	// Update the model matrix
-	model_mesh.update_geometry_matrices(true, false, false, false, true, false);
+	model_mesh.update_openGLuniforms();
 
-	// model_nodes.update_geometry_matrices(true, false, false, false, true, false);
-	// model_lineelements.update_geometry_matrices(true, false, false, false, true, false);
-	// model_trielements.update_geometry_matrices(true, false, false, false, true, false);
-	// model_quadelements.update_geometry_matrices(true, false, false, false, true, false);
-	
 	//___________________
 	node_loads.update_geometry_matrices(true, false, false, false, true, false);
 	node_inldispl.update_geometry_matrices(true, false, false, false, true, false);
@@ -388,12 +383,7 @@ void geom_store::update_model_zoomfit()
 	geom_param.zoom_scale = 1.0f;
 
 	// Update the zoom scale and pan translation
-	model_mesh.update_geometry_matrices(false, true, true, true, false, false);
-
-	// model_nodes.update_geometry_matrices(false, true, true, true, false, false);
-	// model_lineelements.update_geometry_matrices(false, true, true, true, false, false);
-	// model_trielements.update_geometry_matrices(false, true, true, true, false, false);
-	// model_quadelements.update_geometry_matrices(false, true, true, true, false, false);
+	model_mesh.update_openGLuniforms();
 	
 	//___________________
 	node_loads.update_geometry_matrices(false, true, true, true, false, false);
@@ -425,12 +415,7 @@ void geom_store::update_model_pan(glm::vec2& transl)
 	geom_param.panTranslation[1][3] = transl.y;
 
 	// Update the pan translation
-	model_mesh.update_geometry_matrices(false, true, false, false, false, false);
-
-	// model_nodes.update_geometry_matrices(false, true,false, false, false, false);
-	// model_lineelements.update_geometry_matrices(false, true, false, false, false, false);
-	// model_trielements.update_geometry_matrices(false, true, false, false, false, false);
-	// model_quadelements.update_geometry_matrices(false, true, false, false, false, false);
+	model_mesh.update_openGLuniforms();
 
 	//___________________
 	node_loads.update_geometry_matrices(false, true, false, false, false, false);
@@ -459,12 +444,7 @@ void geom_store::update_model_rotate(glm::mat4& rotation_m)
 	geom_param.rotateTranslation = rotation_m;
 
 	// Update the rotate translation
-	model_mesh.update_geometry_matrices(false, false, true, false, false, false);
-
-	// model_nodes.update_geometry_matrices(false, false, true, false, false, false);
-	// model_lineelements.update_geometry_matrices(false, false, true, false, false, false);
-	// model_trielements.update_geometry_matrices(false, false, true, false, false, false);
-	// model_quadelements.update_geometry_matrices(false, false, true, false, false, false);
+	model_mesh.update_openGLuniforms();
 	
 	//___________________
 	node_loads.update_geometry_matrices(false, false, true, false, false, false);
@@ -494,12 +474,7 @@ void geom_store::update_model_zoom(double& z_scale)
 	geom_param.zoom_scale = z_scale;
 
 	// Update the Zoom
-	model_mesh.update_geometry_matrices(false, false, false, true, false, false);
-
-	// model_nodes.update_geometry_matrices(false, false, false, true, false, false);
-	// model_lineelements.update_geometry_matrices(false, false, false, true, false, false);
-	// model_trielements.update_geometry_matrices(false, false, false, true, false, false);
-	// model_quadelements.update_geometry_matrices(false, false, false, true, false, false);
+	model_mesh.update_openGLuniforms();
 
 	//___________________
 	node_loads.update_geometry_matrices(false, false, false, true, false, false);
@@ -536,12 +511,7 @@ void geom_store::update_model_transperency(bool is_transparent)
 	}
 
 	// Update the model transparency
-	model_mesh.update_geometry_matrices(false, false, false, false, true, false);
-
-	// model_nodes.update_geometry_matrices(false, false, false, false, true, false);
-	// model_lineelements.update_geometry_matrices(false, false, false, false, true, false);
-	// model_quadelements.update_geometry_matrices(false, false, false, false, true, false);
-	// model_trielements.update_geometry_matrices(false, false, false, false, true, false);
+	model_mesh.update_openGLuniforms();
 
 	//___________________
 	node_loads.update_geometry_matrices(false, false, false, false, true, false);

@@ -95,8 +95,7 @@ public:
 	std::vector<int> is_node_selected(const glm::vec2& corner_pt1, const glm::vec2& corner_pt2);
 
 
-	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
-		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
+	void update_openGLuniforms();
 
 
 
@@ -128,8 +127,6 @@ private:
 	std::vector<unsigned int> quadrilateralIndexData;
 
 
-	std::vector<float> pointVertices;
-
 	void create_wireframe();
 
 	void create_vertex_normals(std::vector<glm::vec3>& vnormals);
@@ -137,3 +134,6 @@ private:
 	void create_buffer_data();
 
 };
+
+
+

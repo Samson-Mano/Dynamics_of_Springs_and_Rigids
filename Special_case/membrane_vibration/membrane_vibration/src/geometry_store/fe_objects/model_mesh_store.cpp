@@ -16,13 +16,6 @@ void model_mesh_store::init(geom_parameters* geom_param_ptr)
 
 	 mesh_shader.create_shader_data(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
 
-	//// Create the point shader
-	//std::filesystem::path shadersPath = geom_param_ptr->resourcePath;
-
-	//mesh_shader.create_shader((shadersPath.string() + "/resources/shaders/point_vert_shader.vert").c_str(),
-	//	(shadersPath.string() + "/resources/shaders/point_frag_shader.frag").c_str());
-
-
 	// Clear mesh
 	clear_mesh();
 
@@ -289,7 +282,8 @@ void model_mesh_store::create_buffer()
 	// Define the node vertices of the model for a node (3 position, 3 color ) 
 	int node_count = static_cast<int>(this->nodes.size());
 	const unsigned int point_vertex_count = 6 * node_count;
-	this->pointVertices.clear();
+
+	std::vector<float> pointVertices;
 
 	for (int i = 0; i < node_count; i++)
 	{
@@ -454,8 +448,7 @@ void model_mesh_store::paint_selected_mesh_points()
 }
 
 
-void model_mesh_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation,
-	bool set_rotatetranslation, bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void model_mesh_store::update_openGLuniforms()
 {
 
 	// Update the shader uniforms for the mesh shader
@@ -478,60 +471,6 @@ void model_mesh_store::update_geometry_matrices(bool set_modelmatrix, bool set_p
 
 	mesh_shader.setUniform("uMVP", mvp, false);
 	mesh_shader.setUniform("uNormalMatrix", normalMatrix, false);
-
-	//// Set all uniforms with CORRECT names matching shader
-	//mesh_shader.setUniform("uProjectionMatrix", geom_param_ptr->projectionMatrix, false);
-	//mesh_shader.setUniform("uViewMatrix", geom_param_ptr->viewMatrix, false);
-	//mesh_shader.setUniform("uModelMatrix", geom_param_ptr->modelMatrix, false);
-	//mesh_shader.setUniform("uPanTranslation", geom_param_ptr->panTranslation, false);
-	//mesh_shader.setUniform("uZoomScale", static_cast<float>(geom_param_ptr->zoom_scale));
-	//mesh_shader.setUniform("uGeomScale", static_cast<float>(geom_param_ptr->geom_scale));
-	//// mesh_shader.setUniform("uVertexColor", geom_param_ptr->geom_colors.triangle_color);
-	//mesh_shader.setUniform("uTransparency", static_cast<float>(geom_param_ptr->geom_transparency));
-
-
-
-	//if (set_modelmatrix == true)
-	//{
-	//	// set the model matrix
-	//	mesh_shader.setUniform("geom_scale", static_cast<float>(geom_param_ptr->geom_scale));
-	//	mesh_shader.setUniform("transparency", 1.0f);
-
-	//	mesh_shader.setUniform("projectionMatrix", geom_param_ptr->projectionMatrix, false);
-	//	mesh_shader.setUniform("viewMatrix", geom_param_ptr->viewMatrix, false);
-	//	mesh_shader.setUniform("modelMatrix", geom_param_ptr->modelMatrix, false);
-	//}
-
-	//if (set_pantranslation == true)
-	//{
-	//	// set the pan translation
-	//	mesh_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
-	//}
-
-	//if (set_rotatetranslation == true)
-	//{
-	//	// set the rotate translation
-	//	mesh_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
-	//}
-
-	//if (set_zoomtranslation == true)
-	//{
-	//	// set the zoom translation
-	//	mesh_shader.setUniform("zoomscale", static_cast<float>(geom_param_ptr->zoom_scale));
-	//}
-
-	//if (set_transparency == true)
-	//{
-	//	// set the alpha transparency
-	//	mesh_shader.setUniform("transparency", static_cast<float>(geom_param_ptr->geom_transparency));
-	//}
-
-	//if (set_deflscale == true)
-	//{
-	//	// set the deflection scale
-	//	// mesh_shader.setUniform("normalized_deflscale", static_cast<float>(geom_param_ptr->normalized_defl_scale));
-	//	// mesh_shader.setUniform("deflscale", static_cast<float>(geom_param_ptr->defl_scale));
-	//}
 
 	//
 }
@@ -625,7 +564,7 @@ std::vector<int> model_mesh_store::is_node_selected(const glm::vec2& corner_pt1,
 	for (auto it = nodes.begin(); it != nodes.end(); ++it)
 	{
 		const auto& node = it->node_pt;
-		glm::vec4 finalPosition = scaledModelMatrix * glm::vec4(node.x, node.y, 0, 1.0f) * geom_param_ptr->panTranslation;
+		glm::vec4 finalPosition = scaledModelMatrix * glm::vec4(node.x, node.y, node.z, 1.0f) * geom_param_ptr->panTranslation;
 
 		double node_position_x = finalPosition.x;
 		double node_position_y = finalPosition.y;

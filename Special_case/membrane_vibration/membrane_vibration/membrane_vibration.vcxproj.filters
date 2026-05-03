@@ -180,6 +180,9 @@
     <ClCompile Include="src\geometry_store\geometry_buffers\ShaderLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\geometry_store\result_objects\rslt_modalmesh.store.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\dlls\freetype.dll" />
@@ -395,6 +398,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\geometry_buffers\ShaderLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\geometry_store\result_objects\rslt_modalmesh.store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
