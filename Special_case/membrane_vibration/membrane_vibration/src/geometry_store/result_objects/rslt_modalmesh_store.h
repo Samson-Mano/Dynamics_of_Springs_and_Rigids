@@ -52,7 +52,7 @@ public:
 
 	void init(geom_parameters* geom_param_ptr);
 
-	void initialize_mesh(std::vector<elementline_store> wireframe,
+	void initialize_mesh(std::vector<rslt_modalnode_store> rsltnodes,
 		std::vector<elementtri_store> tris,
 		std::vector<elementquad_store> quads);
 
@@ -93,6 +93,8 @@ private:
 	std::vector<unsigned int> triangleIndexData;
 	std::vector<unsigned int> quadrilateralIndexData;
 
+
+	void create_wireframe();
 
 	void create_vertex_normals(std::vector<glm::vec3>& vnormals);
 

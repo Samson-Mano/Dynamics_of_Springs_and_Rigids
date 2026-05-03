@@ -26,10 +26,7 @@ void modal_analysis_solver::clear_results()
 
 void modal_analysis_solver::modal_analysis_start(const model_mesh_store& model_mesh,
 	const material_data& mat_data,
-	modal_nodes_list_store& modal_result_nodes,
-	modal_elementline_list_store& modal_result_lineelements,
-	modal_elementtri_list_store& modal_result_trielements,
-	modal_elementquad_list_store& modal_result_quadelements)
+	rslt_modalmesh_store& rslt_modalmesh)
 {
 	// Main solver call
 	this->is_modal_analysis_complete = false;
@@ -117,9 +114,11 @@ void modal_analysis_solver::modal_analysis_start(const model_mesh_store& model_m
 	eigen_vectors_matrix.setZero();
 
 	// Re-initialize the variables
-	modal_result_nodes.clear_data();
-	modal_result_lineelements.clear_data();
-	modal_result_quadelements.clear_data();
+	rslt_modalmesh.clear_mesh();
+
+	// modal_result_nodes.clear_data();
+	// modal_result_lineelements.clear_data();
+	// modal_result_quadelements.clear_data();
 
 	// Mode results as string
 	mode_result_str.clear();
@@ -138,10 +137,7 @@ void modal_analysis_solver::modal_analysis_start(const model_mesh_store& model_m
 		modal_analysis_model_circular(model_mesh,
 			mat_data,
 			c_radius,
-			modal_result_nodes,
-			modal_result_lineelements,
-			modal_result_trielements,
-			modal_result_quadelements);
+			rslt_modalmesh);
 
 		this->is_modal_analysis_complete = true;
 
@@ -156,9 +152,7 @@ void modal_analysis_solver::modal_analysis_start(const model_mesh_store& model_m
 			mat_data,
 			length_x,
 			length_y,
-			modal_result_nodes,
-			modal_result_lineelements,
-			modal_result_quadelements);
+			rslt_modalmesh);
 
 		this->is_modal_analysis_complete = true;
 
@@ -173,9 +167,7 @@ void modal_analysis_solver::modal_analysis_start(const model_mesh_store& model_m
 			mat_data,
 			length_x,
 			length_y,
-			modal_result_nodes,
-			modal_result_lineelements,
-			modal_result_quadelements);
+			rslt_modalmesh);
 
 		this->is_modal_analysis_complete = true;
 
@@ -190,9 +182,7 @@ void modal_analysis_solver::modal_analysis_start(const model_mesh_store& model_m
 			mat_data,
 			length_x,
 			length_y,
-			modal_result_nodes,
-			modal_result_lineelements,
-			modal_result_quadelements);
+			rslt_modalmesh);
 
 		this->is_modal_analysis_complete = true;
 
@@ -208,10 +198,7 @@ void modal_analysis_solver::modal_analysis_start(const model_mesh_store& model_m
 void modal_analysis_solver::modal_analysis_model_circular(const model_mesh_store& model_mesh,
 	const material_data& mat_data,
 	const double& c_radius,
-	modal_nodes_list_store& modal_result_nodes,
-	modal_elementline_list_store& modal_result_lineelements,
-	modal_elementtri_list_store& modal_result_trielements,
-	modal_elementquad_list_store& modal_result_quadelements)
+	rslt_modalmesh_store& rslt_modalmesh)
 {
 	// Circular string
 	int node_id = 0;
@@ -540,20 +527,42 @@ void modal_analysis_solver::modal_analysis_model_circular(const model_mesh_store
 	//____________________________________________________________________________________________________________________
 
 	// Add the modal quad element result
+	int next_node_id = 0;
+	int next_tri_id = 0;
+
+	std::vector<rslt_modalnode_store> rsltnodes;
+	std::vector<elementtri_store> rslttris;
+	std::unordered_map<int, int> added_nodes;
+
+	// Lambda to create node lambda (captures all needed data)
+	auto create_node = [&](int node_id) -> int {
+		return get_or_create_node(node_id, added_nodes, rsltnodes,
+			nodept_map, constrained_node_map, nodeid_map,
+			eigen_vectors_matrix, paint_mode_count, next_node_id);
+		};
+
 	for (auto& quad : model_mesh.quads)
 	{
-		int quad_id = quad.quad_id;
+		// Get or create corner nodes
+		int quad_node_id1 = create_node(quad.nd1_id);
+		int quad_node_id2 = create_node(quad.nd2_id);
+		int quad_node_id3 = create_node(quad.nd3_id);
+		int quad_node_id4 = create_node(quad.nd4_id);
 
-		modal_result_quadelements.add_modal_elementquadrilateral(quad_id,
-			&modal_result_nodes.modal_nodeMap[quad.nd1_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd2_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd3_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd4_id],
-			quad_midnode[quad_id].mid_pt,
-			quad_midnode[quad_id].midpt_displ,
-			quad_midnode[quad_id].midpt_displ_mag);
+		// Create mid node (unique to this quad, not shared)
+		int quad_node_idmid = next_node_id++;
+		rsltnodes.emplace_back(quad_node_idmid,
+			quad_midnode[quad.quad_id].mid_pt,
+			quad_midnode[quad.quad_id].midpt_displ,
+			quad_midnode[quad.quad_id].midpt_displ_mag);
+
+		// Create 4 triangles
+		rslttris.emplace_back(next_tri_id++, quad_node_id1, quad_node_id2, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id2, quad_node_id3, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id3, quad_node_id4, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id4, quad_node_id1, quad_node_idmid);
+
 	}
-
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
@@ -587,9 +596,7 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const model_mesh_st
 	const material_data& mat_data,
 	const double& length_x,
 	const double& length_y,
-	modal_nodes_list_store& modal_result_nodes,
-	modal_elementline_list_store& modal_result_lineelements,
-	modal_elementquad_list_store& modal_result_quadelements)
+	rslt_modalmesh_store& rslt_modalmesh)
 {
 	// Rectangular membrane
 	int node_id = 0;
@@ -885,4 +892,60 @@ double modal_analysis_solver::rect_eigen_vec(const bessel_function_Frequency& re
 	return t_eigen_vec;
 
 }
+
+
+
+int modal_analysis_solver::get_or_create_node(int original_node_id,
+	std::unordered_map<int, int>& added_nodes,
+	std::vector<rslt_modalnode_store>& rsltnodes,
+	const std::unordered_map<int, glm::vec3>& nodept_map,
+	const std::unordered_map<int, bool>& constrained_node_map,
+	const std::unordered_map<int, int>& nodeid_map,
+	const Eigen::MatrixXd& eigen_vectors_matrix,
+	int paint_mode_count,
+	int& next_node_id)
+{
+	auto it = added_nodes.find(original_node_id);
+	if (it != added_nodes.end()) 
+	{
+		return it->second;  // Node already exists
+	}
+
+	// Create new result node
+	int new_node_id = next_node_id++;
+	added_nodes[original_node_id] = new_node_id;
+
+	glm::vec3 node_pt = nodept_map.at(original_node_id);
+
+	std::vector<glm::vec3> node_modal_displ;
+	std::vector<double> node_modal_displ_magnitude;
+
+	// Check if node is constrained
+	if (!constrained_node_map.at(original_node_id)) {
+		int matrix_index = nodeid_map.at(original_node_id);
+		node_modal_displ.reserve(paint_mode_count);
+		node_modal_displ_magnitude.reserve(paint_mode_count);
+
+		for (int i = 0; i < paint_mode_count; i++) {
+			double displ_magnitude = static_cast<float>(eigen_vectors_matrix.coeff(matrix_index, i));
+
+			// Assuming Z-direction displacement (modify if needed)
+			glm::vec3 modal_displ(0.0, 0.0, displ_magnitude);
+
+			node_modal_displ.push_back(modal_displ);
+			node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
+		}
+	}
+	else {
+		// Constrained node - all zeros
+		node_modal_displ.assign(paint_mode_count, glm::vec3(0.0f));
+		node_modal_displ_magnitude.assign(paint_mode_count, 0.0);
+	}
+
+	rsltnodes.emplace_back(new_node_id, node_pt, node_modal_displ, node_modal_displ_magnitude);
+	return new_node_id;
+
+}
+
+
 

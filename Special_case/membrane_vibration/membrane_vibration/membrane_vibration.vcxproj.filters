@@ -180,7 +180,7 @@
     <ClCompile Include="src\geometry_store\geometry_buffers\ShaderLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\result_objects\rslt_modalmesh.store.cpp">
+    <ClCompile Include="src\geometry_store\result_objects\rslt_modalmesh_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -400,7 +400,7 @@
     <ClInclude Include="src\geometry_store\geometry_buffers\ShaderLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\geometry_store\result_objects\rslt_modalmesh.store.h">
+    <ClInclude Include="src\geometry_store\result_objects\rslt_modalmesh_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
