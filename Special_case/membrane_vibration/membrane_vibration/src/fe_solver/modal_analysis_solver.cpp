@@ -452,78 +452,78 @@ void modal_analysis_solver::modal_analysis_model_circular(const model_mesh_store
 	//_____________________________________________________________________________________
 	// Map the results
 
-	for (auto& nd : model_mesh.nodes)
-	{
-		node_id = nd.node_id;
-		glm::vec3 node_pt = nd.node_pt;
+	//for (auto& nd : model_mesh.nodes)
+	//{
+	//	node_id = nd.node_id;
+	//	glm::vec3 node_pt = nd.node_pt;
 
-		// Modal analysis results
-		std::vector<glm::vec3> node_modal_displ;
-		std::vector<double> node_modal_displ_magnitude;
+	//	// Modal analysis results
+	//	std::vector<glm::vec3> node_modal_displ;
+	//	std::vector<double> node_modal_displ_magnitude;
 
-		// Check whether the node is fixed or not
-		if (this->constrained_node_map[node_id] == false)
-		{
-			int matrix_index = nodeid_map[node_id];
+	//	// Check whether the node is fixed or not
+	//	if (this->constrained_node_map[node_id] == false)
+	//	{
+	//		int matrix_index = nodeid_map[node_id];
 
-			for (int i = 0; i < paint_mode_count; i++)
-			{
-				double displ_magnitude = static_cast<float>(eigen_vectors_matrix.coeff(matrix_index, i));
-				
-				// get the appropriate modal displacement of this particular node
-				glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
+	//		for (int i = 0; i < paint_mode_count; i++)
+	//		{
+	//			double displ_magnitude = static_cast<float>(eigen_vectors_matrix.coeff(matrix_index, i));
+	//			
+	//			// get the appropriate modal displacement of this particular node
+	//			glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
 
-				// add to modal result of this node
-				node_modal_displ.push_back(modal_displ);
-				node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
-			}
-		}
-		else
-		{
-			// Node is constrained so make it zero
-			node_modal_displ.resize(paint_mode_count, glm::vec3(0.0f));
-			node_modal_displ_magnitude.resize(paint_mode_count, 0.0);
-		}
+	//			// add to modal result of this node
+	//			node_modal_displ.push_back(modal_displ);
+	//			node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
+	//		}
+	//	}
+	//	else
+	//	{
+	//		// Node is constrained so make it zero
+	//		node_modal_displ.resize(paint_mode_count, glm::vec3(0.0f));
+	//		node_modal_displ_magnitude.resize(paint_mode_count, 0.0);
+	//	}
 
-		// Create the modal analysis result node
-		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ, node_modal_displ_magnitude);
-	}
+	//	// Create the modal analysis result node
+	//	modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ, node_modal_displ_magnitude);
+	//}
 
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Results mapped to model nodes at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-	//____________________________________________________________________________________________________________________
+	//stopwatch_elapsed_str.str("");
+	//stopwatch_elapsed_str << stopwatch.elapsed();
+	//std::cout << "Results mapped to model nodes at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	////____________________________________________________________________________________________________________________
 
-	// Add the modal line element result
-	for (auto& ln : model_mesh.wireframe)
-	{
-		int line_id = ln.line_id;
-		modal_result_lineelements.add_modal_elementline(line_id,
-			&modal_result_nodes.modal_nodeMap[ln.startnd_id],
-			&modal_result_nodes.modal_nodeMap[ln.endnd_id]);
-	}
-
-
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Results mapped to model Line Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-	//____________________________________________________________________________________________________________________
-
-	// Add the modal tri element result
-	for (auto& tri : model_mesh.tris)
-	{
-		int tri_id = tri.tri_id;
-
-		modal_result_trielements.add_modal_elementtriangle(tri_id,
-			&modal_result_nodes.modal_nodeMap[tri.nd1_id],
-			&modal_result_nodes.modal_nodeMap[tri.nd2_id],
-			&modal_result_nodes.modal_nodeMap[tri.nd3_id]);
-	}
+	//// Add the modal line element result
+	//for (auto& ln : model_mesh.wireframe)
+	//{
+	//	int line_id = ln.line_id;
+	//	modal_result_lineelements.add_modal_elementline(line_id,
+	//		&modal_result_nodes.modal_nodeMap[ln.startnd_id],
+	//		&modal_result_nodes.modal_nodeMap[ln.endnd_id]);
+	//}
 
 
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Results mapped to model Tri Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//stopwatch_elapsed_str.str("");
+	//stopwatch_elapsed_str << stopwatch.elapsed();
+	//std::cout << "Results mapped to model Line Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	////____________________________________________________________________________________________________________________
+
+	//// Add the modal tri element result
+	//for (auto& tri : model_mesh.tris)
+	//{
+	//	int tri_id = tri.tri_id;
+
+	//	modal_result_trielements.add_modal_elementtriangle(tri_id,
+	//		&modal_result_nodes.modal_nodeMap[tri.nd1_id],
+	//		&modal_result_nodes.modal_nodeMap[tri.nd2_id],
+	//		&modal_result_nodes.modal_nodeMap[tri.nd3_id]);
+	//}
+
+
+	//stopwatch_elapsed_str.str("");
+	//stopwatch_elapsed_str << stopwatch.elapsed();
+	//std::cout << "Results mapped to model Tri Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	//____________________________________________________________________________________________________________________
 
 	// Add the modal quad element result
@@ -531,6 +531,7 @@ void modal_analysis_solver::modal_analysis_model_circular(const model_mesh_store
 	int next_tri_id = 0;
 
 	std::vector<rslt_modalnode_store> rsltnodes;
+	std::vector<elementline_store> rsltwireframes;
 	std::vector<elementtri_store> rslttris;
 	std::unordered_map<int, int> added_nodes;
 
@@ -540,6 +541,25 @@ void modal_analysis_solver::modal_analysis_model_circular(const model_mesh_store
 			nodept_map, constrained_node_map, nodeid_map,
 			eigen_vectors_matrix, paint_mode_count, next_node_id);
 		};
+
+
+
+	// Add the modal tri element result
+	for (auto& tri : model_mesh.tris)
+	{
+		// Get or create corner nodes
+		int tri_node_id1 = create_node(tri.nd1_id);
+		int tri_node_id2 = create_node(tri.nd2_id);
+		int tri_node_id3 = create_node(tri.nd3_id);
+
+		// Create 1 Triangle
+		rslttris.emplace_back(next_tri_id++, tri_node_id1, tri_node_id2, tri_node_id3);
+
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model Tri Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
 	for (auto& quad : model_mesh.quads)
 	{
@@ -569,6 +589,21 @@ void modal_analysis_solver::modal_analysis_model_circular(const model_mesh_store
 	std::cout << "Results mapped to model Quad Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	//____________________________________________________________________________________________________________________
 
+
+	// Add the wire frame element result
+	for (auto& ln : model_mesh.wireframe)
+	{
+		int line_id = ln.line_id;
+		int ln_startnd_id = added_nodes.at(ln.startnd_id);
+		int ln_endnd_id = added_nodes.at(ln.endnd_id);
+
+		rsltwireframes.emplace_back(line_id, ln_startnd_id, ln_endnd_id);
+
+	}
+
+
+	// Add to the result mesh
+	rslt_modalmesh.add_result_mesh(rsltnodes, rsltwireframes, rslttris);
 
 
 }
@@ -795,82 +830,161 @@ void modal_analysis_solver::modal_analysis_model_rectangular(const model_mesh_st
 	//_____________________________________________________________________________________
 	// Map the results
 
-	for (auto& nd : model_mesh.nodes)
-	{
-		int node_id = nd.node_id;
-		glm::vec3 node_pt = nd.node_pt;
-		// Modal analysis results
-		std::vector<glm::vec3> node_modal_displ;
-		std::vector<double> node_modal_displ_magnitude;
+	//for (auto& nd : model_mesh.nodes)
+	//{
+	//	int node_id = nd.node_id;
+	//	glm::vec3 node_pt = nd.node_pt;
+	//	// Modal analysis results
+	//	std::vector<glm::vec3> node_modal_displ;
+	//	std::vector<double> node_modal_displ_magnitude;
 
-		// Check whether the node is fixed or not
-		if (this->constrained_node_map[node_id] == false)
-		{
-			int matrix_index = nodeid_map[node_id];
+	//	// Check whether the node is fixed or not
+	//	if (this->constrained_node_map[node_id] == false)
+	//	{
+	//		int matrix_index = nodeid_map[node_id];
 
-			for (int i = 0; i < paint_mode_count; i++)
-			{
-				double displ_magnitude = static_cast<float>(eigen_vectors_matrix.coeff(matrix_index, i));
-				// get the appropriate modal displacement of this particular node
-				glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
+	//		for (int i = 0; i < paint_mode_count; i++)
+	//		{
+	//			double displ_magnitude = static_cast<float>(eigen_vectors_matrix.coeff(matrix_index, i));
+	//			// get the appropriate modal displacement of this particular node
+	//			glm::vec3 modal_displ = glm::vec3(0.0, 0.0, displ_magnitude);
 
-				// add to modal result of this node
-				node_modal_displ.push_back(modal_displ);
-				node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
-			}
-		}
-		else
-		{
-			// Node is constrained so make it zero
-			node_modal_displ.resize(paint_mode_count, glm::vec3(0.0f));
-			node_modal_displ_magnitude.resize(paint_mode_count, 0.0);
-		}
+	//			// add to modal result of this node
+	//			node_modal_displ.push_back(modal_displ);
+	//			node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
+	//		}
+	//	}
+	//	else
+	//	{
+	//		// Node is constrained so make it zero
+	//		node_modal_displ.resize(paint_mode_count, glm::vec3(0.0f));
+	//		node_modal_displ_magnitude.resize(paint_mode_count, 0.0);
+	//	}
 
-		// Create the modal analysis result node
-		modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ, node_modal_displ_magnitude);
-	}
+	//	// Create the modal analysis result node
+	//	modal_result_nodes.add_result_node(node_id, node_pt, node_modal_displ, node_modal_displ_magnitude);
+	//}
 
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Results mapped to model nodes at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-	//____________________________________________________________________________________________________________________
+	//stopwatch_elapsed_str.str("");
+	//stopwatch_elapsed_str << stopwatch.elapsed();
+	//std::cout << "Results mapped to model nodes at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	////____________________________________________________________________________________________________________________
 
-	// Add the modal line element result
-	for (auto& ln : model_mesh.wireframe)
-	{
-		int line_id = ln.line_id;
+	//// Add the modal line element result
+	//for (auto& ln : model_mesh.wireframe)
+	//{
+	//	int line_id = ln.line_id;
 
-		modal_result_lineelements.add_modal_elementline(line_id,
-			&modal_result_nodes.modal_nodeMap[ln.startnd_id],
-			&modal_result_nodes.modal_nodeMap[ln.endnd_id]);
-	}
+	//	modal_result_lineelements.add_modal_elementline(line_id,
+	//		&modal_result_nodes.modal_nodeMap[ln.startnd_id],
+	//		&modal_result_nodes.modal_nodeMap[ln.endnd_id]);
+	//}
 
 
-	stopwatch_elapsed_str.str("");
-	stopwatch_elapsed_str << stopwatch.elapsed();
-	std::cout << "Results mapped to model Line Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
-	//____________________________________________________________________________________________________________________
+	//stopwatch_elapsed_str.str("");
+	//stopwatch_elapsed_str << stopwatch.elapsed();
+	//std::cout << "Results mapped to model Line Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	////____________________________________________________________________________________________________________________
+
+	//// Add the modal quad element result
+	//for (auto& quad : model_mesh.quads)
+	//{
+	//	int quad_id = quad.quad_id;
+
+	//	modal_result_quadelements.add_modal_elementquadrilateral(quad_id,
+	//		&modal_result_nodes.modal_nodeMap[quad.nd1_id],
+	//		&modal_result_nodes.modal_nodeMap[quad.nd2_id],
+	//		&modal_result_nodes.modal_nodeMap[quad.nd3_id],
+	//		&modal_result_nodes.modal_nodeMap[quad.nd4_id],
+	//		quad_midnode[quad_id].mid_pt,
+	//		quad_midnode[quad_id].midpt_displ,
+	//		quad_midnode[quad_id].midpt_displ_mag);
+	//}
+
+
+	//stopwatch_elapsed_str.str("");
+	//stopwatch_elapsed_str << stopwatch.elapsed();
+	//std::cout << "Results mapped to model Quad Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	////____________________________________________________________________________________________________________________
 
 	// Add the modal quad element result
-	for (auto& quad : model_mesh.quads)
-	{
-		int quad_id = quad.quad_id;
+	int next_node_id = 0;
+	int next_tri_id = 0;
 
-		modal_result_quadelements.add_modal_elementquadrilateral(quad_id,
-			&modal_result_nodes.modal_nodeMap[quad.nd1_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd2_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd3_id],
-			&modal_result_nodes.modal_nodeMap[quad.nd4_id],
-			quad_midnode[quad_id].mid_pt,
-			quad_midnode[quad_id].midpt_displ,
-			quad_midnode[quad_id].midpt_displ_mag);
+	std::vector<rslt_modalnode_store> rsltnodes;
+	std::vector<elementline_store> rsltwireframes;
+	std::vector<elementtri_store> rslttris;
+	std::unordered_map<int, int> added_nodes;
+
+	// Lambda to create node lambda (captures all needed data)
+	auto create_node = [&](int node_id) -> int {
+		return get_or_create_node(node_id, added_nodes, rsltnodes,
+			nodept_map, constrained_node_map, nodeid_map,
+			eigen_vectors_matrix, paint_mode_count, next_node_id);
+		};
+
+
+	// Add the modal tri element result
+	for (auto& tri : model_mesh.tris)
+	{
+		// Get or create corner nodes
+		int tri_node_id1 = create_node(tri.nd1_id);
+		int tri_node_id2 = create_node(tri.nd2_id);
+		int tri_node_id3 = create_node(tri.nd3_id);
+
+		// Create 1 Triangle
+		rslttris.emplace_back(next_tri_id++, tri_node_id1, tri_node_id2, tri_node_id3);
+
 	}
 
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model Tri Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	for (auto& quad : model_mesh.quads)
+	{
+		// Get or create corner nodes
+		int quad_node_id1 = create_node(quad.nd1_id);
+		int quad_node_id2 = create_node(quad.nd2_id);
+		int quad_node_id3 = create_node(quad.nd3_id);
+		int quad_node_id4 = create_node(quad.nd4_id);
+
+		// Create mid node (unique to this quad, not shared)
+		int quad_node_idmid = next_node_id++;
+		rsltnodes.emplace_back(quad_node_idmid,
+			quad_midnode[quad.quad_id].mid_pt,
+			quad_midnode[quad.quad_id].midpt_displ,
+			quad_midnode[quad.quad_id].midpt_displ_mag);
+
+		// Create 4 triangles
+		rslttris.emplace_back(next_tri_id++, quad_node_id1, quad_node_id2, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id2, quad_node_id3, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id3, quad_node_id4, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id4, quad_node_id1, quad_node_idmid);
+
+	}
 
 	stopwatch_elapsed_str.str("");
 	stopwatch_elapsed_str << stopwatch.elapsed();
 	std::cout << "Results mapped to model Quad Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 	//____________________________________________________________________________________________________________________
+
+
+	// Add the wire frame element result
+	for (auto& ln : model_mesh.wireframe)
+	{
+		int line_id = ln.line_id;
+		int ln_startnd_id = added_nodes.at(ln.startnd_id);
+		int ln_endnd_id = added_nodes.at(ln.endnd_id);
+
+		rsltwireframes.emplace_back(line_id, ln_startnd_id, ln_endnd_id);
+
+	}
+
+
+	// Add to the result mesh
+	rslt_modalmesh.add_result_mesh(rsltnodes, rsltwireframes, rslttris);
+
 
 }
 

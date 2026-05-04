@@ -32,10 +32,19 @@ public:
 	bool animate_play = true;
 	bool animate_pause = false;
 	double time_val = 0.0;
-	double deformation_scale_max = 40.0;
+
+
+
+	double visualization_deflection_scale = 40.0;
 	double animation_speed = 20.0;
-	double normailzed_defomation_scale = 0.0;
-	double deformation_scale = 0.0;
+
+	double modal_sine_deflection_scale = 0.0;
+	
+	// double deformation_scale = 0.0;
+
+
+
+
 
 	modal_analysis_window();
 	~modal_analysis_window();

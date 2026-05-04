@@ -1239,3 +1239,64 @@ std::vector<int> elementquad_list_store::is_quad_selected(const glm::vec2& corne
 
 
 
+
+	//// Compute normal matrix (inverse transpose of rotation * model)
+	//glm::mat4 rotModel = geom_param_ptr->rotateTranslation * geom_param_ptr->modelMatrix;
+	//glm::mat4 normalMatrix = glm::transpose(glm::inverse(rotModel));
+
+	// mesh_shader.setUniform("uNormalMatrix", normalMatrix, false);
+
+
+
+
+
+
+std::string ShaderLibrary::mesh_vertex_shader()
+{
+    return R"(
+
+    #version 330 core
+                    
+    // Pre-computed MVP matrix on CPU for better performance
+    uniform mat4 uMVP;           // Model-View-Projection matrix
+    uniform mat4 uNormalMatrix;  // For normal transformation
+    uniform vec4 vertexColor;
+                    
+    layout(location = 0) in vec3 aPosition;
+    layout(location = 1) in vec3 aNormal;
+                    
+    out vec3 vNormal;
+    out vec4 vColor;
+                    
+    void main()
+    {
+        gl_Position = uMVP * vec4(aPosition, 1.0);
+        // vNormal = normalize(mat3(uNormalMatrix) * aNormal);
+        vColor = vertexColor;
+    }
+
+)";
+
+}
+
+
+std::string ShaderLibrary::mesh_fragment_shader()
+{
+    return R"(
+
+  #version 330 core
+    
+    in vec3 vNormal;
+    in vec4 vColor;
+    out vec4 fColor;
+    
+    void main()
+    {
+        // Simple color output without lighting
+        fColor = vColor;
+    }
+    
+
+)";
+
+}

@@ -100,7 +100,7 @@ void modal_analysis_window::render_window()
 		if (ImGui::Button("Deformation Scale"))
 		{
 			defscale_input_mode = true;
-			snprintf(defscale_str, 16, "%.1f", deformation_scale_max); // set the buffer to current deformation scale value
+			snprintf(defscale_str, 16, "%.1f", visualization_deflection_scale); // set the buffer to current deformation scale value
 		}
 	}
 	else // input mode
@@ -112,7 +112,7 @@ void modal_analysis_window::render_window()
 			// convert the input string to int
 			defscale_input = atoi(defscale_str);
 			// set the load value to input value
-			deformation_scale_max = defscale_input;
+			visualization_deflection_scale = defscale_input;
 		}
 
 		// Button to switch back to slider mode
@@ -123,21 +123,21 @@ void modal_analysis_window::render_window()
 		}
 	}
 
-	// Text for load value
+	// Text for Deflection scale value
 	ImGui::SameLine();
-	ImGui::Text(" %.1f", deformation_scale_max);
+	ImGui::Text(" %.1f", visualization_deflection_scale);
 
 	// Slider for Deflection scale
-	float deformation_scale_flt = static_cast<float>(deformation_scale_max);
+	float visualization_defl_scale_flt = static_cast<float>(visualization_deflection_scale);
 
 	ImGui::Text("Deformation Scale");
 	ImGui::SameLine();
-	ImGui::SliderFloat(".", &deformation_scale_flt, 0.0f, 100.0f, "%.1f");
-	deformation_scale_max = deformation_scale_flt;
+	ImGui::SliderFloat(".", &visualization_defl_scale_flt, 0.0f, 100.0f, "%.1f");
+	visualization_deflection_scale = visualization_defl_scale_flt;
 
-	//Set the deformation scale
-	normailzed_defomation_scale = 1.0f;
-	deformation_scale = deformation_scale_max;
+	////Set the deformation scale
+	//normailzed_defomation_scale = 1.0f;
+	//deformation_scale = deformation_scale_max;
 
 	ImGui::Spacing();
 	//_________________________________________________________________________________________
@@ -256,14 +256,14 @@ void modal_analysis_window::render_window()
 		}
 
 		// Animation is playing 
-		normailzed_defomation_scale = std::sin(time_val * animation_speed); // Varies between 0 and 1
-		deformation_scale = normailzed_defomation_scale * deformation_scale_max;
+		modal_sine_deflection_scale = std::sin(time_val * animation_speed); // Varies between 0 and 1
+		// deformation_scale = normailzed_defomation_scale * deformation_scale_max;
 		time_val = time_val + 0.0002f;
 	}
 	else if (animate_pause == true)
 	{
-		normailzed_defomation_scale = std::sin(time_val * animation_speed); // Varies between 0 and 1
-		deformation_scale = normailzed_defomation_scale * deformation_scale_max;
+		modal_sine_deflection_scale = std::sin(time_val * animation_speed); // Varies between 0 and 1
+		// deformation_scale = normailzed_defomation_scale * deformation_scale_max;
 	}
 
 

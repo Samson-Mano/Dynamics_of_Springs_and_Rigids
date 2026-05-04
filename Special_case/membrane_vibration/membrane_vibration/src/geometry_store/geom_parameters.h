@@ -111,6 +111,8 @@ public:
 	double normalized_defl_scale = 0.0f; // Value of deflection scale
 	double defl_scale = 0.0f; // Value of deflection scale
 
+	double modal_visualization_defl_scale = 0.0; // Scale to control the modal visualization scale
+	double modal_sine_defl_scale = 0.0; // Sine value to control the modal animation
 
 	// Screen transformations
 	glm::mat4 viewMatrix = glm::mat4(1.0f); // View matrix

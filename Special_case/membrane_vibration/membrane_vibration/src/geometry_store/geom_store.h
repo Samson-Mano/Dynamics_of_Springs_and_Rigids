@@ -20,10 +20,7 @@
 
 // FE Objects
 #include "fe_objects/model_mesh_store.h"
-//#include "fe_objects/nodes_list_store.h"
-//#include "fe_objects/elementline_list_store.h"
-//#include "fe_objects/elementtri_list_store.h"
-//#include "fe_objects/elementquad_list_store.h"
+
 #include "fe_objects/nodeload_list_store.h"
 #include "fe_objects/nodeinlcond_list_store.h"
 
@@ -31,10 +28,7 @@
 #include "geometry_objects/dynamic_selrectangle_store.h"
 
 // FE Result Objects Modal analysis
-#include "result_objects/modal_nodes_list_store.h";
-#include "result_objects/modal_elementline_list_store.h";
-#include "result_objects/modal_elementtri_list_store.h";
-#include "result_objects/modal_elementquad_list_store.h"
+#include "result_objects/rslt_modalmesh_store.h"
 
 // FE Result Objects Pulse analysis
 #include "result_objects/pulse_node_list_store.h"
@@ -86,11 +80,6 @@ private:
 
 	// Geometry objects
 	model_mesh_store model_mesh;
-	
-	//nodes_list_store model_nodes;
-	//elementline_list_store model_lineelements;
-	//elementtri_list_store model_trielements;
-	//elementquad_list_store model_quadelements;
 
 	// Material data
 	material_data mat_data;
@@ -101,10 +90,8 @@ private:
 	nodeinlcond_list_store node_inlvelo;
 
 	// Modal analysis result 
-	modal_nodes_list_store modal_result_nodes;
-	modal_elementline_list_store modal_result_lineelements;
-	modal_elementtri_list_store modal_result_trielements;
-	modal_elementquad_list_store modal_result_quadelements;
+	rslt_modalmesh_store rslt_modal_mesh;
+
 
 	// Pulse analysis result
 	pulse_node_list_store pulse_result_nodes;

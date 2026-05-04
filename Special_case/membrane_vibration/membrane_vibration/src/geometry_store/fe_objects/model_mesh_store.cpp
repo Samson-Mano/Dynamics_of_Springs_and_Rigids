@@ -95,8 +95,8 @@ void model_mesh_store::create_buffer_data()
 		this->vertexData.push_back(pt.y);
 		this->vertexData.push_back(pt.z);
 
-		int nd_id = node.node_id;
-		glm::vec3 ptcoord = pt;
+		//int nd_id = node.node_id;
+		//glm::vec3 ptcoord = pt;
 
 	}
 
@@ -279,9 +279,9 @@ void model_mesh_store::create_vertex_normals(std::vector<glm::vec3>& vnormals)
 void model_mesh_store::create_buffer()
 {
 	// Create the point vertices
-	// Define the node vertices of the model for a node (3 position, 3 color ) 
+	// Define the node vertices of the model for a node (3 position) 
 	int node_count = static_cast<int>(this->nodes.size());
-	const unsigned int point_vertex_count = 6 * node_count;
+	const unsigned int point_vertex_count = 3 * node_count;
 
 	std::vector<float> pointVertices;
 
@@ -294,11 +294,6 @@ void model_mesh_store::create_buffer()
 		pointVertices.push_back(vertexData[vi + 1]);
 		pointVertices.push_back(vertexData[vi + 2]);
 
-		// Add the triangle normal
-		pointVertices.push_back(vertexnormalData[vi + 0]);
-		pointVertices.push_back(vertexnormalData[vi + 1]);
-		pointVertices.push_back(vertexnormalData[vi + 2]);
-		//
 	}
 
 
@@ -312,7 +307,6 @@ void model_mesh_store::create_buffer()
 	//2. Create and add to the buffer layout
 	VertexBufferLayout point_BufferLayout;
 	point_BufferLayout.AddFloat(3); // Vertex layout
-	point_BufferLayout.AddFloat(3); // Normal layout
 
 	//3. Create the vertex Array VAO (Add vertexBuffer binds both the vertexbuffer and vertexarray)
 	this->point_vao.createVertexArray();
@@ -437,7 +431,7 @@ void model_mesh_store::paint_selected_mesh_points()
 	this->selected_point_ibo.Bind();
 
 	glDrawElements(GL_POINTS,
-		static_cast<int>(pointIndexData.size()),
+		static_cast<int>(selectedpointIndexData.size()),
 		GL_UNSIGNED_INT,
 		0);
 
@@ -465,12 +459,8 @@ void model_mesh_store::update_openGLuniforms()
 		geom_param_ptr->rotateTranslation *
 		geom_param_ptr->modelMatrix;
 
-	// Compute normal matrix (inverse transpose of rotation * model)
-	glm::mat4 rotModel = geom_param_ptr->rotateTranslation * geom_param_ptr->modelMatrix;
-	glm::mat4 normalMatrix = glm::transpose(glm::inverse(rotModel));
 
 	mesh_shader.setUniform("uMVP", mvp, false);
-	mesh_shader.setUniform("uNormalMatrix", normalMatrix, false);
 
 	//
 }
@@ -529,7 +519,8 @@ void model_mesh_store::add_selection_nodes(std::vector<int> selected_node_ids)
 
 
 	// Create the selected point index data 
-	this->selected_point_ibo.createIndexBuffer(this->selectedpointIndexData.data(),
+	// this->selected_point_ibo.clear();
+	this->selected_point_ibo.updateIndexBuffer(this->selectedpointIndexData.data(),
 		static_cast<int>(this->selectedpointIndexData.size()));
 
 }

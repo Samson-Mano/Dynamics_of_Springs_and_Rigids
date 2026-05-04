@@ -78,10 +78,12 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	this->node_inlvelo.init(&geom_param);
 
 	// Re-initialize the result elements
-	this->modal_result_nodes.init(&geom_param);
-	this->modal_result_lineelements.init(&geom_param);
-	this->modal_result_trielements.init(&geom_param);
-	this->modal_result_quadelements.init(&geom_param);
+	this->rslt_modal_mesh.init(&geom_param);
+
+	//this->modal_result_nodes.init(&geom_param);
+	//this->modal_result_lineelements.init(&geom_param);
+	//this->modal_result_trielements.init(&geom_param);
+	//this->modal_result_quadelements.init(&geom_param);
 
 	this->pulse_result_nodes.init(&geom_param);
 	this->pulse_result_lineelements.init(&geom_param);
@@ -290,12 +292,6 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	update_model_zoomfit();
 
 
-
-	//this->model_nodes.set_buffer();
-	//this->model_lineelements.set_buffer();
-	//this->model_trielements.set_buffer();
-	//this->model_quadelements.set_buffer();
-
 	// Set the constraints buffer
 	this->node_loads.set_buffer();
 	this->node_inldispl.set_buffer();
@@ -357,10 +353,7 @@ void geom_store::update_model_matrix()
 	node_inlvelo.update_geometry_matrices(true, false, false, false, true, false);
 
 	// Update the modal analysis result matrix
-	modal_result_nodes.update_geometry_matrices(true, false, false, false, false, false);
-	modal_result_lineelements.update_geometry_matrices(true, false, false, false, false, false);
-	modal_result_trielements.update_geometry_matrices(true, false, false, false, false, false);
-	modal_result_quadelements.update_geometry_matrices(true, false, false, false, false, false);
+	rslt_modal_mesh.update_openGLuniforms();
 
 	pulse_result_nodes.update_geometry_matrices(true, false, false, false, false, false);
 	pulse_result_lineelements.update_geometry_matrices(true, false, false, false, false, false);
@@ -391,10 +384,7 @@ void geom_store::update_model_zoomfit()
 	node_inlvelo.update_geometry_matrices(false, true, true, true, false, false);
 
 	// Update the modal analysis result matrix
-	modal_result_nodes.update_geometry_matrices(false, true, true, true, false, false);
-	modal_result_lineelements.update_geometry_matrices(false, true, true, true, false, false);
-	modal_result_trielements.update_geometry_matrices(false, true, true, true, false, false);
-	modal_result_quadelements.update_geometry_matrices(false, true, true, true, false, false);
+	rslt_modal_mesh.update_openGLuniforms();
 
 	pulse_result_nodes.update_geometry_matrices(false, true, true, true, false, false);
 	pulse_result_lineelements.update_geometry_matrices(false, true, true, true, false, false);
@@ -423,10 +413,7 @@ void geom_store::update_model_pan(glm::vec2& transl)
 	node_inlvelo.update_geometry_matrices(false, true, false, false, false, false);
 
 	// Update the modal analysis result matrix
-	modal_result_nodes.update_geometry_matrices(false, true, false, false, false, false);
-	modal_result_lineelements.update_geometry_matrices(false, true, false, false, false, false);
-	modal_result_trielements.update_geometry_matrices(false, true, false, false, false, false);
-	modal_result_quadelements.update_geometry_matrices(false, true, false, false, false, false);
+	rslt_modal_mesh.update_openGLuniforms();
 
 	pulse_result_nodes.update_geometry_matrices(false, true, false, false, false, false);
 	pulse_result_lineelements.update_geometry_matrices(false, true, false, false, false, false);
@@ -452,10 +439,7 @@ void geom_store::update_model_rotate(glm::mat4& rotation_m)
 	node_inlvelo.update_geometry_matrices(false, false, true, false, false, false);
 
 	// Update the modal analysis result matrix
-	modal_result_nodes.update_geometry_matrices(false, false, true, false, false, false);
-	modal_result_lineelements.update_geometry_matrices(false, false, true, false, false, false);
-	modal_result_trielements.update_geometry_matrices(false, false, true, false, false, false);
-	modal_result_quadelements.update_geometry_matrices(false, false, true, false, false, false);
+	rslt_modal_mesh.update_openGLuniforms();
 
 	pulse_result_nodes.update_geometry_matrices(false, false, true, false, false, false);
 	pulse_result_lineelements.update_geometry_matrices(false, false, true, false, false, false);
@@ -482,10 +466,7 @@ void geom_store::update_model_zoom(double& z_scale)
 	node_inlvelo.update_geometry_matrices(false, false, false, true, false, false);
 
 	// Update the modal analysis result matrix
-	modal_result_nodes.update_geometry_matrices(false, false, false, true, false, false);
-	modal_result_lineelements.update_geometry_matrices(false, false, false, true, false, false);
-	modal_result_trielements.update_geometry_matrices(false, false, false, true, false, false);
-	modal_result_quadelements.update_geometry_matrices(false, false, false, true, false, false);
+	rslt_modal_mesh.update_openGLuniforms();
 
 	pulse_result_nodes.update_geometry_matrices(false, false, false, true, false, false);
 	pulse_result_lineelements.update_geometry_matrices(false, false, false, true, false, false);
@@ -535,7 +516,6 @@ void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::ve
 		if (nd_inlcond_window->is_show_window == true)
 		{
 			// Selected Node Index
-			// std::vector<int> selected_node_ids = model_nodes.is_node_selected(o_pt, c_pt);
 			std::vector<int> selected_node_ids = model_mesh.is_node_selected(o_pt, c_pt);
 			nd_inlcond_window->add_to_node_list(selected_node_ids, is_rightbutton);
 		}
@@ -544,7 +524,6 @@ void geom_store::update_selection_rectangle(const glm::vec2& o_pt, const glm::ve
 		if (nd_load_window->is_show_window == true)
 		{
 			// Selected Node Index
-			// std::vector<int> selected_node_ids = model_nodes.is_node_selected(o_pt, c_pt);
 			std::vector<int> selected_node_ids = model_mesh.is_node_selected(o_pt, c_pt);
 			nd_load_window->add_to_node_list(selected_node_ids, is_rightbutton);
 		}
@@ -610,17 +589,12 @@ void geom_store::paint_model()
 	if (op_window->is_show_modelelements == true)
 	{
 		// Show the model elements
-		// model_trielements.paint_elementtriangles();
-		// model_quadelements.paint_elementquadrilaterals();
-
 		model_mesh.paint_mesh();
 	}
 
 	if (op_window->is_show_modeledeges == true)
 	{
 		// Show the model edges
-		// model_lineelements.paint_elementlines();
-
 		model_mesh.paint_mesh_wireframe();
 	}
 
@@ -642,8 +616,6 @@ void geom_store::paint_model()
 	if (op_window->is_show_modelnodes == true)
 	{
 		// Show the model nodes
-		// model_nodes.paint_model_nodes();
-
 		model_mesh.paint_mesh_points();
 
 	}
@@ -716,50 +688,37 @@ void geom_store::paint_modal_analysis_results()
 		if (modal_solver_window->is_mode_selection_changed == true)
 		{
 			// Update the buffers
-			// Modal Tri buffer
-			modal_result_trielements.update_buffer(modal_solver_window->selected_modal_option);
-
-			// Modal Quad buffer
-			modal_result_quadelements.update_buffer(modal_solver_window->selected_modal_option);
-			
-			// Modal Line Update buffer
-			modal_result_lineelements.update_buffer(modal_solver_window->selected_modal_option);
-
-			// Modal Node Update buffer
-			modal_result_nodes.update_buffer(modal_solver_window->selected_modal_option);
+			rslt_modal_mesh.update_buffer(modal_solver_window->selected_modal_option);
 
 			modal_solver_window->is_mode_selection_changed = false;
 		}
 
 		// Update the deflection scale
-		geom_param.normalized_defl_scale = std::abs(modal_solver_window->normailzed_defomation_scale);
-		geom_param.defl_scale = modal_solver_window->deformation_scale;
+		geom_param.modal_visualization_defl_scale = modal_solver_window->visualization_deflection_scale;
+		geom_param.modal_sine_defl_scale = modal_solver_window->modal_sine_deflection_scale;
+
 
 		// Update the deflection scale
-		modal_result_trielements.update_geometry_matrices(false, false, false, false, false, true);
-		modal_result_quadelements.update_geometry_matrices(false, false, false, false, false, true);
-		modal_result_lineelements.update_geometry_matrices(false, false, false, false, false, true);
-		modal_result_nodes.update_geometry_matrices(false, false, false, false, false, true);
+		rslt_modal_mesh.update_animation_openGLuniforms();
 
 		// ______________________________________________________________________________________
 		
 		if (modal_solver_window->show_result_quads == true)
 		{
 			// Paint the modal tris/ quads 
-			modal_result_trielements.paint_modal_elementtriangles();
-			modal_result_quadelements.paint_modal_elementquadrilaterals();
+			rslt_modal_mesh.paint_mesh();
 		}
 
 		if (modal_solver_window->show_result_lines == true)
 		{
 			// Paint the modal lines
-			modal_result_lineelements.paint_modal_elementlines();
+			rslt_modal_mesh.paint_mesh_wireframe();
 		}
 
 		if (modal_solver_window->show_result_nodes == true)
 		{
 			// Paint the modal nodes
-			modal_result_nodes.paint_modal_nodes();
+			rslt_modal_mesh.paint_mesh_points();
 		}
 	}
 
@@ -787,10 +746,7 @@ void geom_store::paint_modal_analysis_results()
 		// Execute the Modal Analysis
 		modal_solver.modal_analysis_start(model_mesh,
 			mat_data,
-			modal_result_nodes,
-			modal_result_lineelements,
-			modal_result_trielements,
-			modal_result_quadelements);
+			rslt_modal_mesh);
 
 		// reset the frequency response and pulse response solution
 		pulse_solver.clear_results();
@@ -802,10 +758,7 @@ void geom_store::paint_modal_analysis_results()
 			modal_solver_window->mode_result_str = modal_solver.mode_result_str;
 
 			// Set the buffer
-			modal_result_nodes.set_buffer(); // Set the node buffer
-			modal_result_lineelements.set_buffer(); // Set the line buffer
-			modal_result_trielements.set_buffer(); // Set the tri buffer
-			modal_result_quadelements.set_buffer(); // Set the quad buffer
+			rslt_modal_mesh.create_buffer();
 
 			std::cout << "Modal Analysis Complete" << std::endl;
 

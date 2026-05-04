@@ -22,10 +22,10 @@ std::unordered_map<ShaderLibrary::ShaderType, ShaderLibrary::ShaderSource>& Shad
             }
         },
                 {
-        ShaderType::MeshRsltShader,
+        ShaderType::ModalRsltShader,
             {
-                meshrslt_vertex_shader(),
-                meshrslt_fragment_shader()
+                modalrslt_vertex_shader(),
+                modalrslt_fragment_shader()
             }
         },
         {
@@ -50,19 +50,16 @@ std::string ShaderLibrary::mesh_vertex_shader()
                     
     // Pre-computed MVP matrix on CPU for better performance
     uniform mat4 uMVP;           // Model-View-Projection matrix
-    uniform mat4 uNormalMatrix;  // For normal transformation
     uniform vec4 vertexColor;
                     
     layout(location = 0) in vec3 aPosition;
-    layout(location = 1) in vec3 aNormal;
                     
-    out vec3 vNormal;
+
     out vec4 vColor;
                     
     void main()
     {
         gl_Position = uMVP * vec4(aPosition, 1.0);
-        vNormal = normalize(mat3(uNormalMatrix) * aNormal);
         vColor = vertexColor;
     }
 
@@ -77,7 +74,6 @@ std::string ShaderLibrary::mesh_fragment_shader()
 
   #version 330 core
     
-    in vec3 vNormal;
     in vec4 vColor;
     out vec4 fColor;
     
@@ -95,7 +91,7 @@ std::string ShaderLibrary::mesh_fragment_shader()
 
 
 
-std::string ShaderLibrary::meshrslt_vertex_shader()
+std::string ShaderLibrary::modalrslt_vertex_shader()
 {
     return R"(
 
@@ -103,34 +99,28 @@ std::string ShaderLibrary::meshrslt_vertex_shader()
                     
     // Pre-computed MVP matrix on CPU for better performance
     uniform mat4 uMVP;           // Model-View-Projection matrix
-    uniform mat4 uNormalMatrix;  // For normal transformation
-    uniform mat4 uModelMatrix;   // For deformation in local space
-
-    // Deformation parameters
-    uniform float uDeflScale = 0.0f; 
+  
+    // Deflection parameters
+    uniform float uDeflAmplitude = 0.0f; // Sine cycle from animation (-1 to 1) 
+    uniform float uDeflScale = 0.0f; // Deflection scale value (controlled by user for visualization)
                 
     layout(location = 0) in vec3 aPosition; // UnDeformed Position of Node (Static Position)
-    layout(location = 1) in vec3 aDeflValue; // Deformation Value of Node at time t
-    layout(location = 2) in vec3 aNormal;
-    layout(location = 3) in float aDeflAmplitude; // Normalized deflection value (0.0 to 1.0)
-                    
-    out vec3 vNormal;
+    layout(location = 1) in vec3 aDeflValue; // Deflection Value of Node for a particular mode
+    layout(location = 2) in float aDeflampl; // Deflection value    
+                
     out float vDeflAmplitude;
-    out vec3 vWorldPosition;
 
     void main()
     {
         // Scaled deformed position of the Node
-        vec3 deformedPosition = vec3(aPosition.x + (aDeflValue.x * uDeflScale), 
-								    aPosition.y + (aDeflValue.y * uDeflScale),
-								    aPosition.z + (aDeflValue.z * uDeflScale));
+        vec3 deformedPosition = vec3(aPosition.x + (aDeflValue.x * uDeflScale * uDeflAmplitude), 
+								    aPosition.y + (aDeflValue.y * uDeflScale * uDeflAmplitude),
+								    aPosition.z + (aDeflValue.z * uDeflScale * uDeflAmplitude));
 
         gl_Position = uMVP * vec4(deformedPosition, 1.0);
-        vNormal = normalize(mat3(uNormalMatrix) * aNormal);
-        vDeflAmplitude = aDeflAmplitude;
 
-        vec4 worldPos = uModelMatrix * vec4(deformedPosition, 1.0);
-        vWorldPosition = worldPos.xyz;
+        vDeflAmplitude = abs(aDeflampl * uDeflAmplitude);
+
     }
 
 )";
@@ -138,14 +128,13 @@ std::string ShaderLibrary::meshrslt_vertex_shader()
 }
 
 
-std::string ShaderLibrary::meshrslt_fragment_shader()
+std::string ShaderLibrary::modalrslt_fragment_shader()
 {
     return R"(
 
-  #version 330 core
+    #version 330 core
     
-    in vec3 vNormal;
-    in float vDeflscale;
+    in float vDeflAmplitude;
     out vec4 fColor;
     
     uniform float vTransparency;
@@ -154,7 +143,7 @@ std::string ShaderLibrary::meshrslt_fragment_shader()
     vec3 jetColormap(float value) 
     {
         // Clamp value to [-1, 1] range and remap to [0, 1]
-        float t = (clamp(value, -1.0, 1.0) + 1.0) / 2.0;
+        float t = value; // (clamp(value, -1.0, 1.0) + 1.0) / 2.0;
         
         // Jet colormap algorithm
         vec3 color;
@@ -168,7 +157,7 @@ std::string ShaderLibrary::meshrslt_fragment_shader()
     // Rainbow colormap
     vec3 rainbowColormap(float value)
     {
-        float t = (clamp(value, -1.0, 1.0) + 1.0) / 2.0;
+        float t = value; // (clamp(value, -1.0, 1.0) + 1.0) / 2.0;
         return vec3(
             sin(t * 3.14159 * 2.0),
             sin((t + 0.33) * 3.14159 * 2.0),
@@ -180,7 +169,7 @@ std::string ShaderLibrary::meshrslt_fragment_shader()
     void main()
     {
         // Simple color output without lighting
-        vec3 vertexColor = jetColormap(interpolated_defl);
+        vec3 vertexColor = jetColormap(vDeflAmplitude);
 
         fColor =  vec4(vertexColor, vTransparency); // Set the final color
     }

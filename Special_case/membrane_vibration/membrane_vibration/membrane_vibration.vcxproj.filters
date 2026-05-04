@@ -96,12 +96,6 @@
     <ClCompile Include="src\geometry_store\geom_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\result_objects\modal_elementline_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\geometry_store\result_objects\modal_nodes_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\geometry_store\result_objects\pulse_elementline_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -156,16 +150,10 @@
     <ClCompile Include="src\events_handler\arcball_transformation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\result_objects\modal_elementquad_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\geometry_store\geometry_objects\dynamic_tri_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\geometry_store\result_objects\pulse_elementquad_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\geometry_store\result_objects\modal_elementtri_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\geometry_store\result_objects\pulse_elementtri_list_store.cpp">
@@ -304,12 +292,6 @@
     <ClInclude Include="src\geometry_store\geom_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\geometry_store\result_objects\modal_elementline_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\result_objects\modal_nodes_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\geometry_store\result_objects\pulse_elementline_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -376,16 +358,10 @@
     <ClInclude Include="src\events_handler\arcball_transformation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\geometry_store\result_objects\modal_elementquad_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\geometry_store\geometry_objects\dynamic_tri_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\result_objects\pulse_elementquad_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\result_objects\modal_elementtri_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\result_objects\pulse_elementtri_list_store.h">

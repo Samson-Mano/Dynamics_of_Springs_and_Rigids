@@ -10,7 +10,7 @@ public:
     enum class ShaderType
     {
         MeshShader,
-        MeshRsltShader,
+        ModalRsltShader,
         TextShader
     };
 
@@ -34,9 +34,9 @@ private:
     static std::string mesh_vertex_shader();
     static std::string mesh_fragment_shader();
 
-    // Mesh Rslt shader
-    static std::string meshrslt_vertex_shader();
-    static std::string meshrslt_fragment_shader();
+    // Modal Rslt shader
+    static std::string modalrslt_vertex_shader();
+    static std::string modalrslt_fragment_shader();
 
     // Text shader
     static std::string text_vertex_shader();
