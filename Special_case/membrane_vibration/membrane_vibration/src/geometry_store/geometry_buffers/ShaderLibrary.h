@@ -11,6 +11,7 @@ public:
     {
         MeshShader,
         ModalRsltShader,
+        LoadViewShader,
         TextShader
     };
 
@@ -37,6 +38,10 @@ private:
     // Modal Rslt shader
     static std::string modalrslt_vertex_shader();
     static std::string modalrslt_fragment_shader();
+
+    // Load View Shader
+    static std::string loadview_vertex_shader();
+    static std::string loadview_fragment_shader();
 
     // Text shader
     static std::string text_vertex_shader();

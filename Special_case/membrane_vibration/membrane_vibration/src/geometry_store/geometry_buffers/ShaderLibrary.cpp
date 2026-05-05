@@ -28,6 +28,13 @@ std::unordered_map<ShaderLibrary::ShaderType, ShaderLibrary::ShaderSource>& Shad
                 modalrslt_fragment_shader()
             }
         },
+         {
+        ShaderType::LoadViewShader,
+            {
+                loadview_vertex_shader(),
+                loadview_fragment_shader()
+            }
+        },
         {
             ShaderType::TextShader,
             {
@@ -72,7 +79,7 @@ std::string ShaderLibrary::mesh_fragment_shader()
 {
     return R"(
 
-  #version 330 core
+    #version 330 core
     
     in vec4 vColor;
     out vec4 fColor;
@@ -178,6 +185,75 @@ std::string ShaderLibrary::modalrslt_fragment_shader()
 )";
 
 }
+
+
+
+
+
+std::string ShaderLibrary::loadview_vertex_shader()
+{
+    return R"(
+
+     #version 330 core
+    
+    uniform mat4 uMVP;
+    uniform vec4 uVertexColor;
+    uniform float uZoomScale = 1.0f;
+    
+    layout(location = 0) in vec3 aPosition;
+    layout(location = 1) in vec3 aOrigin;
+    
+    out vec4 vColor;
+    
+    void main()
+    {
+        // Transform to clip space
+        vec4 clipPos = uMVP * vec4(aPosition, 1.0);
+        vec4 clipOrigin = uMVP * vec4(aOrigin, 1.0);
+        
+        // Calculate NDC coordinates
+        vec3 ndcPos = clipPos.xyz / clipPos.w;
+        vec3 ndcOrigin = clipOrigin.xyz / clipOrigin.w;
+        
+        // Scale offset in NDC space
+        vec2 scaledOffset = (ndcPos.xy - ndcOrigin.xy) / uZoomScale;
+        
+        // Preserve depth from origin (or position)
+        float depth = ndcOrigin.z;
+        
+        // Final position (back to clip space)
+        gl_Position = vec4(ndcOrigin.xy + scaledOffset, depth, 1.0);
+        
+        vColor = uVertexColor;
+    }
+
+)";
+
+}
+
+
+std::string ShaderLibrary::loadview_fragment_shader()
+{
+    return R"(
+
+
+    #version 330 core
+    
+    in vec4 vColor;
+    out vec4 fColor;
+    
+    void main()
+    {
+        // Simple color output without lighting
+        fColor = vColor;
+    }
+    
+
+)";
+
+}
+
+
 
 
 

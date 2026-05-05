@@ -70,6 +70,9 @@ public:
 	std::vector<elementtri_store> tris;
 	std::vector<elementquad_store> quads;
 
+	// Geometry data for OpenGL
+	std::unordered_map<int, int> pointIdToIndex;
+
 	
 	model_mesh_store();
 	~model_mesh_store() = default;
@@ -114,9 +117,6 @@ private:
 	IndexBuffer wireframe_ibo;
 	IndexBuffer triangle_ibo;
 	IndexBuffer quadrilateral_ibo;
-
-	// Geometry data for OpenGL
-	std::unordered_map<int, int> pointIdToIndex;
 
 	std::vector<float> vertexData;
 	std::vector<float> vertexnormalData;

@@ -943,7 +943,9 @@ void  geom_store::paint_node_load_operation()
 		for (int& id : nd_load_window->selected_nodes)
 		{
 			// Add the loads
-			node_loads.add_loads(id, model_mesh.nodes[id].node_pt,
+			int index = model_mesh.pointIdToIndex[id];
+
+			node_loads.add_loads(id, model_mesh.nodes[index].node_pt,
 								load_start_time, load_end_time, load_amplitude);
 		}
 
@@ -1018,7 +1020,8 @@ void geom_store::paint_node_inlcond_operation()
 					continue;
 				}
 
-				node_inldispl.add_inlcondition(id, model_mesh.nodes[id].node_pt, initial_displacement_z);
+				int index = model_mesh.pointIdToIndex[id];
+				node_inldispl.add_inlcondition(id, model_mesh.nodes[index].node_pt, initial_displacement_z);
 
 			}
 			else if (nd_inlcond_window->selected_inl_option == 1)
@@ -1031,7 +1034,8 @@ void geom_store::paint_node_inlcond_operation()
 					continue;
 				}
 
-				node_inlvelo.add_inlcondition(id, model_mesh.nodes[id].node_pt, initial_velocity_z);
+				int index = model_mesh.pointIdToIndex[id];
+				node_inlvelo.add_inlcondition(id, model_mesh.nodes[index].node_pt, initial_velocity_z);
 
 			}
 

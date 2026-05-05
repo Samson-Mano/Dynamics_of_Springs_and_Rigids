@@ -5,10 +5,6 @@ nodeload_list_store::nodeload_list_store()
 	// Empty constructor
 }
 
-nodeload_list_store::~nodeload_list_store()
-{
-	// Empty destructor
-}
 
 void nodeload_list_store::init(geom_parameters* geom_param_ptr)
 {
@@ -17,11 +13,10 @@ void nodeload_list_store::init(geom_parameters* geom_param_ptr)
 
 	load_value_labels.init(geom_param_ptr);
 
-	// Create the shader and Texture for the drawing the constraints
-	std::filesystem::path shadersPath = geom_param_ptr->resourcePath;
+	// Create the load shader
+	auto shaderSrc = ShaderLibrary::Get(ShaderLibrary::ShaderType::LoadViewShader);
 
-	load_shader.create_shader((shadersPath.string() + "/resources/shaders/load_vert_shader.vert").c_str(),
-		(shadersPath.string() + "/resources/shaders/load_frag_shader.frag").c_str());
+	load_shader.create_shader_data(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
 
 	// Clear the loads
 	load_count = 0;
@@ -30,17 +25,19 @@ void nodeload_list_store::init(geom_parameters* geom_param_ptr)
 	all_load_ids.clear();
 }
 
+
 void nodeload_list_store::set_zero_condition(const int& model_type)
 {
 	this->model_type = model_type; // Model type 0 - Circular, 1,2,3 Rectangular
 }
+
 
 void nodeload_list_store::add_loads(int& node_id, glm::vec3& load_loc, double& load_start_time,
 	double& load_end_time, double& load_value)
 {
 	load_data temp_load;
 	temp_load.load_id = get_unique_load_id(all_load_ids); // Load id
-	temp_load.node_id = node_id; // id of the line its applied to
+	temp_load.node_id = node_id; // id of the node its applied to
 	temp_load.load_loc = load_loc; // Load location
 	temp_load.load_start_time = load_start_time; // Load start time
 	temp_load.load_end_time = load_end_time; // Load end time
@@ -51,6 +48,7 @@ void nodeload_list_store::add_loads(int& node_id, glm::vec3& load_loc, double& l
 	all_load_ids.push_back(temp_load.load_id); // Add to the id vector
 	load_count++;
 }
+
 
 void nodeload_list_store::delete_load(int& node_id)
 {
@@ -91,6 +89,7 @@ void nodeload_list_store::delete_load(int& node_id)
 	}
 
 }
+
 
 void nodeload_list_store::set_buffer()
 {
@@ -144,7 +143,7 @@ void nodeload_list_store::set_buffer()
 
 	//__________________________________________________________________________
 
-	unsigned int load_vertex_count = 5 * 9 * load_count;
+	unsigned int load_vertex_count = 5 * 6 * load_count; // 5 points to draw load (3 position, 3 origin)
 	float* load_vertices = new float[load_vertex_count];
 
 	unsigned int load_indices_count = 14 * load_count;
@@ -164,11 +163,10 @@ void nodeload_list_store::set_buffer()
 	VertexBufferLayout load_layout;
 	load_layout.AddFloat(3);  // Position
 	load_layout.AddFloat(3);  // Center
-	load_layout.AddFloat(3);  // Color
 
 	unsigned int load_vertex_size = load_vertex_count * sizeof(float);
 
-	// Create the Constraint buffers
+	// Create the Load buffers
 	load_buffer.CreateBuffers(load_vertices, load_vertex_size,
 		load_indices, load_indices_count, load_layout);
 
@@ -176,6 +174,7 @@ void nodeload_list_store::set_buffer()
 	delete[] load_vertices;
 	delete[] load_indices;
 }
+
 
 void nodeload_list_store::paint_loads()
 {
@@ -187,11 +186,13 @@ void nodeload_list_store::paint_loads()
 	load_shader.UnBind();
 }
 
+
 void nodeload_list_store::paint_load_labels()
 {
 	// Paint load labels
 	load_value_labels.paint_text();
 }
+
 
 void nodeload_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
 	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
@@ -199,55 +200,36 @@ void nodeload_list_store::update_geometry_matrices(bool set_modelmatrix, bool se
 	// Update the load value label uniforms
 	load_value_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
 
-	if (set_modelmatrix == true)
-	{
-		// set the model matrix
-		load_shader.setUniform("geom_scale", static_cast<float>(geom_param_ptr->geom_scale));
-		load_shader.setUniform("transparency", 1.0f);
+
+	// Update the shader uniforms for the load shader
+	float zoomScale = static_cast<float>(geom_param_ptr->zoom_scale);
+	glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f),
+		glm::vec3(zoomScale, zoomScale, zoomScale));
+
+	glm::mat4 viewMatrix = glm::transpose(geom_param_ptr->panTranslation) * scalingMatrix;
+
+	// Compute MVP matrix
+	glm::mat4 mvp = geom_param_ptr->projectionMatrix *
+		viewMatrix *
+		geom_param_ptr->rotateTranslation *
+		geom_param_ptr->modelMatrix;
 
 
-		load_shader.setUniform("projectionMatrix", geom_param_ptr->projectionMatrix, false);
-		load_shader.setUniform("viewMatrix", geom_param_ptr->viewMatrix, false);
-		load_shader.setUniform("modelMatrix", geom_param_ptr->modelMatrix, false);
-	}
+	load_shader.setUniform("uMVP", mvp, false);
+	load_shader.setUniform("uZoomScale", zoomScale);
 
-	if (set_pantranslation == true)
-	{
-		// set the pan translation
-		load_shader.setUniform("panTranslation", geom_param_ptr->panTranslation, false);
-	}
+	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.load_color, geom_param_ptr->geom_transparency);
+	
+	load_shader.setUniform("uVertexColor", vertexColor);
 
-	if (set_rotatetranslation == true)
-	{
-		// set the rotate translation
-		load_shader.setUniform("rotateTranslation", geom_param_ptr->rotateTranslation, false);
-	}
-
-	if (set_zoomtranslation == true)
-	{
-		// set the zoom translation
-		load_shader.setUniform("zoomscale", static_cast<float>(geom_param_ptr->zoom_scale));
-	}
-
-	if (set_transparency == true)
-	{
-		// set the alpha transparency
-		load_shader.setUniform("transparency", static_cast<float>(geom_param_ptr->geom_transparency));
-	}
-
-	if (set_deflscale == true)
-	{
-		// set the deflection scale
-		// load_shader.setUniform("deflscale", static_cast<float>(geom_param_ptr->defl_scale));
-	}
 }
+
 
 void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, unsigned int& load_v_index, unsigned int* load_indices, unsigned int& load_i_index)
 {
 	int load_sign = ld.load_value > 0 ? 1 : -1;
 
 	glm::vec3 load_loc = ld.load_loc;
-	glm::vec3 load_color = geom_param_ptr->geom_colors.load_color;
 
 	// Rotate the corner points
 	glm::vec3 load_arrow_startpt = glm::vec3(0.0,0.0, 
@@ -276,12 +258,7 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	load_vertices[load_v_index + 4] = load_loc.y;
 	load_vertices[load_v_index + 5] = load_loc.z;
 
-	// Load color
-	load_vertices[load_v_index + 6] = load_color.x;
-	load_vertices[load_v_index + 7] = load_color.y;
-	load_vertices[load_v_index + 8] = load_color.z;
-
-	load_v_index = load_v_index + 9;
+	load_v_index = load_v_index + 6;
 
 	// Load 1th point
 	// Position
@@ -294,12 +271,7 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	load_vertices[load_v_index + 4] = load_loc.y;
 	load_vertices[load_v_index + 5] = load_loc.z;
 
-	// Load color
-	load_vertices[load_v_index + 6] = load_color.x;
-	load_vertices[load_v_index + 7] = load_color.y;
-	load_vertices[load_v_index + 8] = load_color.z;
-
-	load_v_index = load_v_index + 9;
+	load_v_index = load_v_index + 6;
 
 	// Load 2th point
 	// Position
@@ -312,12 +284,7 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	load_vertices[load_v_index + 4] = load_loc.y;
 	load_vertices[load_v_index + 5] = load_loc.z;
 
-	// Load color
-	load_vertices[load_v_index + 6] = load_color.x;
-	load_vertices[load_v_index + 7] = load_color.y;
-	load_vertices[load_v_index + 8] = load_color.z;
-
-	load_v_index = load_v_index + 9;
+	load_v_index = load_v_index + 6;
 
 	// Load 3th point
 	// Position
@@ -330,12 +297,7 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	load_vertices[load_v_index + 4] = load_loc.y;
 	load_vertices[load_v_index + 5] = load_loc.z;
 
-	// Load color
-	load_vertices[load_v_index + 6] = load_color.x;
-	load_vertices[load_v_index + 7] = load_color.y;
-	load_vertices[load_v_index + 8] = load_color.z;
-
-	load_v_index = load_v_index + 9;
+	load_v_index = load_v_index + 6;
 
 	// Load 4th point
 	// Position
@@ -348,12 +310,7 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	load_vertices[load_v_index + 4] = load_loc.y;
 	load_vertices[load_v_index + 5] = load_loc.z;
 
-	// Load color
-	load_vertices[load_v_index + 6] = load_color.x;
-	load_vertices[load_v_index + 7] = load_color.y;
-	load_vertices[load_v_index + 8] = load_color.z;
-
-	load_v_index = load_v_index + 9;
+	load_v_index = load_v_index + 6;
 
 	//______________________________________________________________________
 	// 
@@ -391,6 +348,7 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	// Increment
 	load_i_index = load_i_index + 14;
 }
+
 
 int nodeload_list_store::get_unique_load_id(std::vector<int>& all_ids)
 {

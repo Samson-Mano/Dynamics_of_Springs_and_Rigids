@@ -1,8 +1,6 @@
 #pragma once
-// #include "model_mesh_store.h"
-
-#include "../geometry_objects/point_list_store.h"
-#include "../geometry_objects/line_list_store.h"
+#include "../geometry_buffers/gBuffers.h"
+#include "../geom_parameters.h"
 #include "../geometry_objects/label_list_store.h"
 
 
@@ -27,7 +25,7 @@ public:
 	int model_type = 0; // 0 - Circle, 1,2,3 - Rectangle
 
 	nodeload_list_store();
-	~nodeload_list_store();
+	~nodeload_list_store() = default;
 	void init(geom_parameters* geom_param_ptr);
 	void set_zero_condition(const int& model_type);
 	void add_loads(int& node_id, glm::vec3& load_loc, double& load_start_time, 
