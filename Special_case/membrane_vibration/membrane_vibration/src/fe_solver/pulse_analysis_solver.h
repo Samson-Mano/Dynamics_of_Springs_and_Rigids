@@ -2,10 +2,12 @@
 #include "modal_analysis_solver.h"
 #include "../geometry_store/fe_objects/nodeload_list_store.h"
 #include "../geometry_store/fe_objects/nodeinlcond_list_store.h"
-#include "../geometry_store/result_objects/pulse_node_list_store.h"
-#include "../geometry_store/result_objects/pulse_elementline_list_store.h"
-#include "../geometry_store/result_objects/pulse_elementtri_list_store.h"
-#include "../geometry_store/result_objects/pulse_elementquad_list_store.h"
+#include "../geometry_store/result_objects/rslt_pulsemesh_store.h"
+
+//#include "../geometry_store/result_objects/pulse_node_list_store.h"
+//#include "../geometry_store/result_objects/pulse_elementline_list_store.h"
+//#include "../geometry_store/result_objects/pulse_elementtri_list_store.h"
+//#include "../geometry_store/result_objects/pulse_elementquad_list_store.h"
 
 
 struct pulse_load_data
@@ -48,10 +50,7 @@ public:
 		const double time_interval,
 		const double damping_ratio,
 		const int selected_pulse_option,
-		pulse_node_list_store& pulse_result_nodes,
-		pulse_elementline_list_store& pulse_result_lineelements,
-		pulse_elementtri_list_store& pulse_result_trielements,
-		pulse_elementquad_list_store& pulse_result_quadelements);
+		rslt_pulsemesh_store& rslt_pulsemesh);
 
 private:
 	Stopwatch_events stopwatch;
@@ -120,12 +119,20 @@ private:
 		const double& modal_force_endtime);
 
 
-	void map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
-		pulse_elementline_list_store& pulse_result_lineelements,
-		pulse_elementtri_list_store& pulse_result_trielements,
-		pulse_elementquad_list_store& pulse_result_quadelements,
+	void map_pulse_analysis_results(rslt_pulsemesh_store& rslt_pulsemesh,
 		const int& number_of_time_steps,
 		const model_mesh_store& model_mesh, 
-		const std::unordered_map<int, pulse_node_result>& node_results);
+		const std::unordered_map<int, rslt_pulsenode_store>& node_pulseresults);
+
+
+	int get_or_create_node(int original_node_id,
+		std::unordered_map<int, int>& added_nodes,
+		std::vector<rslt_modalnode_store>& rsltnodes,
+		const glm::vec3& node_pt,
+		const std::vector<glm::vec3>& displ,
+		const std::vector<double>& displ_mag,
+		int& next_node_id);
+
+
 
 };

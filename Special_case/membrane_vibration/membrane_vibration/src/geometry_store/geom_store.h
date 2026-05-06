@@ -31,10 +31,12 @@
 #include "result_objects/rslt_modalmesh_store.h"
 
 // FE Result Objects Pulse analysis
-#include "result_objects/pulse_node_list_store.h"
-#include "result_objects/pulse_elementline_list_store.h"
-#include "result_objects/pulse_elementtri_list_store.h"
-#include "result_objects/pulse_elementquad_list_store.h"
+#include "result_objects/rslt_pulsemesh_store.h"
+
+//#include "result_objects/pulse_node_list_store.h"
+//#include "result_objects/pulse_elementline_list_store.h"
+//#include "result_objects/pulse_elementtri_list_store.h"
+//#include "result_objects/pulse_elementquad_list_store.h"
 
 
 class geom_store
@@ -92,12 +94,14 @@ private:
 	// Modal analysis result 
 	rslt_modalmesh_store rslt_modal_mesh;
 
-
 	// Pulse analysis result
-	pulse_node_list_store pulse_result_nodes;
-	pulse_elementline_list_store pulse_result_lineelements;
-	pulse_elementtri_list_store pulse_result_trielements;
-	pulse_elementquad_list_store pulse_result_quadelements;
+	rslt_pulsemesh_store rslt_pulse_mesh;
+
+
+	//pulse_node_list_store pulse_result_nodes;
+	//pulse_elementline_list_store pulse_result_lineelements;
+	//pulse_elementtri_list_store pulse_result_trielements;
+	//pulse_elementquad_list_store pulse_result_quadelements;
 
 	// Solver object
 	modal_analysis_solver modal_solver;

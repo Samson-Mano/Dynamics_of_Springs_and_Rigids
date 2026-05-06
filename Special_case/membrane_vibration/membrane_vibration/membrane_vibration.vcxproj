@@ -175,6 +175,7 @@
     <ClCompile Include="src\geometry_store\result_objects\pulse_elementtri_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\pulse_node_list_store.cpp" />
     <ClCompile Include="src\geometry_store\result_objects\rslt_modalmesh_store.cpp" />
+    <ClCompile Include="src\geometry_store\result_objects\rslt_pulsemesh_store.cpp" />
     <ClCompile Include="src\ImGui\imgui.cpp" />
     <ClCompile Include="src\ImGui\imgui_draw.cpp" />
     <ClCompile Include="src\ImGui\imgui_impl_glfw.cpp" />
@@ -257,6 +258,7 @@
     <ClInclude Include="src\geometry_store\result_objects\pulse_elementtri_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\pulse_node_list_store.h" />
     <ClInclude Include="src\geometry_store\result_objects\rslt_modalmesh_store.h" />
+    <ClInclude Include="src\geometry_store\result_objects\rslt_pulsemesh_store.h" />
     <ClInclude Include="src\ImGui\imconfig.h" />
     <ClInclude Include="src\ImGui\imgui.h" />
     <ClInclude Include="src\ImGui\imgui_impl_glfw.h" />

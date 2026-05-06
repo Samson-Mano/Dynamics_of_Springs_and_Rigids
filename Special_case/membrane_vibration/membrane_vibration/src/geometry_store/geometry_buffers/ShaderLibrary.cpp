@@ -29,6 +29,13 @@ std::unordered_map<ShaderLibrary::ShaderType, ShaderLibrary::ShaderSource>& Shad
             }
         },
          {
+        ShaderType::PulseRsltShader,
+            {
+                modalrslt_vertex_shader(),
+                modalrslt_fragment_shader()
+            }
+        },
+         {
         ShaderType::LoadViewShader,
             {
                 loadview_vertex_shader(),
@@ -188,6 +195,93 @@ std::string ShaderLibrary::modalrslt_fragment_shader()
 
 
 
+
+std::string ShaderLibrary::pulserslt_vertex_shader()
+{
+    return R"(
+
+    #version 330 core
+                    
+    // Pre-computed MVP matrix on CPU for better performance
+    uniform mat4 uMVP;           // Model-View-Projection matrix
+  
+    // Deflection parameters
+    uniform float uDeflScale = 0.0f; // Deflection scale value (controlled by user for visualization)
+                
+    layout(location = 0) in vec3 aPosition; // UnDeformed Position of Node (Static Position)
+    layout(location = 1) in vec3 aDeflValue; // Deflection Value of Node for a particular time step
+    layout(location = 2) in float aDeflampl; // Deflection value    
+                
+    out float vDeflAmplitude;
+
+    void main()
+    {
+        // Scaled deformed position of the Node
+        vec3 deformedPosition = vec3(aPosition.x + (aDeflValue.x * uDeflScale), 
+								    aPosition.y + (aDeflValue.y * uDeflScale),
+								    aPosition.z + (aDeflValue.z * uDeflScale));
+
+        gl_Position = uMVP * vec4(deformedPosition, 1.0);
+
+        vDeflAmplitude = abs(aDeflampl);
+
+    }
+
+)";
+
+}
+
+
+std::string ShaderLibrary::pulserslt_fragment_shader()
+{
+    return R"(
+
+    #version 330 core
+    
+    in float vDeflAmplitude;
+    out vec4 fColor;
+    
+    uniform float vTransparency;
+
+    // Jet colormap (blue to red)
+    vec3 jetColormap(float value) 
+    {
+        // Clamp value to [-1, 1] range and remap to [0, 1]
+        float t = value; // (clamp(value, -1.0, 1.0) + 1.0) / 2.0;
+        
+        // Jet colormap algorithm
+        vec3 color;
+        color.r = clamp(1.5 - abs(4.0 * t - 3.0), 0.0, 1.0);
+        color.g = clamp(1.5 - abs(4.0 * t - 2.0), 0.0, 1.0);
+        color.b = clamp(1.5 - abs(4.0 * t - 1.0), 0.0, 1.0);
+        
+        return color;
+    }
+    
+    // Rainbow colormap
+    vec3 rainbowColormap(float value)
+    {
+        float t = value; // (clamp(value, -1.0, 1.0) + 1.0) / 2.0;
+        return vec3(
+            sin(t * 3.14159 * 2.0),
+            sin((t + 0.33) * 3.14159 * 2.0),
+            sin((t + 0.67) * 3.14159 * 2.0)
+        ) * 0.5 + 0.5;
+    }
+
+
+    void main()
+    {
+        // Simple color output without lighting
+        vec3 vertexColor = jetColormap(vDeflAmplitude);
+
+        fColor =  vec4(vertexColor, vTransparency); // Set the final color
+    }
+    
+
+)";
+
+}
 
 
 std::string ShaderLibrary::loadview_vertex_shader()

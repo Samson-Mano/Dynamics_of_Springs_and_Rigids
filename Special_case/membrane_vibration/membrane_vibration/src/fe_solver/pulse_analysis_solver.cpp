@@ -30,10 +30,7 @@ void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_m
 	const double time_interval,
 	const double damping_ratio,
 	const int selected_pulse_option,
-	pulse_node_list_store& pulse_result_nodes,
-	pulse_elementline_list_store& pulse_result_lineelements,
-	pulse_elementtri_list_store& pulse_result_trielements,
-	pulse_elementquad_list_store& pulse_result_quadelements)
+	rslt_pulsemesh_store& rslt_pulsemesh)
 {
 	// Main solver call
 	this->is_pulse_analysis_complete = false;
@@ -125,7 +122,7 @@ void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_m
 
 	//____________________________________________________________________________________________________________________
 	// Step: 3 Find the pulse response
-	std::unordered_map<int, pulse_node_result> node_results;
+	std::unordered_map<int, rslt_pulsenode_store> node_pulseresults;
 
 	// Time step count
 	this->time_step_count = 0;
@@ -285,14 +282,15 @@ void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_m
 				displ_magnitude = std::abs(global_displ_ampl_respMatrix.coeff(matrix_index));
 			}
 
+
 			// Add the index
-			node_results[node_id].index.push_back(this->time_step_count);
+			// node_pulseresults[node_id].index.push_back(this->time_step_count);
 			// Add the time val
-			node_results[node_id].time_val.push_back(time_t);
+			node_pulseresults[node_id].time_points.push_back(time_t);
 			// Add the displacement magnitude
-			node_results[node_id].node_displ_magnitude.push_back(displ_magnitude);
+			node_pulseresults[node_id].node_displ_magnitude.push_back(displ_magnitude);
 			// Add the Normalized displacement
-			node_results[node_id].node_displ.push_back(node_displ);
+			node_pulseresults[node_id].node_displ.push_back(node_displ);
 		}
 
 		// iterate the time step count
@@ -306,13 +304,10 @@ void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_m
 	//____________________________________________________________________________________________________________________
 	// Step: 4 Map the results
 
-	map_pulse_analysis_results(pulse_result_nodes,
-		pulse_result_lineelements,
-		pulse_result_trielements,
-		pulse_result_quadelements,
+	map_pulse_analysis_results(rslt_pulsemesh,
 		this->time_step_count,
 		model_mesh,
-		node_results);
+		node_pulseresults);
 
 
 
@@ -713,14 +708,47 @@ double pulse_analysis_solver::get_total_harmonic_soln(const double& time_t,
 	return (transient_displ_resp + steady_state_displ_resp);
 }
 
-void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pulse_result_nodes,
-	pulse_elementline_list_store& pulse_result_lineelements,
-	pulse_elementtri_list_store& pulse_result_trielements,
-	pulse_elementquad_list_store& pulse_result_quadelements,
+void pulse_analysis_solver::map_pulse_analysis_results(rslt_pulsemesh_store& rslt_pulsemesh,
 	const int& number_of_time_steps,
 	const model_mesh_store& model_mesh,
-	const std::unordered_map<int, pulse_node_result>& node_results)
+	const std::unordered_map<int, rslt_pulsenode_store>& node_pulseresults)
 {
+
+	//_____________________________________________________________________________________
+	// Map the results
+
+	// Add the modal quad element result
+	int next_node_id = 0;
+	int next_tri_id = 0;
+
+	std::vector<rslt_modalnode_store> rsltnodes;
+	std::vector<elementline_store> rsltwireframes;
+	std::vector<elementtri_store> rslttris;
+	std::unordered_map<int, int> added_nodes;
+
+
+	//_________________________________________________________________________________________________________________
+	// Find the maximum and minimum overall displacement
+	double maximum_displacement = DBL_MIN;
+	double minimum_displacement = DBL_MAX;
+
+	for (auto& nd_rslt_m : node_pulseresults)
+	{
+		rslt_pulsenode_store nd_rslt = nd_rslt_m.second;
+
+		for (auto& nodept_displ : nd_rslt.node_displ_magnitude)
+		{
+			maximum_displacement = std::max(maximum_displacement, nodept_displ);
+			minimum_displacement = std::min(minimum_displacement, nodept_displ);
+		}
+	}
+
+	// Set the pulse response settings
+	rslt_pulsemesh.number_of_timesteps = number_of_time_steps;
+	rslt_pulsemesh.maximim_displacement = maximum_displacement;
+	rslt_pulsemesh.minimum_displacement = minimum_displacement;
+
+
 	// Map the pulse analysis results
 	// map the node results
 	pulse_result_nodes.clear_data();
@@ -735,7 +763,7 @@ void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pu
 
 	//_________________________________________________________________________________________________________________
 
-	double maximum_displacement = 0.0;
+
 
 	for (auto& nd_m : pulse_result_nodes.pulse_nodeMap)
 	{
@@ -854,5 +882,54 @@ void pulse_analysis_solver::map_pulse_analysis_results(pulse_node_list_store& pu
 	pulse_result_lineelements.max_line_displ = maximum_displacement;
 	pulse_result_trielements.max_tri_displ = maximum_displacement;
 	pulse_result_quadelements.max_quad_displ = maximum_displacement;
+
+}
+
+
+
+
+int pulse_analysis_solver::get_or_create_node(int original_node_id,
+	std::unordered_map<int, int>& added_nodes,
+	std::vector<rslt_modalnode_store>& rsltnodes,
+	const glm::vec3& node_pt,
+	const std::vector<glm::vec3>& displ,
+	const std::vector<double>& displ_mag,
+	int& next_node_id)
+{
+	auto it = added_nodes.find(original_node_id);
+	if (it != added_nodes.end())
+	{
+		return it->second;  // Node already exists
+	}
+
+	// Create new result node
+	int new_node_id = next_node_id++;
+	added_nodes[original_node_id] = new_node_id;
+
+
+	//// Check if node is constrained
+	//if (!constrained_node_map.at(original_node_id)) {
+	//	int matrix_index = nodeid_map.at(original_node_id);
+	//	node_modal_displ.reserve(paint_mode_count);
+	//	node_modal_displ_magnitude.reserve(paint_mode_count);
+
+	//	for (int i = 0; i < paint_mode_count; i++) {
+	//		double displ_magnitude = static_cast<float>(eigen_vectors_matrix.coeff(matrix_index, i));
+
+	//		// Assuming Z-direction displacement (modify if needed)
+	//		glm::vec3 modal_displ(0.0, 0.0, displ_magnitude);
+
+	//		node_modal_displ.push_back(modal_displ);
+	//		node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
+	//	}
+	//}
+	//else {
+	//	// Constrained node - all zeros
+	//	node_modal_displ.assign(paint_mode_count, glm::vec3(0.0f));
+	//	node_modal_displ_magnitude.assign(paint_mode_count, 0.0);
+	//}
+
+	rsltnodes.emplace_back(new_node_id, node_pt, displ, displ_mag);
+	return new_node_id;
 
 }

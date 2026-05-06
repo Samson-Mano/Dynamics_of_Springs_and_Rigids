@@ -11,8 +11,8 @@ plt.rcParams.update({'lines.linewidth': 5.0})
 
 
 
-def draw_spring(x_start, x_end, y_center=0, coils=10,
-                         radius=1.5, aspect=0.3, end_ratio=0.0, points=2000):
+def draw_spring(x_start, x_end, y_center=0, coils=4,
+                         radius=4.0, aspect=0.3, end_ratio=0.0, points=2000):
 
     L = x_end - x_start
     t = np.linspace(0, 1, points)
