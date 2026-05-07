@@ -36,7 +36,11 @@ public:
 	bool show_result_lines = true; // show result elements
 	bool show_result_quads = true; // show result quads
 
-	double deformation_scale_max = 10.0;
+	// double deformation_scale_max = 10.0;
+
+	bool IsVisualizationDeflScale = false;
+	double visualization_deflection_scale = 40.0;
+
 
 	// Time step control
 	double time_interval_atrun = 0.0; // Value of time interval used in the pulse response 

@@ -184,6 +184,7 @@ void pulse_analysis_window::render_window()
 	static bool defscale_input_mode = false;
 	static char defscale_str[16] = ""; // buffer to store input deformation scale string
 	static double defscale_input = 0; // buffer to store input deformation scale value
+	this->IsVisualizationDeflScale = false;
 
 	// Button to switch to input mode
 	if (!defscale_input_mode)
@@ -191,7 +192,8 @@ void pulse_analysis_window::render_window()
 		if (ImGui::Button("Deformation Scale"))
 		{
 			defscale_input_mode = true;
-			snprintf(defscale_str, 16, "%.1f", deformation_scale_max); // set the buffer to current deformation scale value
+			this->IsVisualizationDeflScale = true;
+			snprintf(defscale_str, 16, "%.1f", visualization_deflection_scale); // set the buffer to current deformation scale value
 		}
 	}
 	else // input mode
@@ -203,7 +205,8 @@ void pulse_analysis_window::render_window()
 			// convert the input string to int
 			defscale_input = atoi(defscale_str);
 			// set the load value to input value
-			deformation_scale_max = defscale_input;
+			this->IsVisualizationDeflScale = true;
+			visualization_deflection_scale = defscale_input;
 		}
 
 		// Button to switch back to slider mode
@@ -216,15 +219,21 @@ void pulse_analysis_window::render_window()
 
 	// Text for load value
 	ImGui::SameLine();
-	ImGui::Text(" %.1f", deformation_scale_max);
+	ImGui::Text(" %.1f", visualization_deflection_scale);
 
 	// Slider for Deflection scale
-	float deformation_scale_flt = static_cast<float>(deformation_scale_max);
+	float deformation_scale_flt = static_cast<float>(visualization_deflection_scale);
 
 	ImGui::Text("Deformation Scale");
 	ImGui::SameLine();
 	ImGui::SliderFloat(".", &deformation_scale_flt, 0.0f, 100.0f, "%.1f");
-	deformation_scale_max = deformation_scale_flt;
+
+	if (deformation_scale_flt != static_cast<float>(visualization_deflection_scale))
+	{
+		this->IsVisualizationDeflScale = true;
+		visualization_deflection_scale = deformation_scale_flt;
+	}
+
 
 	////Set the deformation scale
 	//normailzed_defomation_scale = 1.0f;

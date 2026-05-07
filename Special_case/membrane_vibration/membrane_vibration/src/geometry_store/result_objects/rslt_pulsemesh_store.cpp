@@ -135,14 +135,16 @@ void rslt_pulsemesh_store::update_buffer(int time_step)
 			pointVertices.push_back(pt.y);
 			pointVertices.push_back(pt.z);
 
-			const glm::vec3& modal_displ = node.node_displ[time_step];
+			float modal_displ_val = (node.node_displ_magnitude[time_step] - minimum_displacement) /
+				(maximim_displacement - minimum_displacement);
+
+			const glm::vec3& modal_displ = node.node_displ[time_step] * modal_displ_val;
 
 			// Modal displacement values
 			pointVertices.push_back(modal_displ.x);
 			pointVertices.push_back(modal_displ.y);
 			pointVertices.push_back(modal_displ.z);
 
-			float modal_displ_val = node.node_displ_magnitude[time_step];
 
 			// Modal displacement value
 			pointVertices.push_back(modal_displ_val);

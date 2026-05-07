@@ -124,6 +124,21 @@ void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_m
 	// Step: 3 Find the pulse response
 	std::unordered_map<int, rslt_pulsenode_store> node_pulseresults;
 
+	// Initialize the node pulse results
+	for (auto& nd : model_mesh.nodes)
+	{
+		// get the node id
+		std::vector<glm::vec3> displ_list;
+		std::vector<double> displ_mag_list;
+
+		// Construct and move
+		rslt_pulsenode_store value(nd.node_id, nd.node_pt, displ_list, displ_mag_list);
+		node_pulseresults.insert({ nd.node_id, std::move(value) });
+	}
+
+
+	std::vector<double> time_points;
+
 	// Time step count
 	this->time_step_count = 0;
 
@@ -136,6 +151,9 @@ void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_m
 
 		// time at 
 		double time_t = i * time_interval;
+
+		// Add to the time point list
+		time_points.push_back(time_t);
 
 		// Displacement amplitude matrix
 		Eigen::VectorXd modal_displ_ampl_respMatrix(reducedDOF);
@@ -286,7 +304,7 @@ void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_m
 			// Add the index
 			// node_pulseresults[node_id].index.push_back(this->time_step_count);
 			// Add the time val
-			node_pulseresults[node_id].time_points.push_back(time_t);
+			// node_pulseresults[node_id].time_points.push_back(time_t);
 			// Add the displacement magnitude
 			node_pulseresults[node_id].node_displ_magnitude.push_back(displ_magnitude);
 			// Add the Normalized displacement
@@ -305,10 +323,12 @@ void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_m
 	// Step: 4 Map the results
 
 	map_pulse_analysis_results(rslt_pulsemesh,
-		this->time_step_count,
 		model_mesh,
 		node_pulseresults);
 
+
+	rslt_pulsemesh.time_points = std::move(time_points);
+	rslt_pulsemesh.number_of_timesteps = this->time_step_count;
 
 
 	stopwatch_elapsed_str.str("");
@@ -320,7 +340,7 @@ void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_m
 	this->time_interval = time_interval;
 	this->total_simulation_time = total_simulation_time;
 
-	if (pulse_result_lineelements.max_line_displ == 0)
+	if (std::abs(rslt_pulsemesh.maximim_displacement - rslt_pulsemesh.minimum_displacement) == 0)
 	{
 		// Analysis failed 
 		stopwatch_elapsed_str.str("");
@@ -708,8 +728,9 @@ double pulse_analysis_solver::get_total_harmonic_soln(const double& time_t,
 	return (transient_displ_resp + steady_state_displ_resp);
 }
 
+
+
 void pulse_analysis_solver::map_pulse_analysis_results(rslt_pulsemesh_store& rslt_pulsemesh,
-	const int& number_of_time_steps,
 	const model_mesh_store& model_mesh,
 	const std::unordered_map<int, rslt_pulsenode_store>& node_pulseresults)
 {
@@ -721,7 +742,7 @@ void pulse_analysis_solver::map_pulse_analysis_results(rslt_pulsemesh_store& rsl
 	int next_node_id = 0;
 	int next_tri_id = 0;
 
-	std::vector<rslt_modalnode_store> rsltnodes;
+	std::vector<rslt_pulsenode_store> rsltnodes;
 	std::vector<elementline_store> rsltwireframes;
 	std::vector<elementtri_store> rslttris;
 	std::unordered_map<int, int> added_nodes;
@@ -744,102 +765,64 @@ void pulse_analysis_solver::map_pulse_analysis_results(rslt_pulsemesh_store& rsl
 	}
 
 	// Set the pulse response settings
-	rslt_pulsemesh.number_of_timesteps = number_of_time_steps;
 	rslt_pulsemesh.maximim_displacement = maximum_displacement;
 	rslt_pulsemesh.minimum_displacement = minimum_displacement;
 
-
-	// Map the pulse analysis results
-	// map the node results
-	pulse_result_nodes.clear_data();
-
-	for (auto& nd : model_mesh.nodes)
-	{
-		int node_id = nd.node_id;
-
-		// Add to the pulse node results store
-		pulse_result_nodes.add_result_node(node_id, nd.node_pt, node_results.at(nd.node_id), number_of_time_steps);
-	}
-
-	//_________________________________________________________________________________________________________________
+	// Lambda to create node lambda (captures all needed data)
+	auto create_node = [&](int node_id) -> int {
+		return get_or_create_node(node_id, added_nodes, rsltnodes, node_pulseresults, next_node_id);
+		};
 
 
 
-	for (auto& nd_m : pulse_result_nodes.pulse_nodeMap)
-	{
-		pulse_node_store nd = nd_m.second;
-
-		//get all the two points
-		// Point displacement
-		for (auto& nodept_displ : nd.node_pulse_result.node_displ_magnitude)
-		{
-			maximum_displacement = std::max(maximum_displacement, std::abs(nodept_displ));
-		}
-	}
-
-	//_________________________________________________________________________________________________________________
-	// map the line results
-	pulse_result_lineelements.clear_data();
-
-	for (auto& ln : model_mesh.wireframe)
-	{
-		// Extract the pulse node store -> start node and end node
-		pulse_node_store* startNode = &pulse_result_nodes.pulse_nodeMap[ln.startnd_id];
-		pulse_node_store* endNode = &pulse_result_nodes.pulse_nodeMap[ln.endnd_id];
-		
-		int line_id = ln.line_id;
-
-		// Add to the pulse element line results store
-		pulse_result_lineelements.add_pulse_elementline(line_id, startNode, endNode);
-	}
-
-	//_________________________________________________________________________________________________________________
-	// map the tri results
-	pulse_result_trielements.clear_data();
-
+	// Add the modal tri element result
 	for (auto& tri : model_mesh.tris)
 	{
-		// Extract the model tris
-		int tri_id = tri.tri_id;
+		// Get or create corner nodes
+		int tri_node_id1 = create_node(tri.nd1_id);
+		int tri_node_id2 = create_node(tri.nd2_id);
+		int tri_node_id3 = create_node(tri.nd3_id);
 
-		// Extract the pulse node store -> nd1, nd2 & nd3
-		pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[tri.nd1_id];
-		pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[tri.nd2_id];
-		pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[tri.nd3_id];
+		// Create 1 Triangle
+		rslttris.emplace_back(next_tri_id++, tri_node_id1, tri_node_id2, tri_node_id3);
 
-
-		// Add to the pulse element tri results store
-		pulse_result_trielements.add_pulse_elementtriangle(tri_id, nd1, nd2, nd3);
 	}
 
-	//_________________________________________________________________________________________________________________
-	// map the quad results
-	pulse_result_quadelements.clear_data();
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model Tri Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
 
-	std::unordered_map<int, quad_midnode_eigenvector_store> quad_midnode;
 
-	// Create the quad mid interpolation
 	for (auto& quad : model_mesh.quads)
 	{
-		int quad_id = quad.quad_id; // get the quad id
+		// Get or create corner nodes
+		int quad_node_id1 = create_node(quad.nd1_id);
+		int quad_node_id2 = create_node(quad.nd2_id);
+		int quad_node_id3 = create_node(quad.nd3_id);
+		int quad_node_id4 = create_node(quad.nd4_id);
 
-		// Extract the pulse node store -> nd1, nd2, nd3 & nd4
-		pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[quad.nd1_id];
-		pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[quad.nd2_id];
-		pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[quad.nd3_id];
-		pulse_node_store* nd4 = &pulse_result_nodes.pulse_nodeMap[quad.nd4_id];
+		const rslt_pulsenode_store& nd1_pulseresult = node_pulseresults.at(quad.nd1_id);
+		const rslt_pulsenode_store& nd2_pulseresult = node_pulseresults.at(quad.nd2_id);
+		const rslt_pulsenode_store& nd3_pulseresult = node_pulseresults.at(quad.nd3_id);
+		const rslt_pulsenode_store& nd4_pulseresult = node_pulseresults.at(quad.nd4_id);
 
-		glm::vec3 quad_midpt = geom_parameters::findGeometricCenter(nd1->node_pt, nd2->node_pt, nd3->node_pt, nd4->node_pt); // quad mid pt
+
+		// Create mid node (unique to this quad, not shared)
+		glm::vec3 quad_midpt = geom_parameters::findGeometricCenter(nd1_pulseresult.node_pt,
+			nd2_pulseresult.node_pt,
+			nd3_pulseresult.node_pt,
+			nd4_pulseresult.node_pt); // quad mid pt
+
 		std::vector<glm::vec3> quad_midpt_displ; // displacement at mid pt of quad
 		std::vector<double> quad_midpt_displ_mag; // displacement magnitude at mid pt of quad
 
-		for (int i = 0; i < static_cast<int>(nd1->node_pulse_result.node_displ_magnitude.size()); i++)
+		for (int i = 0; i < static_cast<int>(nd1_pulseresult.node_displ_magnitude.size()); i++)
 		{
 			// Displacement node pt
-			glm::vec3 nd1_displ = nd1->node_pulse_result.node_displ[i]; // nd1 displ
-			glm::vec3 nd2_displ = nd2->node_pulse_result.node_displ[i]; // nd2 displ
-			glm::vec3 nd3_displ = nd3->node_pulse_result.node_displ[i]; // nd3 displ
-			glm::vec3 nd4_displ = nd4->node_pulse_result.node_displ[i]; // nd4 displ
+			glm::vec3 nd1_displ = nd1_pulseresult.node_displ[i]; // nd1 displ
+			glm::vec3 nd2_displ = nd2_pulseresult.node_displ[i]; // nd2 displ
+			glm::vec3 nd3_displ = nd3_pulseresult.node_displ[i]; // nd3 displ
+			glm::vec3 nd4_displ = nd4_pulseresult.node_displ[i]; // nd4 displ
 
 			// mid point displacement
 			glm::vec3 midpt_displ = geom_parameters::findGeometricCenter(nd1_displ, nd2_displ, nd3_displ, nd4_displ);
@@ -852,36 +835,180 @@ void pulse_analysis_solver::map_pulse_analysis_results(rslt_pulsemesh_store& rsl
 			quad_midpt_displ_mag.push_back(displ_mag);
 		}
 
-		// Add to the quad mid node eigenvector list
-		quad_midnode[quad_id].quad_id = quad_id;
-		quad_midnode[quad_id].mid_pt = quad_midpt;
-		quad_midnode[quad_id].midpt_displ = quad_midpt_displ;
-		quad_midnode[quad_id].midpt_displ_mag = quad_midpt_displ_mag;
+
+		int quad_node_idmid = next_node_id++;
+		rsltnodes.emplace_back(quad_node_idmid,
+			quad_midpt,
+			quad_midpt_displ,
+			quad_midpt_displ_mag);
+
+		// Create 4 triangles
+		rslttris.emplace_back(next_tri_id++, quad_node_id1, quad_node_id2, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id2, quad_node_id3, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id3, quad_node_id4, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id4, quad_node_id1, quad_node_idmid);
+
 	}
 
-	for (auto& quad : model_mesh.quads)
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model Quad Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+
+	// Add the wire frame element result
+	for (auto& ln : model_mesh.wireframe)
 	{
-		// Extract the model lines
-		int quad_id = quad.quad_id;
+		int line_id = ln.line_id;
+		int ln_startnd_id = added_nodes.at(ln.startnd_id);
+		int ln_endnd_id = added_nodes.at(ln.endnd_id);
 
-		// Extract the pulse node store -> nd1, nd2, nd3 & nd4
-		pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[quad.nd1_id];
-		pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[quad.nd2_id];
-		pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[quad.nd3_id];
-		pulse_node_store* nd4 = &pulse_result_nodes.pulse_nodeMap[quad.nd4_id];
+		rsltwireframes.emplace_back(line_id, ln_startnd_id, ln_endnd_id);
 
-
-		// Add to the pulse element quad results store
-		pulse_result_quadelements.add_pulse_elementquadrilateral(quad_id, nd1, nd2, nd3, nd4,
-			quad_midnode[quad_id].mid_pt, quad_midnode[quad_id].midpt_displ, quad_midnode[quad_id].midpt_displ_mag);
 	}
 
-	//_________________________________________________________________________________________________________________
-	// Set the maximim displacement
-	pulse_result_nodes.max_node_displ = maximum_displacement;
-	pulse_result_lineelements.max_line_displ = maximum_displacement;
-	pulse_result_trielements.max_tri_displ = maximum_displacement;
-	pulse_result_quadelements.max_quad_displ = maximum_displacement;
+
+	// Add to the result mesh
+	rslt_pulsemesh.add_result_mesh(rsltnodes, rsltwireframes, rslttris);
+
+
+
+
+
+
+	//// Map the pulse analysis results
+	//// map the node results
+	//pulse_result_nodes.clear_data();
+
+	//for (auto& nd : model_mesh.nodes)
+	//{
+	//	int node_id = nd.node_id;
+
+	//	// Add to the pulse node results store
+	//	pulse_result_nodes.add_result_node(node_id, nd.node_pt, node_results.at(nd.node_id), number_of_time_steps);
+	//}
+
+	////_________________________________________________________________________________________________________________
+
+
+
+	//for (auto& nd_m : pulse_result_nodes.pulse_nodeMap)
+	//{
+	//	pulse_node_store nd = nd_m.second;
+
+	//	//get all the two points
+	//	// Point displacement
+	//	for (auto& nodept_displ : nd.node_pulse_result.node_displ_magnitude)
+	//	{
+	//		maximum_displacement = std::max(maximum_displacement, std::abs(nodept_displ));
+	//	}
+	//}
+
+	////_________________________________________________________________________________________________________________
+	//// map the line results
+	//pulse_result_lineelements.clear_data();
+
+	//for (auto& ln : model_mesh.wireframe)
+	//{
+	//	// Extract the pulse node store -> start node and end node
+	//	pulse_node_store* startNode = &pulse_result_nodes.pulse_nodeMap[ln.startnd_id];
+	//	pulse_node_store* endNode = &pulse_result_nodes.pulse_nodeMap[ln.endnd_id];
+	//	
+	//	int line_id = ln.line_id;
+
+	//	// Add to the pulse element line results store
+	//	pulse_result_lineelements.add_pulse_elementline(line_id, startNode, endNode);
+	//}
+
+	////_________________________________________________________________________________________________________________
+	//// map the tri results
+	//pulse_result_trielements.clear_data();
+
+	//for (auto& tri : model_mesh.tris)
+	//{
+	//	// Extract the model tris
+	//	int tri_id = tri.tri_id;
+
+	//	// Extract the pulse node store -> nd1, nd2 & nd3
+	//	pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[tri.nd1_id];
+	//	pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[tri.nd2_id];
+	//	pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[tri.nd3_id];
+
+
+	//	// Add to the pulse element tri results store
+	//	pulse_result_trielements.add_pulse_elementtriangle(tri_id, nd1, nd2, nd3);
+	//}
+
+	////_________________________________________________________________________________________________________________
+	//// map the quad results
+	//pulse_result_quadelements.clear_data();
+
+	//std::unordered_map<int, quad_midnode_eigenvector_store> quad_midnode;
+
+	//// Create the quad mid interpolation
+	//for (auto& quad : model_mesh.quads)
+	//{
+	//	int quad_id = quad.quad_id; // get the quad id
+
+	//	// Extract the pulse node store -> nd1, nd2, nd3 & nd4
+	//	pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[quad.nd1_id];
+	//	pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[quad.nd2_id];
+	//	pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[quad.nd3_id];
+	//	pulse_node_store* nd4 = &pulse_result_nodes.pulse_nodeMap[quad.nd4_id];
+
+	//	glm::vec3 quad_midpt = geom_parameters::findGeometricCenter(nd1->node_pt, nd2->node_pt, nd3->node_pt, nd4->node_pt); // quad mid pt
+	//	std::vector<glm::vec3> quad_midpt_displ; // displacement at mid pt of quad
+	//	std::vector<double> quad_midpt_displ_mag; // displacement magnitude at mid pt of quad
+
+	//	for (int i = 0; i < static_cast<int>(nd1->node_pulse_result.node_displ_magnitude.size()); i++)
+	//	{
+	//		// Displacement node pt
+	//		glm::vec3 nd1_displ = nd1->node_pulse_result.node_displ[i]; // nd1 displ
+	//		glm::vec3 nd2_displ = nd2->node_pulse_result.node_displ[i]; // nd2 displ
+	//		glm::vec3 nd3_displ = nd3->node_pulse_result.node_displ[i]; // nd3 displ
+	//		glm::vec3 nd4_displ = nd4->node_pulse_result.node_displ[i]; // nd4 displ
+
+	//		// mid point displacement
+	//		glm::vec3 midpt_displ = geom_parameters::findGeometricCenter(nd1_displ, nd2_displ, nd3_displ, nd4_displ);
+
+	//		// mid point displacement magnitude
+	//		double displ_mag = glm::length(midpt_displ);
+
+
+	//		quad_midpt_displ.push_back(midpt_displ);
+	//		quad_midpt_displ_mag.push_back(displ_mag);
+	//	}
+
+	//	// Add to the quad mid node eigenvector list
+	//	quad_midnode[quad_id].quad_id = quad_id;
+	//	quad_midnode[quad_id].mid_pt = quad_midpt;
+	//	quad_midnode[quad_id].midpt_displ = quad_midpt_displ;
+	//	quad_midnode[quad_id].midpt_displ_mag = quad_midpt_displ_mag;
+	//}
+
+	//for (auto& quad : model_mesh.quads)
+	//{
+	//	// Extract the model lines
+	//	int quad_id = quad.quad_id;
+
+	//	// Extract the pulse node store -> nd1, nd2, nd3 & nd4
+	//	pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[quad.nd1_id];
+	//	pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[quad.nd2_id];
+	//	pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[quad.nd3_id];
+	//	pulse_node_store* nd4 = &pulse_result_nodes.pulse_nodeMap[quad.nd4_id];
+
+
+	//	// Add to the pulse element quad results store
+	//	pulse_result_quadelements.add_pulse_elementquadrilateral(quad_id, nd1, nd2, nd3, nd4,
+	//		quad_midnode[quad_id].mid_pt, quad_midnode[quad_id].midpt_displ, quad_midnode[quad_id].midpt_displ_mag);
+	//}
+
+	////_________________________________________________________________________________________________________________
+	//// Set the maximim displacement
+	//pulse_result_nodes.max_node_displ = maximum_displacement;
+	//pulse_result_lineelements.max_line_displ = maximum_displacement;
+	//pulse_result_trielements.max_tri_displ = maximum_displacement;
+	//pulse_result_quadelements.max_quad_displ = maximum_displacement;
 
 }
 
@@ -890,10 +1017,8 @@ void pulse_analysis_solver::map_pulse_analysis_results(rslt_pulsemesh_store& rsl
 
 int pulse_analysis_solver::get_or_create_node(int original_node_id,
 	std::unordered_map<int, int>& added_nodes,
-	std::vector<rslt_modalnode_store>& rsltnodes,
-	const glm::vec3& node_pt,
-	const std::vector<glm::vec3>& displ,
-	const std::vector<double>& displ_mag,
+	std::vector<rslt_pulsenode_store>& rsltnodes,
+	const std::unordered_map<int, rslt_pulsenode_store>& node_pulseresults,
 	int& next_node_id)
 {
 	auto it = added_nodes.find(original_node_id);
@@ -907,27 +1032,12 @@ int pulse_analysis_solver::get_or_create_node(int original_node_id,
 	added_nodes[original_node_id] = new_node_id;
 
 
-	//// Check if node is constrained
-	//if (!constrained_node_map.at(original_node_id)) {
-	//	int matrix_index = nodeid_map.at(original_node_id);
-	//	node_modal_displ.reserve(paint_mode_count);
-	//	node_modal_displ_magnitude.reserve(paint_mode_count);
+	const rslt_pulsenode_store& nd_pulseresult = node_pulseresults.at(original_node_id);
 
-	//	for (int i = 0; i < paint_mode_count; i++) {
-	//		double displ_magnitude = static_cast<float>(eigen_vectors_matrix.coeff(matrix_index, i));
+	glm::vec3 node_pt = nd_pulseresult.node_pt;
+	std::vector<glm::vec3> displ = nd_pulseresult.node_displ;
+	std::vector<double> displ_mag = nd_pulseresult.node_displ_magnitude;
 
-	//		// Assuming Z-direction displacement (modify if needed)
-	//		glm::vec3 modal_displ(0.0, 0.0, displ_magnitude);
-
-	//		node_modal_displ.push_back(modal_displ);
-	//		node_modal_displ_magnitude.push_back(std::abs(displ_magnitude));
-	//	}
-	//}
-	//else {
-	//	// Constrained node - all zeros
-	//	node_modal_displ.assign(paint_mode_count, glm::vec3(0.0f));
-	//	node_modal_displ_magnitude.assign(paint_mode_count, 0.0);
-	//}
 
 	rsltnodes.emplace_back(new_node_id, node_pt, displ, displ_mag);
 	return new_node_id;

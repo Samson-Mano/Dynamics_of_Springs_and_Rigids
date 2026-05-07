@@ -16,10 +16,13 @@ struct rslt_pulsenode_store
 	int node_id = 0;
 	glm::vec3 node_pt = glm::vec3(0);
 
-	// std::vector<int> index; // index
-	// std::vector<double> time_points; // at time t list
-	std::vector<double> node_displ_magnitude; // Displacmenet magnitude at time t
 	std::vector <glm::vec3> node_displ; // Nodal  displacement at time t
+	std::vector<double> node_displ_magnitude; // Displacmenet magnitude at time t
+
+
+	// Default constructor
+	rslt_pulsenode_store() = default;
+
 
 	// Constructor for lvalues (copies)
 	rslt_pulsenode_store(int id, const glm::vec3& pt,

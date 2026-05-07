@@ -816,34 +816,44 @@ void geom_store::paint_pulse_analysis_results()
 	{
 		// Update the deflection scale
 		geom_param.normalized_defl_scale = 1.0f;
-		geom_param.defl_scale = pulse_solver_window->deformation_scale_max;
+		geom_param.defl_scale = pulse_solver_window->visualization_deflection_scale;
 
 		// Update the deflection scale
-		pulse_result_quadelements.update_geometry_matrices(false, false, false, false, false, true);
-		pulse_result_trielements.update_geometry_matrices(false, false, false, false, false, true);
-		pulse_result_lineelements.update_geometry_matrices(false, false, false, false, false, true);
-		pulse_result_nodes.update_geometry_matrices(false, false, false, false, false, true);
+		if (pulse_solver_window->IsVisualizationDeflScale == true)
+		{
+			rslt_pulse_mesh.update_animation_openGLuniforms();
+			pulse_solver_window->IsVisualizationDeflScale = false;
+		}
+		//pulse_result_quadelements.update_geometry_matrices(false, false, false, false, false, true);
+		//pulse_result_trielements.update_geometry_matrices(false, false, false, false, false, true);
+		//pulse_result_lineelements.update_geometry_matrices(false, false, false, false, false, true);
+		//pulse_result_nodes.update_geometry_matrices(false, false, false, false, false, true);
+
+		rslt_pulse_mesh.update_buffer(pulse_solver_window->time_step);
 
 		// ______________________________________________________________________________________
 		
 		if (pulse_solver_window->show_result_quads == true)
 		{
 			// Paint the pulse quads 
-			pulse_result_trielements.paint_pulse_elementtriangles(pulse_solver_window->time_step);
-			pulse_result_quadelements.paint_pulse_elementquads(pulse_solver_window->time_step);
+			rslt_pulse_mesh.paint_mesh();
+			// pulse_result_trielements.paint_pulse_elementtriangles(pulse_solver_window->time_step);
+			// pulse_result_quadelements.paint_pulse_elementquads(pulse_solver_window->time_step);
 		}
 
 
 		if (pulse_solver_window->show_result_lines == true)
 		{
 			// Paint the pulse lines
-			pulse_result_lineelements.paint_pulse_elementlines(pulse_solver_window->time_step);
+			rslt_pulse_mesh.paint_mesh_wireframe();
+			// pulse_result_lineelements.paint_pulse_elementlines(pulse_solver_window->time_step);
 		}
 
 		if (pulse_solver_window->show_result_nodes == true)
 		{
 			// Paint the pulse nodes
-			pulse_result_nodes.paint_pulse_nodes(pulse_solver_window->time_step);
+			rslt_pulse_mesh.paint_mesh_points();
+			// pulse_result_nodes.paint_pulse_nodes(pulse_solver_window->time_step);
 		}
 
 	}
@@ -898,10 +908,7 @@ void geom_store::paint_pulse_analysis_results()
 			pulse_solver_window->time_interval,
 			pulse_solver_window->damping_ratio,
 			pulse_solver_window->selected_pulse_option,
-			pulse_result_nodes,
-			pulse_result_lineelements,
-			pulse_result_trielements,
-			pulse_result_quadelements);
+			rslt_pulse_mesh);
 
 		// Check whether the modal analysis is complete or not
 		if (pulse_solver.is_pulse_analysis_complete == true)
@@ -911,10 +918,12 @@ void geom_store::paint_pulse_analysis_results()
 			pulse_solver_window->time_step_count = pulse_solver.time_step_count;
 
 			// Reset the buffers for pulse result nodes, lines and quads/ tris
-			pulse_result_quadelements.set_buffer();
-			pulse_result_trielements.set_buffer();
-			pulse_result_lineelements.set_buffer();
-			pulse_result_nodes.set_buffer();
+			rslt_pulse_mesh.create_buffer();
+
+			// pulse_result_quadelements.set_buffer();
+			// pulse_result_trielements.set_buffer();
+			// pulse_result_lineelements.set_buffer();
+			// pulse_result_nodes.set_buffer();
 
 			std::cout << "Pulse analysis complete " << std::endl;
 

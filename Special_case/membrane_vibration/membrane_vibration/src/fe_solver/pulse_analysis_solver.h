@@ -120,17 +120,14 @@ private:
 
 
 	void map_pulse_analysis_results(rslt_pulsemesh_store& rslt_pulsemesh,
-		const int& number_of_time_steps,
 		const model_mesh_store& model_mesh, 
 		const std::unordered_map<int, rslt_pulsenode_store>& node_pulseresults);
 
 
 	int get_or_create_node(int original_node_id,
 		std::unordered_map<int, int>& added_nodes,
-		std::vector<rslt_modalnode_store>& rsltnodes,
-		const glm::vec3& node_pt,
-		const std::vector<glm::vec3>& displ,
-		const std::vector<double>& displ_mag,
+		std::vector<rslt_pulsenode_store>& rsltnodes,
+		const std::unordered_map<int, rslt_pulsenode_store>& node_pulseresults,
 		int& next_node_id);
 
 
