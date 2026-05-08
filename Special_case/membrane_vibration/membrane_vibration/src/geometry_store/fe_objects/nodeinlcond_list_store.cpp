@@ -157,8 +157,7 @@ void nodeinlcond_list_store::paint_inlcond_label()
 	// inl_condition_labels.paint_text();
 }
 
-void nodeinlcond_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
-	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void nodeinlcond_list_store::update_openGLuniforms()
 {
 	// Update model openGL uniforms
 	// Update the shader uniforms for the load shader

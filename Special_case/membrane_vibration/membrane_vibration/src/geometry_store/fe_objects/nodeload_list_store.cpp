@@ -134,8 +134,7 @@ void nodeload_list_store::set_buffer()
 				is_load_val_above = true;
 			}
 
-			load_value_labels.add_text(temp_str, load.load_loc, glm::vec3(0), temp_color, 
-				load_angle_rad, is_load_val_above, false);
+			load_value_labels.add_text(temp_str, load.load_loc,	is_load_val_above, true);
 		}
 	}
 
@@ -194,11 +193,10 @@ void nodeload_list_store::paint_load_labels()
 }
 
 
-void nodeload_list_store::update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
-	bool set_zoomtranslation, bool set_transparency, bool set_deflscale)
+void nodeload_list_store::update_openGLuniforms()
 {
 	// Update the load value label uniforms
-	load_value_labels.update_opengl_uniforms(set_modelmatrix, set_pantranslation, set_rotatetranslation, set_zoomtranslation, set_transparency, set_deflscale);
+	load_value_labels.update_openGLuniforms();
 
 
 	// Update the shader uniforms for the load shader

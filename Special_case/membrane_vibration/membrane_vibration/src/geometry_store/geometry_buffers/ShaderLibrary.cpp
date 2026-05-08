@@ -31,8 +31,8 @@ std::unordered_map<ShaderLibrary::ShaderType, ShaderLibrary::ShaderSource>& Shad
          {
         ShaderType::PulseRsltShader,
             {
-                modalrslt_vertex_shader(),
-                modalrslt_fragment_shader()
+                pulserslt_vertex_shader(),
+                pulserslt_fragment_shader()
             }
         },
          {
@@ -47,6 +47,13 @@ std::unordered_map<ShaderLibrary::ShaderType, ShaderLibrary::ShaderSource>& Shad
             {
                 text_vertex_shader(),
                 text_fragment_shader()
+            }
+        },
+        {
+            ShaderType::SelectRectangleShader,
+            {
+                selrect_vertex_shader(),
+                selrect_fragment_shader()
             }
         }
     };
@@ -356,7 +363,43 @@ std::string ShaderLibrary::text_vertex_shader()
 {
     return R"(
 
-#version 330 core
+    #version 330 core
+                    
+    // Pre-computed MVP matrix on CPU for better performance
+    uniform mat4 uMVP;           // Model-View-Projection matrix
+    uniform mat4 uViewMatrix;
+    uniform vec4 uLabelColor;
+
+    
+    layout(location = 0) in vec3 aLocalPosition;  // Quad corner (relative to center)
+    layout(location = 1) in vec3 aWorldOrigin;    // Label position in world
+    layout(location = 2) in vec2 aTextureCoord;
+
+    out vec4 vColor;
+    out vec2 vTextureCoord;
+
+                    
+    void main()
+    {
+
+        // Extract camera right and up from view matrix (billboarding)
+        vec3 cameraRight = vec3(uViewMatrix[0][0], uViewMatrix[1][0], uViewMatrix[2][0]);
+        vec3 cameraUp = vec3(uViewMatrix[0][1], uViewMatrix[1][1], uViewMatrix[2][1]);
+        
+        // Billboard: quad always faces camera
+        vec3 worldPos = aWorldOrigin + 
+                        cameraRight * aLocalPosition.x  +
+                        cameraUp * aLocalPosition.y;
+        
+        // Standard transformation
+        gl_Position = uMVP * vec4(worldPos, 1.0);
+        
+        vTextureCoord = aTextureCoord;
+        vColor = uLabelColor;
+
+    }
+
+
 )";
 
 }
@@ -366,9 +409,75 @@ std::string ShaderLibrary::text_fragment_shader()
 {
     return R"(
 
+
+    #version 330 core
+    uniform sampler2D u_Texture;
+
+    in vec4 vColor;
+    in vec2 vTextureCoord;
+
+    out vec4 fColor;
+    
+    void main()
+    {
+        // Simple color output without lighting
+        vec4 texColor = vec4(1.0, 1.0, 1.0, texture(u_Texture, vTextureCoord).r);
+
+        fColor = vColor * texColor;
+    }
+ 
+)";
+
+}
+
+
+
+
+
+
+std::string ShaderLibrary::selrect_vertex_shader()
+{
+    return R"(
+
 #version 330 core
+
+layout(location = 0) in vec2 node_position;
+
+out vec4 v_Color;
+
+void main()
+{
+	v_Color = vec4(0.8039f,0.3608f,0.3608f,0.5f);
+
+	// Final position passed to fragment shader
+	gl_Position = vec4(node_position,0.0f,1.0f);
+}
 
 )";
 
 }
+
+
+std::string ShaderLibrary::selrect_fragment_shader()
+{
+    return R"(
+
+
+#version 330 core
+
+in vec4 v_Color;
+
+out vec4 f_Color; // fragment's final color (out to the fragment shader)
+
+void main()
+{
+	f_Color = v_Color;
+}
+
+
+)";
+
+}
+
+
 

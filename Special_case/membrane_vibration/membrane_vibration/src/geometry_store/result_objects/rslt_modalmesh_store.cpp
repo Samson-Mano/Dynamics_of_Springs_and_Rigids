@@ -215,7 +215,7 @@ void rslt_modalmesh_store::update_openGLuniforms()
 	glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f),
 		glm::vec3(zoomScale, zoomScale, zoomScale));
 
-	// Note: Matrix4.Transpose in C# - make sure this is what you want
+	// Note: Matrix4.Transpose in C#
 	glm::mat4 viewMatrix = glm::transpose(geom_param_ptr->panTranslation) * scalingMatrix;
 
 	// Compute MVP matrix

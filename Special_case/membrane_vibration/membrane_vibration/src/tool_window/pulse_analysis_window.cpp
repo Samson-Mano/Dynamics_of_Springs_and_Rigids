@@ -184,7 +184,7 @@ void pulse_analysis_window::render_window()
 	static bool defscale_input_mode = false;
 	static char defscale_str[16] = ""; // buffer to store input deformation scale string
 	static double defscale_input = 0; // buffer to store input deformation scale value
-	this->IsVisualizationDeflScale = false;
+	// this->IsVisualizationDeflScale = false;
 
 	// Button to switch to input mode
 	if (!defscale_input_mode)

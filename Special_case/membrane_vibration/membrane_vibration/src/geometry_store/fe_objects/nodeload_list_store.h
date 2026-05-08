@@ -12,7 +12,7 @@ struct load_data
 	double load_value = 0.0; // Load value
 	double load_start_time = 0.0; // Load start time
 	double load_end_time = 0.0; // Load end time
-	bool show_load_label = false;
+	bool show_load_label = true;
 
 };
 
@@ -34,8 +34,8 @@ public:
 	void set_buffer();
 	void paint_loads();
 	void paint_load_labels();
-	void update_geometry_matrices(bool set_modelmatrix, bool set_pantranslation, bool set_rotatetranslation,
-		bool set_zoomtranslation, bool set_transparency, bool set_deflscale);
+	void update_openGLuniforms();
+
 private:
 	geom_parameters* geom_param_ptr = nullptr;
 	gBuffers load_buffer;

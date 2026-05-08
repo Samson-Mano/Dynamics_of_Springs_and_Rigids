@@ -112,6 +112,7 @@ void rslt_pulsemesh_store::update_buffer(int time_step)
 
 	prev_time_step = time_step;
 
+	// this->point_vbo.Bind();
 
 	// Map buffer for direct writing
 	float* vertexPtr = this->point_vbo.mapBuffer();
@@ -135,19 +136,19 @@ void rslt_pulsemesh_store::update_buffer(int time_step)
 			pointVertices.push_back(pt.y);
 			pointVertices.push_back(pt.z);
 
-			float modal_displ_val = (node.node_displ_magnitude[time_step] - minimum_displacement) /
+			float pulse_displ_val = (node.node_displ_magnitude[time_step] - minimum_displacement) /
 				(maximim_displacement - minimum_displacement);
 
-			const glm::vec3& modal_displ = node.node_displ[time_step] * modal_displ_val;
+			const glm::vec3& pulse_displ = node.node_displ[time_step] * pulse_displ_val;
 
 			// Modal displacement values
-			pointVertices.push_back(modal_displ.x);
-			pointVertices.push_back(modal_displ.y);
-			pointVertices.push_back(modal_displ.z);
+			pointVertices.push_back(pulse_displ.x);
+			pointVertices.push_back(pulse_displ.y);
+			pointVertices.push_back(pulse_displ.z);
 
 
 			// Modal displacement value
-			pointVertices.push_back(modal_displ_val);
+			pointVertices.push_back(pulse_displ_val);
 
 		}
 
@@ -168,23 +169,43 @@ void rslt_pulsemesh_store::update_buffer(int time_step)
 			vertexPtr[offset++] = pt.y;
 			vertexPtr[offset++] = pt.z;
 
-			const glm::vec3& modal_displ = node.node_displ[time_step];
 
-			// Modal displacement values
-			vertexPtr[offset++] = modal_displ.x;
-			vertexPtr[offset++] = modal_displ.y;
-			vertexPtr[offset++] = modal_displ.z;
+			// Get original displacement
+			const glm::vec3& original_displ = node.node_displ[time_step];
+			float original_magnitude = node.node_displ_magnitude[time_step];
 
-			float modal_displ_val = node.node_displ_magnitude[time_step];
+			// Scale magnitude to [-1, 1] range
+			// First normalize to [0, 1], then map to [-1, 1]
+			float t = (original_magnitude - minimum_displacement) / (maximim_displacement - minimum_displacement);
+			float normalized_magnitude = t; // *2.0f - 1.0f;  // Convert [0,1] to [-1,1]
 
-			// Modal displacement value
-			vertexPtr[offset++] = modal_displ_val;
+			// Scale the displacement vector preserving direction
+			glm::vec3 scaled_displ = original_displ;
+
+			if (original_magnitude > 1e-6f) 
+			{
+				// Scale to unit vector then multiply by normalized magnitude
+				scaled_displ = glm::normalize(original_displ) * normalized_magnitude;
+			}
+			else {
+				scaled_displ = glm::vec3(0.0f);
+			}
+
+			// Displacement values (scaled to [-1, 1] range)
+			vertexPtr[offset++] = scaled_displ.x;
+			vertexPtr[offset++] = scaled_displ.y;
+			vertexPtr[offset++] = scaled_displ.z;
+
+			// Normalized magnitude value in [-1, 1]
+			vertexPtr[offset++] = normalized_magnitude;
 
 		}
 
 		// Unmap to make data available to GPU
 		this->point_vbo.unmapBuffer();
 	}
+
+	// this->point_vbo.UnBind();
 
 	//
 }
@@ -262,7 +283,7 @@ void rslt_pulsemesh_store::update_openGLuniforms()
 	glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f),
 		glm::vec3(zoomScale, zoomScale, zoomScale));
 
-	// Note: Matrix4.Transpose in C# - make sure this is what you want
+	// Note: Matrix4.Transpose in C#
 	glm::mat4 viewMatrix = glm::transpose(geom_param_ptr->panTranslation) * scalingMatrix;
 
 	// Compute MVP matrix
@@ -282,14 +303,10 @@ void rslt_pulsemesh_store::update_openGLuniforms()
 void rslt_pulsemesh_store::update_animation_openGLuniforms()
 {
 	// Scale the visualization scale to match the geometry scale
-	float visualization_defl_scale = this->geom_param_ptr->modal_visualization_defl_scale *
+	float visualization_defl_scale = this->geom_param_ptr->pulse_visualization_defl_scale *
 		(this->geom_param_ptr->node_circle_radii / this->geom_param_ptr->geom_scale);
 
 	rsltmesh_shader.setUniform("uDeflScale", visualization_defl_scale);
-
-	//float sine_defl_scale = this->geom_param_ptr->modal_sine_defl_scale;
-
-	//rsltmesh_shader.setUniform("uDeflAmplitude", sine_defl_scale);
 
 }
 

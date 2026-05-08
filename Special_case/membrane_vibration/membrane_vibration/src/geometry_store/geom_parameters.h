@@ -22,6 +22,7 @@ struct geom_color_theme
 	glm::vec3 ptmass_color = glm::vec3(0);
 	glm::vec3 inlcond_displ_color = glm::vec3(0);
 	glm::vec3 inlcond_velo_color = glm::vec3(0);
+	glm::vec3 text_color = glm::vec3(0);
 };
 
 struct chart_setting_data
@@ -108,11 +109,14 @@ public:
 
 	double geom_scale = 0.0; // Scale of the geometry
 	double geom_transparency = 1.0; // Value to control the geometry transparency
-	double normalized_defl_scale = 0.0f; // Value of deflection scale
-	double defl_scale = 0.0f; // Value of deflection scale
+	//double normalized_defl_scale = 0.0f; // Value of deflection scale
+	//double defl_scale = 0.0f; // Value of deflection scale
 
 	double modal_visualization_defl_scale = 0.0; // Scale to control the modal visualization scale
 	double modal_sine_defl_scale = 0.0; // Sine value to control the modal animation
+
+	double pulse_visualization_defl_scale = 0.0; // Scale to control the pulse visualization scale
+
 
 	// Screen transformations
 	glm::mat4 viewMatrix = glm::mat4(1.0f); // View matrix

@@ -13,7 +13,8 @@ public:
         ModalRsltShader,
         PulseRsltShader,
         LoadViewShader,
-        TextShader
+        TextShader,
+        SelectRectangleShader
     };
 
     struct ShaderSource
@@ -51,6 +52,10 @@ private:
     // Text shader
     static std::string text_vertex_shader();
     static std::string text_fragment_shader();
+
+    // Select Rectangle shader selrect
+    static std::string selrect_vertex_shader();
+    static std::string selrect_fragment_shader();
 
 
 };

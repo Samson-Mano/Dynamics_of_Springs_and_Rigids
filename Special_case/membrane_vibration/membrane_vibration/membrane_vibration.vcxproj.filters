@@ -69,12 +69,6 @@
     <ClCompile Include="src\geometry_store\geometry_buffers\VertexBufferLayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\geometry_objects\dynamic_line_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\geometry_store\geometry_objects\dynamic_point_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\geometry_store\geometry_objects\dynamic_selrectangle_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -85,12 +79,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\geometry_store\geom_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\geometry_store\result_objects\pulse_elementline_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\geometry_store\result_objects\pulse_node_list_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ImGui\imgui.cpp">
@@ -141,15 +129,6 @@
     <ClCompile Include="src\events_handler\arcball_transformation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\geometry_store\geometry_objects\dynamic_tri_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\geometry_store\result_objects\pulse_elementquad_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\geometry_store\result_objects\pulse_elementtri_list_store.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\geometry_store\fe_objects\model_mesh_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -167,22 +146,8 @@
     <None Include="resources\dlls\freetype.dll" />
     <None Include="resources\dlls\glew32.dll" />
     <None Include="resources\dlls\glfw3.dll" />
-    <None Include="resources\shaders\constraint_frag_shader.frag" />
-    <None Include="resources\shaders\constraint_vert_shader.vert" />
-    <None Include="resources\shaders\load_frag_shader.frag" />
-    <None Include="resources\shaders\load_vert_shader.vert" />
-    <None Include="resources\shaders\point_frag_shader.frag" />
-    <None Include="resources\shaders\point_vert_shader.vert" />
-    <None Include="resources\shaders\ptmass_frag_shader.frag" />
-    <None Include="resources\shaders\ptmass_vert_shader.vert" />
     <None Include="resources\shaders\selrect_frag_shader.frag" />
     <None Include="resources\shaders\selrect_vert_shader.vert" />
-    <None Include="resources\shaders\text_frag_shader.frag" />
-    <None Include="resources\shaders\text_vert_shader.vert" />
-    <None Include="resources\shaders\dynpoint_vert_shader.vert" />
-    <None Include="resources\shaders\dynpoint_frag_shader.frag" />
-    <None Include="resources\shaders\dyntripoint_vert_shader.vert" />
-    <None Include="resources\shaders\dyntripoint_frag_shader.frag" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\CanadaDBNormal.ttf" />
@@ -256,12 +221,6 @@
     <ClInclude Include="src\geometry_store\geometry_buffers\VertexBufferLayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\geometry_store\geometry_objects\dynamic_line_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\geometry_objects\dynamic_point_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\geometry_store\geometry_objects\dynamic_selrectangle_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -272,12 +231,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\geom_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\result_objects\pulse_elementline_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\result_objects\pulse_node_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ImGui\imconfig.h">
@@ -338,15 +291,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\events_handler\arcball_transformation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\geometry_objects\dynamic_tri_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\result_objects\pulse_elementquad_list_store.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\geometry_store\result_objects\pulse_elementtri_list_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry_store\fe_objects\model_mesh_store.h">

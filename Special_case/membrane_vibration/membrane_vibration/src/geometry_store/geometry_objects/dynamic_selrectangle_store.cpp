@@ -15,11 +15,10 @@ void dynamic_selrectangle_store::init(geom_parameters* geom_param_ptr)
 	// Set the geometry parameters
 	this->geom_param_ptr = geom_param_ptr;
 
-	// Create the point shader
-	std::filesystem::path shadersPath = geom_param_ptr->resourcePath;
+	// Create the select rectangle shader
+	auto shaderSrc = ShaderLibrary::Get(ShaderLibrary::ShaderType::SelectRectangleShader);
 
-	dyn_selrect_shader.create_shader((shadersPath.string() + "/resources/shaders/selrect_vert_shader.vert").c_str(),
-		(shadersPath.string() + "/resources/shaders/selrect_frag_shader.frag").c_str());
+	dyn_selrect_shader.create_shader_data(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
 
 	// Set the buffer
 	set_boundaryline_buffer();
