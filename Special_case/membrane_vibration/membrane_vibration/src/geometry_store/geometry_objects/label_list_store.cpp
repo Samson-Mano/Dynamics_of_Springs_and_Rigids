@@ -86,7 +86,8 @@ void label_list_store::paint_text()
 	label_buffers.Bind();
 	
 	glActiveTexture(GL_TEXTURE0);
-	//// Bind the texture to the slot
+
+	// Bind the texture to the slot
 	glBindTexture(GL_TEXTURE_2D, geom_param_ptr->main_font.textureID);
 
 	glDrawElements(GL_TRIANGLES, 6 * total_char_count, GL_UNSIGNED_INT, 0);
@@ -108,7 +109,6 @@ void label_list_store::clear_labels()
 void label_list_store::update_openGLuniforms()
 {
 
-
 	// Update the shader uniforms for the load shader
 	float zoomScale = static_cast<float>(geom_param_ptr->zoom_scale);
 	glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f),
@@ -127,7 +127,7 @@ void label_list_store::update_openGLuniforms()
 
 
 	label_shader.setUniform("uMVP", mvp, false);
-	label_shader.setUniform("uViewMatrix", viewMatrix, false);
+	label_shader.setUniform("uZoomScale", zoomScale);
 
 
 	glm::vec4 labelColor = glm::vec4(geom_param_ptr->geom_colors.load_color, geom_param_ptr->geom_transparency);
@@ -156,18 +156,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 		total_label_height = std::max(total_label_height, ch_data.Size.y * font_scale);
 	}
 
-	float zoomScale = static_cast<float>(geom_param_ptr->zoom_scale);
-	glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f),
-		glm::vec3(zoomScale, zoomScale, zoomScale));
-
-	// Note: Matrix4.Transpose in C#
-	glm::mat4 viewMatrix = glm::transpose(geom_param_ptr->panTranslation) * scalingMatrix;
-
-	// Extract right and up vectors (first two rows)
-	glm::vec3 cameraRight = glm::vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
-	glm::vec3 cameraUp = glm::vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-
-
+	
 	// Apply label rotation around the label origin (if any)
 	float angleRadians = glm::radians(lb.label_angle);
 	glm::mat4 label_rotationMatrix = glm::rotate(glm::mat4(1.0f), angleRadians, glm::vec3(0, 0, 1));
@@ -176,11 +165,18 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 	glm::vec3 labelPos = lb.label_loc;
 
 
-	// Calculate Y offset (above or below)
-	float yOffset = lb.label_above_loc ? total_label_height * 0.5f : -total_label_height * 1.5f;
-	glm::vec3 labelOrigin = labelPos + (cameraUp * yOffset);
+	float x = labelPos.x - (total_label_width * 0.5f);
 
-	float currentX = -total_label_width * 0.5f;  // Center the text
+	// Whether paint above the location or not
+	float y = 0.0f;
+	if (lb.label_above_loc == true)
+	{
+		y = labelPos.y + (total_label_height * 0.5f);
+	}
+	else
+	{
+		y = labelPos.y - (total_label_height + (total_label_height * 0.5f));
+	}
 
 
 	for (int i = 0; lb.label[i] != '\0'; ++i)
@@ -190,74 +186,117 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 
 		Character ch_data = geom_param_ptr->main_font.ch_atlas[ch];
 
-		float charWidth = (ch_data.Advance >> 6) * font_scale;
-		float charHeight = ch_data.Size.y * font_scale;
-		float xpos = currentX + (ch_data.Bearing.x * font_scale);
-		float ypos = (ch_data.Bearing.y - charHeight) * font_scale;
+		float xpos = x + (ch_data.Bearing.x * font_scale);
+		float ypos = y - (ch_data.Size.y - ch_data.Bearing.y) * font_scale;
 
-		float w = charWidth;
-		float h = charHeight;
-		float margin = 0.00002f;
+		float w = ch_data.Size.x * font_scale;
+		float h = ch_data.Size.y * font_scale;
 
-		// Calculate quad corners in local space (relative to label origin)
-		glm::vec3 localCorners[4] = 
-		{
-			glm::vec3(xpos, ypos + h, 0.0f),      // top-left
-			glm::vec3(xpos, ypos, 0.0f),          // bottom-left
-			glm::vec3(xpos + w, ypos, 0.0f),      // bottom-right
-			glm::vec3(xpos + w, ypos + h, 0.0f)   // top-right
-		};
+		float margin = 0.00002f; // This value prevents the minor overlap with the next char when rendering
 
-		// Apply local rotation (if any)
-		for (int j = 0; j < 4; ++j) 
-		{
-			localCorners[j] = glm::vec3(label_rotationMatrix * glm::vec4(localCorners[j], 1.0f));
-		}
+		// Point 1
+		// Vertices [0,0] // 0th point
 
-		// Transform to world space using billboarding
-		for (int j = 0; j < 4; ++j) 
-		{
-			glm::vec3 worldPos = labelOrigin +
-				cameraRight * localCorners[j].x +
-				cameraUp * localCorners[j].y;
+		vertices[vertex_index + 0] = xpos;
+		vertices[vertex_index + 1] = ypos + h;
+		vertices[vertex_index + 2] = 0.0;
 
-			// Store vertex
-			vertices[vertex_index + 0] = worldPos.x;
-			vertices[vertex_index + 1] = worldPos.y;
-			vertices[vertex_index + 2] = worldPos.z;
-			vertices[vertex_index + 3] = labelPos.x;  // Origin X
-			vertices[vertex_index + 4] = labelPos.y;  // Origin Y
-			vertices[vertex_index + 5] = labelPos.z;  // Origin Z
+		// Label origin
+		vertices[vertex_index + 3] = labelPos.x;
+		vertices[vertex_index + 4] = labelPos.y;
+		vertices[vertex_index + 5] = labelPos.z;
 
-			// UV coordinates
-			vertices[vertex_index + 6] = ch_data.top_left.x + margin;
+		// Texture Glyph coordinate
+		vertices[vertex_index + 6] = ch_data.top_left.x + margin;
+		vertices[vertex_index + 7] = ch_data.bot_right.y;
 
-			// Handle Y texture coordinate based on corner
-			if (j == 0 || j == 3) 
-			{
-				vertices[vertex_index + 7] = ch_data.top_left.y;
-			}
-			else 
-			{
-				vertices[vertex_index + 7] = ch_data.bot_right.y;
-			}
+		// Iterate
+		vertex_index = vertex_index + 8;
 
-			vertex_index += 8;
-		}
+		//__________________________________________________________________________________________
+
+		// Point 2
+		// Vertices [0,1] // 1th point
+
+		vertices[vertex_index + 0] = xpos;
+		vertices[vertex_index + 1] = ypos;
+		vertices[vertex_index + 2] = 0.0;
+
+		// Label origin
+		vertices[vertex_index + 3] = labelPos.x;
+		vertices[vertex_index + 4] = labelPos.y;
+		vertices[vertex_index + 5] = labelPos.z;
+
+		// Texture Glyph coordinate
+		vertices[vertex_index + 6] = ch_data.top_left.x + margin;
+		vertices[vertex_index + 7] = ch_data.top_left.y;
+
+		// Iterate
+		vertex_index = vertex_index + 8;
+
+		//__________________________________________________________________________________________
+
+		// Point 3
+		// Vertices [1,1] // 2th point
+
+		vertices[vertex_index + 0] = xpos + w;
+		vertices[vertex_index + 1] = ypos;
+		vertices[vertex_index + 2] = 0.0;
+
+		// Label origin
+		vertices[vertex_index + 3] = labelPos.x;
+		vertices[vertex_index + 4] = labelPos.y;
+		vertices[vertex_index + 5] = labelPos.z;
+
+		// Texture Glyph coordinate
+		vertices[vertex_index + 6] = ch_data.bot_right.x - margin;
+		vertices[vertex_index + 7] = ch_data.top_left.y;
+
+		// Iterate
+		vertex_index = vertex_index + 8;
+
+		//__________________________________________________________________________________________
+
+		// Point 4
+		// Vertices [1,0] // 3th point
+
+		vertices[vertex_index + 0] = xpos + w;
+		vertices[vertex_index + 1] = ypos + h;
+		vertices[vertex_index + 2] = 0.0;
+
+		// Label origin
+		vertices[vertex_index + 3] = labelPos.x;
+		vertices[vertex_index + 4] = labelPos.y;
+		vertices[vertex_index + 5] = labelPos.z;
+
+		// Texture Glyph coordinate
+		vertices[vertex_index + 6] = ch_data.bot_right.x - margin;
+		vertices[vertex_index + 7] = ch_data.bot_right.y;
+
+		// Iterate
+		vertex_index = vertex_index + 8;
+
+		//__________________________________________________________________________________________
+		x += (ch_data.Advance >> 6) * font_scale;
+
+		//__________________________________________________________________________________________
 
 
-		// Indices (two triangles per quad)
-		unsigned int baseIdx = (indices_index / 6) * 4;
+		// Fix the index buffers
+		// Set the node indices
+		unsigned int t_id = ((indices_index / 6) * 4);
+		// Triangle 0,1,2
+		indices[indices_index + 0] = t_id + 0;
+		indices[indices_index + 1] = t_id + 1;
+		indices[indices_index + 2] = t_id + 2;
 
-		indices[indices_index + 0] = baseIdx + 0;
-		indices[indices_index + 1] = baseIdx + 1;
-		indices[indices_index + 2] = baseIdx + 2;
-		indices[indices_index + 3] = baseIdx + 2;
-		indices[indices_index + 4] = baseIdx + 3;
-		indices[indices_index + 5] = baseIdx + 0;
-		indices_index += 6;
+		// Triangle 2,3,0
+		indices[indices_index + 3] = t_id + 2;
+		indices[indices_index + 4] = t_id + 3;
+		indices[indices_index + 5] = t_id + 0;
 
-		currentX += charWidth;
+		// Increment
+		indices_index = indices_index + 6;
 	}
 
 }

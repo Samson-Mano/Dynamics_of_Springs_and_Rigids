@@ -12,7 +12,6 @@ struct load_data
 	double load_value = 0.0; // Load value
 	double load_start_time = 0.0; // Load start time
 	double load_end_time = 0.0; // Load end time
-	bool show_load_label = true;
 
 };
 
@@ -28,8 +27,8 @@ public:
 	~nodeload_list_store() = default;
 	void init(geom_parameters* geom_param_ptr);
 	void set_zero_condition(const int& model_type);
-	void add_loads(int& node_id, glm::vec3& load_loc, double& load_start_time, 
-		double& load_end_time,double& load_value);
+	void add_loads(int& node_id, glm::vec3& load_loc, double& load_start_time,
+		double& load_end_time, double& load_value);
 	void delete_load(int& node_id);
 	void set_buffer();
 	void paint_loads();

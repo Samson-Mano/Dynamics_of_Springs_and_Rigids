@@ -22,6 +22,7 @@ class label_list_store
 	// Stores all the labels
 public:
 	geom_parameters* geom_param_ptr = nullptr;
+
 	unsigned int total_char_count = 0;
 	std::vector<label_text> labels;
 

@@ -118,15 +118,27 @@ void nodeload_list_store::set_buffer()
 			load_max = std::abs(load.load_value);
 		}
 		//__________________________________________________________________________
+	}	
 
-		if (load.show_load_label == true)
+	
+	// Only show label for the first load
+	bool show_load_label = true;
+
+	for (auto& loadx : loadMap)
+	{
+		load_data load = loadx.second;
+
+		if (show_load_label == true)
 		{
 			std::stringstream ss;
 			ss << std::fixed << std::setprecision(geom_param_ptr->load_precision) << std::abs(load.load_value);
 
 			glm::vec3 temp_color = geom_param_ptr->geom_colors.load_color;
-			std::string	temp_str = "(" + std::to_string(load.node_id) + ") " + ss.str();
+			std::string	temp_str = "(" + std::to_string(load.load_id) + ") " + ss.str();
 			double load_angle_rad = 0.0f;
+
+			glm::vec3 load_arrow_endpt = load.load_loc; // +glm::vec3(0.0, 0.0,
+				// -20.0f * (load.load_value / load_max) * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale))); // 1
 
 			bool is_load_val_above = false;
 			if (load.load_value < 0)
@@ -134,7 +146,9 @@ void nodeload_list_store::set_buffer()
 				is_load_val_above = true;
 			}
 
-			load_value_labels.add_text(temp_str, load.load_loc,	is_load_val_above, true);
+			load_value_labels.add_text(temp_str, load_arrow_endpt, is_load_val_above, true);
+
+			show_load_label = false;
 		}
 	}
 

@@ -367,13 +367,14 @@ std::string ShaderLibrary::text_vertex_shader()
                     
     // Pre-computed MVP matrix on CPU for better performance
     uniform mat4 uMVP;           // Model-View-Projection matrix
-    uniform mat4 uViewMatrix;
     uniform vec4 uLabelColor;
-
+    uniform float uZoomScale = 1.0f;
     
-    layout(location = 0) in vec3 aLocalPosition;  // Quad corner (relative to center)
-    layout(location = 1) in vec3 aWorldOrigin;    // Label position in world
+
+    layout(location = 0) in vec3 aPosition;  // Quad corner (relative to center)
+    layout(location = 1) in vec3 aOrigin;    // Label position in world
     layout(location = 2) in vec2 aTextureCoord;
+
 
     out vec4 vColor;
     out vec2 vTextureCoord;
@@ -382,20 +383,25 @@ std::string ShaderLibrary::text_vertex_shader()
     void main()
     {
 
-        // Extract camera right and up from view matrix (billboarding)
-        vec3 cameraRight = vec3(uViewMatrix[0][0], uViewMatrix[1][0], uViewMatrix[2][0]);
-        vec3 cameraUp = vec3(uViewMatrix[0][1], uViewMatrix[1][1], uViewMatrix[2][1]);
+        // Transform to clip space
+        vec4 clipPos = uMVP * vec4(aPosition, 1.0);
+        vec4 clipOrigin = uMVP * vec4(aOrigin, 1.0);
         
-        // Billboard: quad always faces camera
-        vec3 worldPos = aWorldOrigin + 
-                        cameraRight * aLocalPosition.x  +
-                        cameraUp * aLocalPosition.y;
+        // Calculate NDC coordinates
+        vec3 ndcPos = clipPos.xyz / clipPos.w;
+        vec3 ndcOrigin = clipOrigin.xyz / clipOrigin.w;
         
-        // Standard transformation
-        gl_Position = uMVP * vec4(worldPos, 1.0);
+        // Scale offset in NDC space
+        vec2 scaledOffset = (ndcPos.xy - ndcOrigin.xy) / uZoomScale;
         
-        vTextureCoord = aTextureCoord;
+        // Preserve depth from origin (or position)
+        float depth = ndcOrigin.z;
+        
+        // Final position (back to clip space)
+        gl_Position = vec4(ndcOrigin.xy + scaledOffset, depth, 1.0);
+
         vColor = uLabelColor;
+        vTextureCoord = aTextureCoord;
 
     }
 

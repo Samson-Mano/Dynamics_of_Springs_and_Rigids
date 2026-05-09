@@ -912,6 +912,7 @@ void  geom_store::paint_node_load_operation()
 
 			node_loads.add_loads(id, model_mesh.nodes[index].node_pt,
 								load_start_time, load_end_time, load_amplitude);
+
 		}
 
 		node_loads.set_buffer();

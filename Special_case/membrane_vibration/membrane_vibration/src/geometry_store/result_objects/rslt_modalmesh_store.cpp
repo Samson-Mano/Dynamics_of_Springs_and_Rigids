@@ -157,7 +157,7 @@ void rslt_modalmesh_store::paint_mesh()
 		GL_UNSIGNED_INT,
 		0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	this->triangle_ibo.UnBind();
 	this->point_vao.UnBind();
