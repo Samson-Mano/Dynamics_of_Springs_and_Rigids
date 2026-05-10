@@ -23,7 +23,6 @@
 //____ Tool Window
 #include "tool_window/inlcondition_window.h"
 #include "tool_window/new_model_window.h"
-#include "tool_window/inlcondition_window.h"
 #include "tool_window/node_load_window.h"
 #include "tool_window/modal_analysis_window.h"
 #include "tool_window/pulse_analysis_window.h"
@@ -42,9 +41,9 @@ public:
 	file_events file_menu;
 
 	bool is_glwindow_success = false;
-	int window_width = 800;
-	int window_height = 600;
-	bool isWindowSizeChanging = false;
+	static int window_width;
+	static int window_height;
+	static bool isWindowSizeChanging;
 
 	// main geometry variable
 	geom_store geom;
@@ -66,9 +65,24 @@ public:
 	void fini();
 	void app_render();
 	void menu_events();
-	void framebufferSizeCallback(GLFWwindow* window, int window_width, int window_height);
+	static void framebufferSizeCallback(GLFWwindow* window, int window_width, int window_height);
 	void GLFWwindow_set_icon(GLFWwindow* window);
 private:
 
+	bool checkOpenGLVersion();
+	void setupDebugCallback();
+	void initModernOpenGL();
+
+
+	void customizeImGuiStyle();
+	void applyTheme(int themeIndex);
+	// void renderThemeSelector();
+	void customizeEngineeringTheme();
+	void customizeBlueTheme();
+	void customizeHighContrastTheme();
+
+
 	void draw_status_bar();
+
+
 };

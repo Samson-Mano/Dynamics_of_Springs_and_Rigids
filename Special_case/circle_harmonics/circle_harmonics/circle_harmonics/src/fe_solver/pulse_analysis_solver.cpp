@@ -1,0 +1,1045 @@
+#include "pulse_analysis_solver.h"
+
+pulse_analysis_solver::pulse_analysis_solver()
+{
+	// Empty constructor
+}
+
+pulse_analysis_solver::~pulse_analysis_solver()
+{
+	// Empty destructor
+}
+
+void pulse_analysis_solver::clear_results()
+{
+	// Clear the analysis results
+	is_pulse_analysis_complete = false;
+	time_step_count = 0;
+	time_interval = 0.0;
+	total_simulation_time = 0.0;
+
+}
+
+void pulse_analysis_solver::pulse_analysis_start(const model_mesh_store& model_mesh,
+	const nodeload_list_store& node_loads,
+	const nodeinlcond_list_store& node_inldispl,
+	const nodeinlcond_list_store& node_inlvelo,
+	const material_data& mat_data,
+	const modal_analysis_solver& modal_solver,
+	const double total_simulation_time,
+	const double time_interval,
+	const double damping_ratio,
+	const int selected_pulse_option,
+	rslt_pulsemesh_store& rslt_pulsemesh)
+{
+	// Main solver call
+	this->is_pulse_analysis_complete = false;
+
+	// Check the model
+	// Number of loads, initial condition (Exit if no load and no initial condition is present)
+	if (node_loads.load_count == 0 &&
+		static_cast<int>(node_inldispl.inlcondMap.size()) == 0 &&
+		static_cast<int>(node_inlvelo.inlcondMap.size()) == 0)
+	{
+		return;
+	}
+
+	//____________________________________________
+	Eigen::initParallel();  // Initialize Eigen's thread pool
+
+	stopwatch.start();
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << std::fixed << std::setprecision(6);
+	std::cout << "Pulse analysis started" << std::endl;
+
+	// Retrive the Eigen values and Eigen vectors data from Modan Analysis solver
+	this->constrained_node_map = modal_solver.constrained_node_map;
+	this->nodeid_map = modal_solver.nodeid_map;
+	this->model_type = modal_solver.model_type;
+	this->numDOF = modal_solver.node_count;
+	this->reducedDOF = modal_solver.matrix_size;
+	this->eigen_values_vector = modal_solver.eigen_values_vector;
+	this->eigen_vectors_matrix = modal_solver.eigen_vectors_matrix;
+
+	//std::ofstream output_file;
+	//output_file.open("pulse_analysis_results.txt");
+
+	//output_file << "Eigen vector matrix:" << std::endl;
+	//output_file << this->eigen_vectors_matrix << std::endl;
+	//output_file << std::endl;
+
+	//output_file.close();
+	
+
+	//____________________________________________________________________________________________________________________
+	// Step: 1 Create the initial displacement matrix (Modal Transformed initial displacement matrix)
+	Eigen::VectorXd modal_reducedInitialDisplacementMatrix(reducedDOF);
+	Eigen::VectorXd modal_reducedInitialVelocityMatrix(reducedDOF);
+
+
+	create_initial_condition_matrices(modal_reducedInitialDisplacementMatrix,
+		modal_reducedInitialVelocityMatrix,
+		model_mesh.nodes,
+		node_inldispl,
+		node_inlvelo);
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Intial condition matrices created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Step: 2 Create the pulse load matrix (Modal Transformed pulse loads)
+
+	this->pulse_loads.clear();
+
+	for (auto& ld_m : node_loads.loadMap)
+	{
+		// get the loads
+		load_data ld = ld_m.second;
+
+		// temporary value to store the pulse load
+		pulse_load_data pulse_ld;
+
+		create_pulse_load_matrices(pulse_ld,
+			ld,
+			model_mesh.nodes);
+
+		// Set the time data to the pulse loads
+		pulse_ld.node_id = ld.node_id;
+		pulse_ld.load_start_time = ld.load_start_time;
+		pulse_ld.load_end_time = ld.load_end_time;
+
+		// Add to the pulse load list
+		this->pulse_loads.push_back(pulse_ld);
+	}
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Pulse Load matrices created at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Step: 3 Find the pulse response
+	std::unordered_map<int, rslt_pulsenode_store> node_pulseresults;
+
+	// Initialize the node pulse results
+	for (auto& nd : model_mesh.nodes)
+	{
+		// get the node id
+		std::vector<glm::vec3> displ_list;
+		std::vector<double> displ_mag_list;
+
+		// Construct and move
+		rslt_pulsenode_store value(nd.node_id, nd.node_pt, displ_list, displ_mag_list);
+		node_pulseresults.insert({ nd.node_id, std::move(value) });
+	}
+
+
+	std::vector<double> time_points;
+
+	// Time step count
+	this->time_step_count = 0;
+
+	int num_intervals = static_cast<int>(total_simulation_time / time_interval);
+	double progress_interval = num_intervals / 10.0;
+	int last_printed_progress = -1; // Initialize with an invalid value
+
+	for (int i = 0; i <= num_intervals; i++)
+	{
+
+		// time at 
+		double time_t = i * time_interval;
+
+		// Add to the time point list
+		time_points.push_back(time_t);
+
+		// Displacement amplitude matrix
+		Eigen::VectorXd modal_displ_ampl_respMatrix(reducedDOF);
+		modal_displ_ampl_respMatrix.setZero();
+
+		// 1D results for modal transformed Simple Harmonic Motion
+		for (int i = 0; i < reducedDOF; i++)
+		{
+			double modal_mass = 1.0;
+			double modal_stiff = eigen_values_vector.coeff(i);
+
+			// Displacement response due to initial condition
+			double displ_resp_initial = 0.0;
+
+			// Get the steady state displacemetn response for the initial condition
+			if (std::abs(modal_reducedInitialDisplacementMatrix.coeff(i)) > epsilon ||
+				std::abs(modal_reducedInitialVelocityMatrix.coeff(i)) > epsilon)
+			{
+				displ_resp_initial = get_steady_state_initial_condition_soln(time_t,
+					modal_mass,
+					modal_stiff,
+					modal_reducedInitialDisplacementMatrix.coeff(i),
+					modal_reducedInitialVelocityMatrix.coeff(i));
+			}
+
+			//_______________________________________________________________________
+			// Displacement response due to pulse force
+			double displ_resp_force = 0.0;
+
+			// Cycle through all the loads
+			for (auto& pulse_load : pulse_loads)
+			{
+				if (std::abs(pulse_load.modal_LoadamplMatrix(i)) > epsilon)
+				{
+					// Load amplitude at index not equal to zero
+					// Go through all the force
+					double at_force_displ_resp = 0.0;
+
+					if (selected_pulse_option == 0)
+					{
+						// Half sine pulse
+
+						at_force_displ_resp = get_steady_state_half_sine_pulse_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 1)
+					{
+						// Rectangular pulse
+
+						at_force_displ_resp = get_steady_state_rectangular_pulse_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 2)
+					{
+						// Triangular pulse
+
+						at_force_displ_resp = get_steady_state_triangular_pulse_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 3)
+					{
+						// Step force with finite rise
+
+						at_force_displ_resp = get_steady_state_stepforce_finiterise_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+					else if (selected_pulse_option == 4)
+					{
+						// Harmonic Excitation
+
+						at_force_displ_resp = get_total_harmonic_soln(time_t,
+							modal_mass,
+							modal_stiff,
+							pulse_load.modal_LoadamplMatrix(i),
+							pulse_load.load_start_time,
+							pulse_load.load_end_time);
+
+					}
+
+					displ_resp_force = displ_resp_force + at_force_displ_resp;
+				}
+
+			}
+
+			// Store the displacement result
+			modal_displ_ampl_respMatrix.coeffRef(i) = displ_resp_initial + displ_resp_force;
+
+
+			// Calculate percentage progress
+			int progress_percentage = static_cast<int>((time_t / total_simulation_time) * 100);
+			// Check if it's a new 10% interval
+			if (progress_percentage / 10 > last_printed_progress) 
+			{
+				stopwatch_elapsed_str.str("");
+				stopwatch_elapsed_str << stopwatch.elapsed();
+				std::cout << progress_percentage << "% pulse analysis completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+				last_printed_progress = progress_percentage / 10;
+			}
+		}
+
+
+		// Transform the modal displacement to the global displacement
+		Eigen::VectorXd global_displ_ampl_respMatrix(reducedDOF);
+
+		global_displ_ampl_respMatrix = this->eigen_vectors_matrix * modal_displ_ampl_respMatrix;
+
+		// Store the results to node results
+		for (auto& nd : model_mesh.nodes)
+		{
+			// get the node id
+			int node_id = nd.node_id;
+
+			// Node displacement response
+			glm::vec3 node_displ = glm::vec3(0);
+			double displ_magnitude = 0.0;
+
+			// Check whether the node is fixed or not
+			if (this->constrained_node_map[node_id] == false)
+			{
+				int matrix_index = nodeid_map[node_id];
+
+				// get the nodal displacement at time t
+				node_displ = glm::vec3(0.0, 0.0, global_displ_ampl_respMatrix.coeff(matrix_index));
+				displ_magnitude = std::abs(global_displ_ampl_respMatrix.coeff(matrix_index));
+			}
+
+
+			// Add the index
+			// node_pulseresults[node_id].index.push_back(this->time_step_count);
+			// Add the time val
+			// node_pulseresults[node_id].time_points.push_back(time_t);
+			// Add the displacement magnitude
+			node_pulseresults[node_id].node_displ_magnitude.push_back(displ_magnitude);
+			// Add the Normalized displacement
+			node_pulseresults[node_id].node_displ.push_back(node_displ);
+		}
+
+		// iterate the time step count
+		this->time_step_count++;
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Pulse analysis solved at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Step: 4 Map the results
+
+	map_pulse_analysis_results(rslt_pulsemesh,
+		model_mesh,
+		node_pulseresults);
+
+
+	rslt_pulsemesh.time_points = std::move(time_points);
+	rslt_pulsemesh.number_of_timesteps = this->time_step_count;
+
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	//____________________________________________________________________________________________________________________
+	// Save the Pulse analysis settings
+	this->time_interval = time_interval;
+	this->total_simulation_time = total_simulation_time;
+
+	if (std::abs(rslt_pulsemesh.maximim_displacement - rslt_pulsemesh.minimum_displacement) == 0)
+	{
+		// Analysis failed 
+		stopwatch_elapsed_str.str("");
+		stopwatch_elapsed_str << stopwatch.elapsed();
+		std::cout << "Analysis failed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+		return;
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str.clear();
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results storage completed at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+	// Analysis complete
+	this->is_pulse_analysis_complete = true;
+
+}
+
+void pulse_analysis_solver::create_initial_condition_matrices(Eigen::VectorXd& modal_reducedInitialDisplacementMatrix,
+	Eigen::VectorXd& modal_reducedInitialVelocityMatrix,
+	const std::vector<node_store>& model_nodes,
+	const nodeinlcond_list_store& node_inldispl,
+	const nodeinlcond_list_store& node_inlvelo)
+{
+	// Modal reduction of global initial displacement
+	// Modal vector transformation 
+	modal_reducedInitialDisplacementMatrix.setZero();
+	modal_reducedInitialVelocityMatrix.setZero();
+
+	// Fixed  - Fixed Condition so skip the first and last node
+	Eigen::VectorXd global_reducedInitialDisplacementMatrix(reducedDOF);
+	Eigen::VectorXd global_reducedInitialVelocityMatrix(reducedDOF);
+
+	// Set the initial condition - Displacement
+	int matrix_index = 0;
+	global_reducedInitialDisplacementMatrix.setZero();
+
+	for (auto& inlc_m : node_inldispl.inlcondMap)
+	{
+		nodeinl_condition_data inlc = inlc_m.second;
+
+		if (this->constrained_node_map[inlc.node_id] == false)
+		{
+			// Node is un-constrained
+			// get the matrix index
+			matrix_index = this->nodeid_map[inlc.node_id]; // get the ordered map of the start node ID
+
+			global_reducedInitialDisplacementMatrix.coeffRef(matrix_index) = -1.0 * inlc.inl_amplitude_z;
+		}
+	}
+
+	// Set the initial condition - Velocity
+	matrix_index = 0;
+	global_reducedInitialVelocityMatrix.setZero();
+
+	for (auto& inlc_m : node_inlvelo.inlcondMap)
+	{
+		nodeinl_condition_data inlc = inlc_m.second;
+
+		if (this->constrained_node_map[inlc.node_id] == false)
+		{
+			// Node is un-constrained
+			// get the matrix index
+			matrix_index = this->nodeid_map[inlc.node_id]; // get the ordered map of the start node ID
+
+			global_reducedInitialVelocityMatrix.coeffRef(matrix_index) = -1.0 * inlc.inl_amplitude_z;
+		}
+	}
+
+
+	// Apply modal Transformation
+	modal_reducedInitialDisplacementMatrix = this->eigen_vectors_matrix.transpose() * global_reducedInitialDisplacementMatrix;
+	modal_reducedInitialVelocityMatrix = this->eigen_vectors_matrix.transpose() * global_reducedInitialVelocityMatrix;
+
+}
+
+
+void pulse_analysis_solver::create_pulse_load_matrices(pulse_load_data& pulse_ld,
+	const load_data& ld,
+	const std::vector<node_store>& model_nodes)
+{
+	// Create Pulse load matrix
+	// Modal vector transformation
+	int matrix_index = 0;
+	Eigen::VectorXd global_reducedLoadMatrix(reducedDOF);
+	global_reducedLoadMatrix.setZero();
+
+	if (this->constrained_node_map[ld.node_id] == false)
+	{
+		// Node is un-constrained
+		// get the matrix index
+		matrix_index = this->nodeid_map[ld.node_id]; // get the ordered map of the start node ID
+
+		global_reducedLoadMatrix.coeffRef(matrix_index) = ld.load_value;
+	}
+
+	// Apply modal Transformation
+	Eigen::VectorXd modal_reducedLoadMatrix(reducedDOF);
+
+	modal_reducedLoadMatrix = this->eigen_vectors_matrix.transpose() * global_reducedLoadMatrix;
+
+	// Store the modal amplitude matrix
+	pulse_ld.modal_LoadamplMatrix = modal_reducedLoadMatrix;
+
+}
+
+
+double pulse_analysis_solver::get_steady_state_initial_condition_soln(const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_initial_displacement,
+	const double& modal_initial_velocity)
+{
+	// Return the steady state solution for the intial displacment and velocity
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+
+	double steady_state_displ_resp = (modal_initial_displacement * std::cos(modal_omega_n * time_t)) +
+		((modal_initial_velocity / modal_omega_n) * std::sin(modal_omega_n * time_t));
+
+	return steady_state_displ_resp;
+}
+
+
+double pulse_analysis_solver::get_steady_state_half_sine_pulse_soln(const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_force_ampl,
+	const double& modal_force_starttime,
+	const double& modal_force_endtime)
+{
+	// Return the steady state solution for the half sine pulse
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+	double modal_omega_f = m_pi / (modal_force_endtime - modal_force_starttime);
+
+	// natural time period
+	double T_n = (2.0 * m_pi) / modal_omega_n;
+	// Force period
+	double t_d = (modal_force_endtime - modal_force_starttime);
+	// time at
+	double t_at = 0.0;
+
+	double steady_state_displ_resp = 0.0;
+
+	// Check whether the current time is greater than the force start time
+	if (time_t >= modal_force_starttime)
+	{
+		t_at = time_t - modal_force_starttime;
+		if (time_t <= modal_force_endtime)
+		{
+			// current time is within the force period
+			if (std::abs((t_d / T_n) - 0.5) < 0.000001)
+			{
+				// Resonance case
+				double k_fact = (modal_force_ampl / (2.0 * modal_stiff));
+				steady_state_displ_resp = k_fact * (std::sin(modal_omega_n * t_at) - (modal_omega_n * t_at * std::cos(modal_omega_n * t_at)));
+			}
+			else
+			{
+				// Normal case
+				double const1 = m_pi / (modal_omega_n * t_d);
+				double const2 = 1.0 - std::pow(const1, 2);
+				double k_fact = (modal_force_ampl / modal_stiff) * (1 / const2);
+				steady_state_displ_resp = k_fact * (std::sin((m_pi / t_d) * t_at) - (const1 * std::sin(modal_omega_n * t_at)));
+			}
+		}
+		else if (time_t > modal_force_endtime)
+		{
+			// current time is over the force period
+			if (std::abs((t_d / T_n) - 0.5) < 0.000001)
+			{
+				// Resonance case
+				double k_fact = ((modal_force_ampl * m_pi) / (2.0 * modal_stiff));
+				steady_state_displ_resp = k_fact * std::cos((modal_omega_n * t_at) - m_pi);
+			}
+			else
+			{
+				// Normal case
+				double const1 = m_pi / (modal_omega_n * t_d);
+				double const2 = std::pow(const1, 2) - 1.0;
+				double k_fact = (modal_force_ampl / modal_stiff) * ((2 * const1) / const2) * std::cos(modal_omega_n * t_d * 0.5);
+				steady_state_displ_resp = k_fact * std::sin(modal_omega_n * (t_at - (t_d * 0.5)));
+			}
+		}
+	}
+
+
+	return steady_state_displ_resp;
+}
+
+
+double pulse_analysis_solver::get_steady_state_rectangular_pulse_soln(const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_force_ampl,
+	const double& modal_force_starttime,
+	const double& modal_force_endtime)
+{
+	// Return the steady state solution for the Rectangular pulse
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+	double modal_omega_f = m_pi / (modal_force_endtime - modal_force_starttime);
+
+	// natural time period
+	double T_n = (2.0 * m_pi) / modal_omega_n;
+	// Force period
+	double t_d = (modal_force_endtime - modal_force_starttime);
+	// time at
+	double t_at = 0.0;
+
+	double steady_state_displ_resp = 0.0;
+
+	// Check whether the current time is greater than the force start time
+	if (time_t >= modal_force_starttime)
+	{
+		t_at = time_t - modal_force_starttime;
+		double k_fact = (modal_force_ampl / modal_stiff);
+
+		if (time_t <= modal_force_endtime)
+		{
+
+			// current time is within the force period
+			steady_state_displ_resp = k_fact * (1.0 - std::cos(modal_omega_n * t_at));
+
+		}
+		else if (time_t > modal_force_endtime)
+		{
+			// current time is over the force period
+			steady_state_displ_resp = k_fact * (std::cos(modal_omega_n * (t_at - t_d)) - std::cos(modal_omega_n * t_at));
+
+		}
+	}
+
+	return steady_state_displ_resp;
+}
+
+
+double pulse_analysis_solver::get_steady_state_triangular_pulse_soln(const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_force_ampl,
+	const double& modal_force_starttime,
+	const double& modal_force_endtime)
+{
+	// Return the steady state solution for the Triangular pulse
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+	double modal_omega_f = m_pi / (modal_force_endtime - modal_force_starttime);
+
+	// natural time period
+	double T_n = (2.0 * m_pi) / modal_omega_n;
+	// Force period
+	double t_d = (modal_force_endtime - modal_force_starttime);
+	// time at
+	double t_at = 0.0;
+
+	double	steady_state_displ_resp = 0.0;
+
+	// Check whether the current time is greater than the force start time
+	if (time_t >= modal_force_starttime)
+	{
+		t_at = time_t - modal_force_starttime;
+
+		if (time_t <= modal_force_endtime)
+		{
+			// current time is within the force period
+			if (t_at < (t_d * 0.5))
+			{
+				double k_fact = ((2.0 * modal_force_ampl) / modal_stiff);
+
+				steady_state_displ_resp = k_fact * ((t_at / t_d) - (std::sin(modal_omega_n * t_at) / (t_d * modal_omega_n)));
+			}
+			else
+			{
+				double k_fact = ((2.0 * modal_force_ampl) / modal_stiff);
+				double factor1 = (1 / (t_d * modal_omega_n)) * ((2.0 * std::sin(modal_omega_n * (t_at - (0.5 * t_d)))) -
+					std::sin(modal_omega_n * t_at));
+
+				steady_state_displ_resp = k_fact * (1.0 - (t_at / t_d) + factor1);
+			}
+
+		}
+		else if (time_t > modal_force_endtime)
+		{
+			// current time is over the force period
+
+			double k_fact = ((2.0 * modal_force_ampl) / modal_stiff);
+			double m_factor = (1 / (t_d * modal_omega_n));
+			double factor1 = 2.0 * std::sin(modal_omega_n * (t_at - (0.5 * t_d)));
+			double factor2 = std::sin(modal_omega_n * (t_at - t_d));
+
+			steady_state_displ_resp = k_fact * (m_factor * (factor1 - factor2 - std::sin(modal_omega_n * t_at)));
+
+		}
+	}
+
+	return steady_state_displ_resp;
+}
+
+
+
+double pulse_analysis_solver::get_steady_state_stepforce_finiterise_soln(const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_force_ampl,
+	const double& modal_force_starttime,
+	const double& modal_force_endtime)
+{
+	// Return the steady state solution for the Step Force with Finite Rise
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+	double modal_omega_f = m_pi / (modal_force_endtime - modal_force_starttime);
+
+	// natural time period
+	double T_n = (2.0 * m_pi) / modal_omega_n;
+	// Force period
+	double t_d = (modal_force_endtime - modal_force_starttime);
+	// time at
+	double t_at = 0.0;
+
+	double	steady_state_displ_resp = 0.0;
+
+	// Check whether the current time is greater than the force start time
+	if (time_t >= modal_force_starttime)
+	{
+		t_at = time_t - modal_force_starttime;
+		double k_fact = (modal_force_ampl / modal_stiff);
+
+		if (time_t <= modal_force_endtime)
+		{
+
+			// current time is within the force period
+			steady_state_displ_resp = k_fact * ((t_at / t_d) -
+				(std::sin(modal_omega_n * t_at) / (t_d * modal_omega_n)));
+
+		}
+		else if (time_t > modal_force_endtime)
+		{
+			// current time is over the force period
+			double factor1 = std::sin(modal_omega_n * (t_at - t_d)) - std::sin(modal_omega_n * t_at);
+
+			steady_state_displ_resp = k_fact * (1.0 + (1 / (modal_omega_n * t_d)) * factor1);
+
+		}
+	}
+
+	return steady_state_displ_resp;
+}
+
+
+double pulse_analysis_solver::get_total_harmonic_soln(const double& time_t,
+	const double& modal_mass,
+	const double& modal_stiff,
+	const double& modal_force_ampl,
+	const double& modal_force_starttime,
+	const double& modal_force_endtime)
+{
+	// Return the Total solution (Transient + steady state) for the Harmonic excitation
+		// Return the steady state solution for the Step Force with Finite Rise
+	double modal_omega_n = std::sqrt(modal_stiff / modal_mass); // Modal omega n
+	double modal_omega_f = m_pi / (2.0 * (modal_force_endtime - modal_force_starttime));
+
+	double transient_displ_resp;
+	double steady_state_displ_resp;
+
+	if (std::abs(modal_omega_f - modal_omega_n) < epsilon)
+	{
+		// Resonance case
+		transient_displ_resp = 0.0;
+
+		double force_factor = (modal_force_ampl / (2.0 * modal_stiff));
+
+		steady_state_displ_resp = force_factor * ((modal_omega_n * time_t * std::cos(modal_omega_n * time_t)) - std::sin(modal_omega_n * time_t));
+	}
+	else
+	{
+		// Regular case
+		double force_factor = (modal_force_ampl / modal_stiff);
+		double freq_ratio = modal_omega_f / modal_omega_n;
+		double freq_factor = (1.0 - (freq_ratio * freq_ratio));
+
+
+		transient_displ_resp = -1.0 * force_factor * (freq_ratio / freq_factor) * std::sin(modal_omega_n * time_t);
+
+		steady_state_displ_resp = force_factor * (1.0 / freq_factor) * std::sin(modal_omega_f * time_t);
+
+	}
+
+	return (transient_displ_resp + steady_state_displ_resp);
+}
+
+
+
+void pulse_analysis_solver::map_pulse_analysis_results(rslt_pulsemesh_store& rslt_pulsemesh,
+	const model_mesh_store& model_mesh,
+	const std::unordered_map<int, rslt_pulsenode_store>& node_pulseresults)
+{
+
+	//_____________________________________________________________________________________
+	// Map the results
+
+	// Add the modal quad element result
+	int next_node_id = 0;
+	int next_tri_id = 0;
+
+	std::vector<rslt_pulsenode_store> rsltnodes;
+	std::vector<elementline_store> rsltwireframes;
+	std::vector<elementtri_store> rslttris;
+	std::unordered_map<int, int> added_nodes;
+
+
+	//_________________________________________________________________________________________________________________
+	// Find the maximum and minimum overall displacement
+	double maximum_displacement = DBL_MIN;
+	double minimum_displacement = DBL_MAX;
+
+	for (auto& nd_rslt_m : node_pulseresults)
+	{
+		rslt_pulsenode_store nd_rslt = nd_rslt_m.second;
+
+		for (auto& nodept_displ : nd_rslt.node_displ_magnitude)
+		{
+			maximum_displacement = std::max(maximum_displacement, nodept_displ);
+			minimum_displacement = std::min(minimum_displacement, nodept_displ);
+		}
+	}
+
+	// Set the pulse response settings
+	rslt_pulsemesh.maximim_displacement = maximum_displacement;
+	rslt_pulsemesh.minimum_displacement = minimum_displacement;
+
+	// Lambda to create node lambda (captures all needed data)
+	auto create_node = [&](int node_id) -> int {
+		return get_or_create_node(node_id, added_nodes, rsltnodes, node_pulseresults, next_node_id);
+		};
+
+
+
+	// Add the modal tri element result
+	for (auto& tri : model_mesh.tris)
+	{
+		// Get or create corner nodes
+		int tri_node_id1 = create_node(tri.nd1_id);
+		int tri_node_id2 = create_node(tri.nd2_id);
+		int tri_node_id3 = create_node(tri.nd3_id);
+
+		// Create 1 Triangle
+		rslttris.emplace_back(next_tri_id++, tri_node_id1, tri_node_id2, tri_node_id3);
+
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model Tri Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+
+
+	for (auto& quad : model_mesh.quads)
+	{
+		// Get or create corner nodes
+		int quad_node_id1 = create_node(quad.nd1_id);
+		int quad_node_id2 = create_node(quad.nd2_id);
+		int quad_node_id3 = create_node(quad.nd3_id);
+		int quad_node_id4 = create_node(quad.nd4_id);
+
+		const rslt_pulsenode_store& nd1_pulseresult = node_pulseresults.at(quad.nd1_id);
+		const rslt_pulsenode_store& nd2_pulseresult = node_pulseresults.at(quad.nd2_id);
+		const rslt_pulsenode_store& nd3_pulseresult = node_pulseresults.at(quad.nd3_id);
+		const rslt_pulsenode_store& nd4_pulseresult = node_pulseresults.at(quad.nd4_id);
+
+
+		// Create mid node (unique to this quad, not shared)
+		glm::vec3 quad_midpt = geom_parameters::findGeometricCenter(nd1_pulseresult.node_pt,
+			nd2_pulseresult.node_pt,
+			nd3_pulseresult.node_pt,
+			nd4_pulseresult.node_pt); // quad mid pt
+
+		std::vector<glm::vec3> quad_midpt_displ; // displacement at mid pt of quad
+		std::vector<double> quad_midpt_displ_mag; // displacement magnitude at mid pt of quad
+
+		for (int i = 0; i < static_cast<int>(nd1_pulseresult.node_displ_magnitude.size()); i++)
+		{
+			// Displacement node pt
+			glm::vec3 nd1_displ = nd1_pulseresult.node_displ[i]; // nd1 displ
+			glm::vec3 nd2_displ = nd2_pulseresult.node_displ[i]; // nd2 displ
+			glm::vec3 nd3_displ = nd3_pulseresult.node_displ[i]; // nd3 displ
+			glm::vec3 nd4_displ = nd4_pulseresult.node_displ[i]; // nd4 displ
+
+			// mid point displacement
+			glm::vec3 midpt_displ = geom_parameters::findGeometricCenter(nd1_displ, nd2_displ, nd3_displ, nd4_displ);
+
+			// mid point displacement magnitude
+			double displ_mag = glm::length(midpt_displ);
+
+
+			quad_midpt_displ.push_back(midpt_displ);
+			quad_midpt_displ_mag.push_back(displ_mag);
+		}
+
+
+		int quad_node_idmid = next_node_id++;
+		rsltnodes.emplace_back(quad_node_idmid,
+			quad_midpt,
+			quad_midpt_displ,
+			quad_midpt_displ_mag);
+
+		// Create 4 triangles
+		rslttris.emplace_back(next_tri_id++, quad_node_id1, quad_node_id2, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id2, quad_node_id3, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id3, quad_node_id4, quad_node_idmid);
+		rslttris.emplace_back(next_tri_id++, quad_node_id4, quad_node_id1, quad_node_idmid);
+
+	}
+
+	stopwatch_elapsed_str.str("");
+	stopwatch_elapsed_str << stopwatch.elapsed();
+	std::cout << "Results mapped to model Quad Elements at " << stopwatch_elapsed_str.str() << " secs" << std::endl;
+	//____________________________________________________________________________________________________________________
+
+
+	// Add the wire frame element result
+	for (auto& ln : model_mesh.wireframe)
+	{
+		int line_id = ln.line_id;
+		int ln_startnd_id = added_nodes.at(ln.startnd_id);
+		int ln_endnd_id = added_nodes.at(ln.endnd_id);
+
+		rsltwireframes.emplace_back(line_id, ln_startnd_id, ln_endnd_id);
+
+	}
+
+
+	// Add to the result mesh
+	rslt_pulsemesh.add_result_mesh(rsltnodes, rsltwireframes, rslttris);
+
+
+
+
+
+
+	//// Map the pulse analysis results
+	//// map the node results
+	//pulse_result_nodes.clear_data();
+
+	//for (auto& nd : model_mesh.nodes)
+	//{
+	//	int node_id = nd.node_id;
+
+	//	// Add to the pulse node results store
+	//	pulse_result_nodes.add_result_node(node_id, nd.node_pt, node_results.at(nd.node_id), number_of_time_steps);
+	//}
+
+	////_________________________________________________________________________________________________________________
+
+
+
+	//for (auto& nd_m : pulse_result_nodes.pulse_nodeMap)
+	//{
+	//	pulse_node_store nd = nd_m.second;
+
+	//	//get all the two points
+	//	// Point displacement
+	//	for (auto& nodept_displ : nd.node_pulse_result.node_displ_magnitude)
+	//	{
+	//		maximum_displacement = std::max(maximum_displacement, std::abs(nodept_displ));
+	//	}
+	//}
+
+	////_________________________________________________________________________________________________________________
+	//// map the line results
+	//pulse_result_lineelements.clear_data();
+
+	//for (auto& ln : model_mesh.wireframe)
+	//{
+	//	// Extract the pulse node store -> start node and end node
+	//	pulse_node_store* startNode = &pulse_result_nodes.pulse_nodeMap[ln.startnd_id];
+	//	pulse_node_store* endNode = &pulse_result_nodes.pulse_nodeMap[ln.endnd_id];
+	//	
+	//	int line_id = ln.line_id;
+
+	//	// Add to the pulse element line results store
+	//	pulse_result_lineelements.add_pulse_elementline(line_id, startNode, endNode);
+	//}
+
+	////_________________________________________________________________________________________________________________
+	//// map the tri results
+	//pulse_result_trielements.clear_data();
+
+	//for (auto& tri : model_mesh.tris)
+	//{
+	//	// Extract the model tris
+	//	int tri_id = tri.tri_id;
+
+	//	// Extract the pulse node store -> nd1, nd2 & nd3
+	//	pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[tri.nd1_id];
+	//	pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[tri.nd2_id];
+	//	pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[tri.nd3_id];
+
+
+	//	// Add to the pulse element tri results store
+	//	pulse_result_trielements.add_pulse_elementtriangle(tri_id, nd1, nd2, nd3);
+	//}
+
+	////_________________________________________________________________________________________________________________
+	//// map the quad results
+	//pulse_result_quadelements.clear_data();
+
+	//std::unordered_map<int, quad_midnode_eigenvector_store> quad_midnode;
+
+	//// Create the quad mid interpolation
+	//for (auto& quad : model_mesh.quads)
+	//{
+	//	int quad_id = quad.quad_id; // get the quad id
+
+	//	// Extract the pulse node store -> nd1, nd2, nd3 & nd4
+	//	pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[quad.nd1_id];
+	//	pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[quad.nd2_id];
+	//	pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[quad.nd3_id];
+	//	pulse_node_store* nd4 = &pulse_result_nodes.pulse_nodeMap[quad.nd4_id];
+
+	//	glm::vec3 quad_midpt = geom_parameters::findGeometricCenter(nd1->node_pt, nd2->node_pt, nd3->node_pt, nd4->node_pt); // quad mid pt
+	//	std::vector<glm::vec3> quad_midpt_displ; // displacement at mid pt of quad
+	//	std::vector<double> quad_midpt_displ_mag; // displacement magnitude at mid pt of quad
+
+	//	for (int i = 0; i < static_cast<int>(nd1->node_pulse_result.node_displ_magnitude.size()); i++)
+	//	{
+	//		// Displacement node pt
+	//		glm::vec3 nd1_displ = nd1->node_pulse_result.node_displ[i]; // nd1 displ
+	//		glm::vec3 nd2_displ = nd2->node_pulse_result.node_displ[i]; // nd2 displ
+	//		glm::vec3 nd3_displ = nd3->node_pulse_result.node_displ[i]; // nd3 displ
+	//		glm::vec3 nd4_displ = nd4->node_pulse_result.node_displ[i]; // nd4 displ
+
+	//		// mid point displacement
+	//		glm::vec3 midpt_displ = geom_parameters::findGeometricCenter(nd1_displ, nd2_displ, nd3_displ, nd4_displ);
+
+	//		// mid point displacement magnitude
+	//		double displ_mag = glm::length(midpt_displ);
+
+
+	//		quad_midpt_displ.push_back(midpt_displ);
+	//		quad_midpt_displ_mag.push_back(displ_mag);
+	//	}
+
+	//	// Add to the quad mid node eigenvector list
+	//	quad_midnode[quad_id].quad_id = quad_id;
+	//	quad_midnode[quad_id].mid_pt = quad_midpt;
+	//	quad_midnode[quad_id].midpt_displ = quad_midpt_displ;
+	//	quad_midnode[quad_id].midpt_displ_mag = quad_midpt_displ_mag;
+	//}
+
+	//for (auto& quad : model_mesh.quads)
+	//{
+	//	// Extract the model lines
+	//	int quad_id = quad.quad_id;
+
+	//	// Extract the pulse node store -> nd1, nd2, nd3 & nd4
+	//	pulse_node_store* nd1 = &pulse_result_nodes.pulse_nodeMap[quad.nd1_id];
+	//	pulse_node_store* nd2 = &pulse_result_nodes.pulse_nodeMap[quad.nd2_id];
+	//	pulse_node_store* nd3 = &pulse_result_nodes.pulse_nodeMap[quad.nd3_id];
+	//	pulse_node_store* nd4 = &pulse_result_nodes.pulse_nodeMap[quad.nd4_id];
+
+
+	//	// Add to the pulse element quad results store
+	//	pulse_result_quadelements.add_pulse_elementquadrilateral(quad_id, nd1, nd2, nd3, nd4,
+	//		quad_midnode[quad_id].mid_pt, quad_midnode[quad_id].midpt_displ, quad_midnode[quad_id].midpt_displ_mag);
+	//}
+
+	////_________________________________________________________________________________________________________________
+	//// Set the maximim displacement
+	//pulse_result_nodes.max_node_displ = maximum_displacement;
+	//pulse_result_lineelements.max_line_displ = maximum_displacement;
+	//pulse_result_trielements.max_tri_displ = maximum_displacement;
+	//pulse_result_quadelements.max_quad_displ = maximum_displacement;
+
+}
+
+
+
+
+int pulse_analysis_solver::get_or_create_node(int original_node_id,
+	std::unordered_map<int, int>& added_nodes,
+	std::vector<rslt_pulsenode_store>& rsltnodes,
+	const std::unordered_map<int, rslt_pulsenode_store>& node_pulseresults,
+	int& next_node_id)
+{
+	auto it = added_nodes.find(original_node_id);
+	if (it != added_nodes.end())
+	{
+		return it->second;  // Node already exists
+	}
+
+	// Create new result node
+	int new_node_id = next_node_id++;
+	added_nodes[original_node_id] = new_node_id;
+
+
+	const rslt_pulsenode_store& nd_pulseresult = node_pulseresults.at(original_node_id);
+
+	glm::vec3 node_pt = nd_pulseresult.node_pt;
+	std::vector<glm::vec3> displ = nd_pulseresult.node_displ;
+	std::vector<double> displ_mag = nd_pulseresult.node_displ_magnitude;
+
+
+	rsltnodes.emplace_back(new_node_id, node_pt, displ, displ_mag);
+	return new_node_id;
+
+}
