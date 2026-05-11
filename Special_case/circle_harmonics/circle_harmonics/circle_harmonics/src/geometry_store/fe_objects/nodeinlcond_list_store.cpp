@@ -142,6 +142,12 @@ void nodeinlcond_list_store::set_buffer()
 
 void nodeinlcond_list_store::paint_inlcond()
 {
+	// Skip if no Initial condition
+	if (inlcond_count == 0)
+	{
+		return;
+	}
+
 	// Paint the initial displacement points
 	inlcond_shader.Bind();
 	inlcond_buffer.Bind();
@@ -173,7 +179,7 @@ void nodeinlcond_list_store::update_openGLuniforms()
 		geom_param_ptr->rotateTranslation *
 		geom_param_ptr->modelMatrix;
 
-
+	inlcond_shader.Bind();
 	inlcond_shader.setUniform("uMVP", mvp, false);
 	inlcond_shader.setUniform("uZoomScale", zoomScale);
 
@@ -192,6 +198,8 @@ void nodeinlcond_list_store::update_openGLuniforms()
 
 		inlcond_shader.setUniform("uVertexColor", vertexColor);
 	}
+
+	inlcond_shader.UnBind();
 
 	//
 }

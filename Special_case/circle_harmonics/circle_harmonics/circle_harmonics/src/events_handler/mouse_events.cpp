@@ -188,6 +188,18 @@ void mouse_events::change_viewport()
 	}
 }
 
+void mouse_events::change_viewport(int view)
+{
+	// 2, 4 , 6
+	viewType = view;
+	arcball.setDefault(viewType);
+
+	// Update rotate 
+	glm::mat4 rot_matrix = arcball.getRotationMatrix();
+	geom->update_model_rotate(rot_matrix);
+
+}
+
 void mouse_events::left_mouse_click(glm::vec2& loc)
 {
 	/*

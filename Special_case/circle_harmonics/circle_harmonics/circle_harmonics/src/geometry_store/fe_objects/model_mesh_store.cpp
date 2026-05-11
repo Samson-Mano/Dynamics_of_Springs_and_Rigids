@@ -12,9 +12,9 @@ void model_mesh_store::init(geom_parameters* geom_param_ptr)
 	this->geom_param_ptr = geom_param_ptr;
 
 	// Create the mesh shader
-	 auto shaderSrc = ShaderLibrary::Get(ShaderLibrary::ShaderType::MeshShader);
+	auto shaderSrc = ShaderLibrary::Get(ShaderLibrary::ShaderType::MeshShader);
 
-	 mesh_shader.createShader(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
+	mesh_shader.createShader(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
 
 	// Clear mesh
 	clear_mesh();
@@ -256,7 +256,7 @@ void model_mesh_store::create_vertex_normals(std::vector<glm::vec3>& vnormals)
 	for (const auto& normal : vnormals)
 	{
 		float length1 = glm::length(normal);
-		float lengthSq =  length1 * length1;
+		float lengthSq = length1 * length1;
 		glm::vec3 normalized;
 
 		if (lengthSq > EPSILON)
@@ -318,7 +318,7 @@ void model_mesh_store::create_buffer()
 
 	// 4. Create the index buffer object (IBO) for the points 
 	// 4A. Create the point index data 
-	this->point_ibo.createIndexBuffer(this->pointIndexData.data(), 
+	this->point_ibo.createIndexBuffer(this->pointIndexData.data(),
 		static_cast<unsigned int>(this->pointIndexData.size()));
 
 	// 4B. Create the line index data 
@@ -340,32 +340,43 @@ void model_mesh_store::create_buffer()
 void model_mesh_store::paint_mesh()
 {
 	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.triangle_color, geom_param_ptr->geom_transparency);
-	this->mesh_shader.setUniform("vertexColor", vertexColor);// Updating uniforms unBinds shader
-	this->mesh_shader.Bind();
 
+	this->mesh_shader.Bind();
+	this->mesh_shader.setUniform("vertexColor", vertexColor);
 
 	// Paint the mesh triangles, quadrilaterals
 	this->point_vao.Bind();
 
-	// Paint the triangle mesh
-	this->triangle_ibo.Bind();
-	
-	glDrawElements(GL_TRIANGLES,
-		static_cast<unsigned int>(triangleIndexData.size()),
-		GL_UNSIGNED_INT,
-		0);
+	unsigned int triIndexSize = static_cast<unsigned int>(triangleIndexData.size());
+	unsigned int quadIndexSize = static_cast<unsigned int>(quadrilateralIndexData.size());
 
-	this->triangle_ibo.UnBind();
+	if (triIndexSize != 0)
+	{
+		// Paint the triangle mesh
+		this->triangle_ibo.Bind();
 
-	// Paint the quadrilateral mesh
-	this->quadrilateral_ibo.Bind();
+		glDrawElements(GL_TRIANGLES,
+			triIndexSize,
+			GL_UNSIGNED_INT,
+			0);
 
-	glDrawElements(GL_TRIANGLES,
-		static_cast<unsigned int>(quadrilateralIndexData.size()),
-		GL_UNSIGNED_INT,
-		0);
+		this->triangle_ibo.UnBind();
+	}
 
-	this->quadrilateral_ibo.UnBind();
+
+	if (quadIndexSize != 0)
+	{
+		// Paint the quadrilateral mesh
+		this->quadrilateral_ibo.Bind();
+
+		glDrawElements(GL_TRIANGLES,
+			quadIndexSize,
+			GL_UNSIGNED_INT,
+			0);
+
+		this->quadrilateral_ibo.UnBind();
+	}
+
 	this->point_vao.UnBind();
 	this->mesh_shader.UnBind();
 
@@ -374,70 +385,88 @@ void model_mesh_store::paint_mesh()
 
 void model_mesh_store::paint_mesh_wireframe()
 {
-	
-	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.line_color, geom_param_ptr->geom_transparency);
-	this->mesh_shader.setUniform("vertexColor", vertexColor);// Updating uniforms unBinds shader
-	this->mesh_shader.Bind();
+	unsigned int wireIndexSize = static_cast<unsigned int>(wireframeIndexData.size());
 
-	// Paint the mesh wireframe
-	this->point_vao.Bind();
-	this->wireframe_ibo.Bind();
+	if (wireIndexSize != 0)
+	{
+		glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.line_color, geom_param_ptr->geom_transparency);
 
-	glDrawElements(GL_LINES,
-		static_cast<unsigned int>(wireframeIndexData.size()),
-		GL_UNSIGNED_INT,
-		0);
+		this->mesh_shader.Bind();
+		this->mesh_shader.setUniform("vertexColor", vertexColor);
 
-	this->wireframe_ibo.UnBind();
-	this->point_vao.UnBind();
-	this->mesh_shader.UnBind();
+
+		this->point_vao.Bind();
+
+		// Paint the mesh wireframe
+		this->wireframe_ibo.Bind();
+
+		glDrawElements(GL_LINES,
+			wireIndexSize,
+			GL_UNSIGNED_INT,
+			0);
+
+		this->wireframe_ibo.UnBind();
+		this->point_vao.UnBind();
+		this->mesh_shader.UnBind();
+	}
 }
 
 
 
 void model_mesh_store::paint_mesh_points()
 {
+	unsigned int pointIndexSize = static_cast<unsigned int>(pointIndexData.size());
 
-	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.node_color, geom_param_ptr->geom_transparency);
-	this->mesh_shader.setUniform("vertexColor", vertexColor);// Updating uniforms unBinds shader
-	this->mesh_shader.Bind();
+	if (pointIndexSize != 0)
+	{
+		glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.node_color, geom_param_ptr->geom_transparency);
 
-	// Paint the mesh points
-	this->point_vao.Bind();
-	this->point_ibo.Bind();
-
-	glDrawElements(GL_POINTS,
-		static_cast<unsigned int>(pointIndexData.size()),
-		GL_UNSIGNED_INT,
-		0);
+		this->mesh_shader.Bind();
+		this->mesh_shader.setUniform("vertexColor", vertexColor);
 
 
-	this->point_ibo.UnBind();
-	this->point_vao.UnBind();
-	this->mesh_shader.UnBind();
+		this->point_vao.Bind();
+
+		// Paint the mesh points
+		this->point_ibo.Bind();
+
+		glDrawElements(GL_POINTS,
+			pointIndexSize,
+			GL_UNSIGNED_INT,
+			0);
+
+		this->point_ibo.UnBind();
+		this->point_vao.UnBind();
+		this->mesh_shader.UnBind();
+	}
 
 }
 
 void model_mesh_store::paint_selected_mesh_points()
 {
+	unsigned int selectedpointIndexSize = static_cast<unsigned int>(selectedpointIndexData.size());
 
-	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.selection_color, geom_param_ptr->geom_transparency);
-	this->mesh_shader.setUniform("vertexColor", vertexColor);// Updating uniforms unBinds shader
-	this->mesh_shader.Bind();
+	if (selectedpointIndexSize != 0)
+	{
+		glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.selection_color, geom_param_ptr->geom_transparency);
 
-	// Paint the selected mesh points
-	this->point_vao.Bind();
-	this->selected_point_ibo.Bind();
+		this->mesh_shader.Bind();
+		this->mesh_shader.setUniform("vertexColor", vertexColor);
 
-	glDrawElements(GL_POINTS,
-		static_cast<int>(selectedpointIndexData.size()),
-		GL_UNSIGNED_INT,
-		0);
+		this->point_vao.Bind();
 
-	this->selected_point_ibo.UnBind();
-	this->point_vao.UnBind();
-	this->mesh_shader.UnBind();
+		// Paint the selected mesh points
+		this->selected_point_ibo.Bind();
 
+		glDrawElements(GL_POINTS,
+			selectedpointIndexSize,
+			GL_UNSIGNED_INT,
+			0);
+
+		this->selected_point_ibo.UnBind();
+		this->point_vao.UnBind();
+		this->mesh_shader.UnBind();
+	}
 }
 
 
@@ -458,8 +487,9 @@ void model_mesh_store::update_openGLuniforms()
 		geom_param_ptr->rotateTranslation *
 		geom_param_ptr->modelMatrix;
 
-
+	mesh_shader.Bind();
 	mesh_shader.setUniform("uMVP", mvp, false);
+	mesh_shader.UnBind();
 
 	//
 }
@@ -511,7 +541,7 @@ void model_mesh_store::add_selection_nodes(std::vector<int> selected_node_ids)
 
 	for (int nd_id : selected_node_ids)
 	{
-		int index =	this->pointIdToIndex[nd_id];
+		int index = this->pointIdToIndex[nd_id];
 
 		this->selectedpointIndexData.push_back(index);
 	}

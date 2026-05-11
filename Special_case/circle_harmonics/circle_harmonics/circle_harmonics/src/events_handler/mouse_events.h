@@ -41,6 +41,7 @@ public:
 	void zoom_operation(double& e_delta, glm::vec2& loc);
 	void zoom_to_fit();
 	void change_viewport();
+	void change_viewport(int view);
 	void left_mouse_click(glm::vec2& loc);
 	void left_mouse_doubleclick(glm::vec2& loc);
 	void right_mouse_click(glm::vec2& loc);

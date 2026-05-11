@@ -131,40 +131,86 @@ void geom_store::load_model(const int& model_type, std::vector<std::string> inpu
 	// read the model
 	//___________________________________________________________________________
 
-	std::ifstream model_file;
+	// Determine model file path based on type
+	std::filesystem::path model_path;
+	
+
+	if (this->mat_data.model_type == 0)
+	{
+		// Circular 60 segments
+		model_path = "resources/model_data/circle_mesh_60.txt";
+	}
+	else if (this->mat_data.model_type == 1)
+	{
+		// Circular 60 segments (Quad Special)
+		model_path = "resources/model_data/circle_mesh_60quad_spl.txt";
+	}
+	else if (this->mat_data.model_type == 2)
+	{
+		// Circular 60 segments triangle
+		model_path = "resources/model_data/circle_mesh_60tri.txt";
+	}
+	else if (this->mat_data.model_type == 3)
+	{
+		// Circular 60 segments triangle special 1
+		model_path = "resources/model_data/circle_mesh_60tri_spl.txt";
+	}
+	else if (this->mat_data.model_type == 4)
+	{
+		// Circular 60 segments triangle special 2
+		model_path = "resources/model_data/circle_mesh_60tri_spl1.txt";
+	}
+	else if (this->mat_data.model_type == 5)
+	{
+		// Circular 120 Quad
+		model_path = "resources/model_data/circle_mesh_120.txt";
+	}
+	else if (this->mat_data.model_type == 6)
+	{
+		// Circular 180 Quad
+		model_path = "resources/model_data/circle_mesh_180.txt";
+	}
+	else if (this->mat_data.model_type == 7)
+	{
+		// Circular 240 Quad
+		model_path = "resources/model_data/circle_mesh_240.txt";
+	}
+	else if (this->mat_data.model_type == 8)
+	{
+		// Circular 360 Quad
+		model_path = "resources/model_data/circle_mesh_360.txt";
+	}
+	else if (this->mat_data.model_type == 9)
+	{
+		// Circular 720 Quad
+		model_path = "resources/model_data/circle_mesh_720.txt";
+	}
+	else if (this->mat_data.model_type == 10)
+	{
+		// Circular 1440 Quad
+		model_path = "resources/model_data/circle_mesh_1440.txt";
+	}
 
 	// Print current working directory
 	std::filesystem::path current_path = std::filesystem::current_path();
 	std::cout << "Current working directory: " << current_path << std::endl;
 
 
-	if (this->mat_data.model_type == 0)
+
+	std::cout << "Attempting to load model type " << model_type
+		<< " from: " << model_path << std::endl;
+
+
+	// Check if file exists
+	if (!std::filesystem::exists(model_path)) 
 	{
-		// Circular
-		model_file =std::ifstream("circle_mesh.txt", std::ifstream::in);
-	}
-	else if (this->mat_data.model_type == 1)
-	{
-		// Rectange 1:1
-		model_file = std::ifstream("rect1_mesh.txt", std::ifstream::in);
-	}
-	else if (this->mat_data.model_type == 2)
-	{
-		// Rectangle 1:2
-		model_file = std::ifstream("rect2_mesh.txt", std::ifstream::in);
-	}
-	else if (this->mat_data.model_type == 3)
-	{
-		// Rectangle 1:3
-		model_file = std::ifstream("rect3_mesh.txt", std::ifstream::in);
-	}
-	else if (this->mat_data.model_type == 4)
-	{
-		// Circular triangle
-		model_file = std::ifstream("circle_mesh_tri.txt", std::ifstream::in);
+		std::cerr << "ERROR: Model file not found: " << model_path << std::endl;
+		return;
 	}
 
-	
+	std::ifstream model_file;
+	model_file = std::ifstream(model_path, std::ifstream::in);
+
 	// Read the Raw Data
 	// Read the entire file into a string
 	std::string file_contents((std::istreambuf_iterator<char>(model_file)),
@@ -354,6 +400,8 @@ void geom_store::update_model_zoomfit()
 	geom_param.panTranslation = glm::mat4(1.0f);
 
 	// Rotation Matrix
+	geom_param.rotateTranslation = glm::mat4(glm::mat4_cast(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)));
+
 	// geom_param.rotateTranslation = glm::mat4( glm::mat4_cast(0.4402697668541200f, 0.8215545196058330f, 0.2968766167094340f, -0.2075451231915790f));
 
 	// Set the zoom scale

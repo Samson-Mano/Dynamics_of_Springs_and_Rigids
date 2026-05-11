@@ -57,7 +57,7 @@ void Shader::createShader(const char* vertexShaderData, const char* fragmentShad
 
     if (s_enableDebugOutput && m_programID != 0) 
     {
-        std::cout << "Shader program created successfully. ID: " << m_programID << std::endl;
+       //  std::cout << "Shader program created successfully. ID: " << m_programID << std::endl;
     }
 }
 
@@ -114,7 +114,7 @@ unsigned int Shader::compileShader(GLenum type, const char* source, const std::s
 
     if (s_enableDebugOutput) 
     {
-        std::cout << "Compiled " << shaderName << " shader successfully. ID: " << shader << std::endl;
+       // std::cout << "Compiled " << shaderName << " shader successfully. ID: " << shader << std::endl;
     }
 
     return shader;

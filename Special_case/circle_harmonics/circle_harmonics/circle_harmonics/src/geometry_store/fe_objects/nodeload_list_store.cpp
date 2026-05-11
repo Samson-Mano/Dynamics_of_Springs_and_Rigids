@@ -191,6 +191,12 @@ void nodeload_list_store::set_buffer()
 
 void nodeload_list_store::paint_loads()
 {
+	// Skip if no loads
+	if (load_count == 0) 
+	{
+		return;
+	}
+
 	// Paint the loads
 	load_shader.Bind();
 	load_buffer.Bind();
@@ -227,12 +233,14 @@ void nodeload_list_store::update_openGLuniforms()
 		geom_param_ptr->modelMatrix;
 
 
+	load_shader.Bind();
 	load_shader.setUniform("uMVP", mvp, false);
 	load_shader.setUniform("uZoomScale", zoomScale);
 
 	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.load_color, geom_param_ptr->geom_transparency);
 	
 	load_shader.setUniform("uVertexColor", vertexColor);
+	load_shader.UnBind();
 
 }
 

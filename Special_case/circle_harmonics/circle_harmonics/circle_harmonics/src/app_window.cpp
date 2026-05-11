@@ -184,10 +184,12 @@ void app_window::initModernOpenGL()
 	glDepthFunc(GL_LEQUAL);  // Better for modern rendering
 	glDepthMask(GL_TRUE);
 
-	// 3. Enable backface culling
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);
+	// 3. Disable backface culling
+	glDisable(GL_CULL_FACE);
+
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_BACK);
+	//glFrontFace(GL_CCW);
 
 	// 4. Enable seamless cubemaps (OpenGL 3.2+)
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -307,6 +309,31 @@ void app_window::menu_events()
 				// Options menu
 				op_window.is_show_window = true;
 			}
+			if (ImGui::BeginMenu("View"))  // BeginMenu, not MenuItem
+			{
+				if (ImGui::MenuItem("Front view"))
+				{
+					// Handle front view
+					// setFrontView();
+					mouse_Handler.mouse_evnt.change_viewport(4);
+				}
+				if (ImGui::MenuItem("Top view"))
+				{
+					// Handle top view
+					// setTopView();
+					mouse_Handler.mouse_evnt.change_viewport(2);
+				}
+				if (ImGui::MenuItem("Side view"))
+				{
+					// Handle side view
+					// setSideView();
+					mouse_Handler.mouse_evnt.change_viewport(6);
+				}
+				ImGui::EndMenu();  // End the submenu
+			}
+
+			ImGui::Separator();  // Optional separator
+
 			if (ImGui::MenuItem("Exit"))
 			{
 				// Handle menu Exit

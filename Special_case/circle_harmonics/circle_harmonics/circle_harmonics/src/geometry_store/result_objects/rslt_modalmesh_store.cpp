@@ -22,8 +22,8 @@ void rslt_modalmesh_store::init(geom_parameters* geom_param_ptr)
 
 
 void rslt_modalmesh_store::add_result_mesh(std::vector<rslt_modalnode_store> rsltnodes,
-		std::vector<elementline_store> wireframe,
-		std::vector<elementtri_store> tris)
+	std::vector<elementline_store> wireframe,
+	std::vector<elementtri_store> tris)
 {
 	// Clear the existing mesh
 	clear_mesh();
@@ -144,65 +144,78 @@ void rslt_modalmesh_store::update_buffer(int selected_mode)
 void rslt_modalmesh_store::paint_mesh()
 {
 
-	this->rsltmesh_shader.Bind();
+	unsigned int triIndexSize = static_cast<unsigned int>(triangleIndexData.size());
 
-	// Paint the mesh triangles, quadrilaterals
-	this->point_vao.Bind();
+	if (triIndexSize != 0)
+	{
+		this->rsltmesh_shader.Bind();
 
-	// Paint the triangle mesh
-	this->triangle_ibo.Bind();
+		// Paint the mesh triangles, quadrilaterals
+		this->point_vao.Bind();
 
-	glDrawElements(GL_TRIANGLES,
-		static_cast<unsigned int>(triangleIndexData.size()),
-		GL_UNSIGNED_INT,
-		0);
+		// Paint the triangle mesh
+		this->triangle_ibo.Bind();
 
-	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glDrawElements(GL_TRIANGLES,
+			triIndexSize,
+			GL_UNSIGNED_INT,
+			0);
 
-	this->triangle_ibo.UnBind();
-	this->point_vao.UnBind();
-	this->rsltmesh_shader.UnBind();
-
+		this->triangle_ibo.UnBind();
+		this->point_vao.UnBind();
+		this->rsltmesh_shader.UnBind();
+	}
 }
 
 
 void rslt_modalmesh_store::paint_mesh_wireframe()
 {
+	unsigned int wireIndexSize = static_cast<unsigned int>(wireframeIndexData.size());
 
-	this->rsltmesh_shader.Bind();
+	if (wireIndexSize != 0)
+	{
+		this->rsltmesh_shader.Bind();
+		this->point_vao.Bind();
 
-	// Paint the mesh wireframe
-	this->point_vao.Bind();
-	this->wireframe_ibo.Bind();
+		// Paint the mesh wireframe
+		this->wireframe_ibo.Bind();
 
-	glDrawElements(GL_LINES,
-		static_cast<unsigned int>(wireframeIndexData.size()),
-		GL_UNSIGNED_INT,
-		0);
+		glDrawElements(GL_LINES,
+			wireIndexSize,
+			GL_UNSIGNED_INT,
+			0);
 
-	this->wireframe_ibo.UnBind();
-	this->point_vao.UnBind();
-	this->rsltmesh_shader.UnBind();
+		this->wireframe_ibo.UnBind();
+		this->point_vao.UnBind();
+		this->rsltmesh_shader.UnBind();
+	}
 
 }
 
 void rslt_modalmesh_store::paint_mesh_points()
 {
-	this->rsltmesh_shader.Bind();
 
-	// Paint the mesh points
-	this->point_vao.Bind();
-	this->point_ibo.Bind();
+	unsigned int pointIndexSize = static_cast<unsigned int>(pointIndexData.size());
 
-	glDrawElements(GL_POINTS,
-		static_cast<unsigned int>(pointIndexData.size()),
-		GL_UNSIGNED_INT,
-		0);
+	if (pointIndexSize != 0)
+	{
+		this->rsltmesh_shader.Bind();
 
+		// Paint the mesh points
+		this->point_vao.Bind();
 
-	this->point_ibo.UnBind();
-	this->point_vao.UnBind();
-	this->rsltmesh_shader.UnBind();
+		// Paint the mesh points
+		this->point_ibo.Bind();
+
+		glDrawElements(GL_POINTS,
+			pointIndexSize,
+			GL_UNSIGNED_INT,
+			0);
+
+		this->point_ibo.UnBind();
+		this->point_vao.UnBind();
+		this->rsltmesh_shader.UnBind();
+	}
 
 }
 
@@ -224,10 +237,10 @@ void rslt_modalmesh_store::update_openGLuniforms()
 		geom_param_ptr->rotateTranslation *
 		geom_param_ptr->modelMatrix;
 
-
+	rsltmesh_shader.Bind();
 	rsltmesh_shader.setUniform("uMVP", mvp, false);
 	rsltmesh_shader.setUniform("vTransparency", 0.8f);// Updating uniforms unBinds shader
-
+	rsltmesh_shader.UnBind();
 
 }
 
@@ -239,12 +252,13 @@ void rslt_modalmesh_store::update_animation_openGLuniforms()
 	float visualization_defl_scale = this->geom_param_ptr->modal_visualization_defl_scale *
 		(this->geom_param_ptr->node_circle_radii / this->geom_param_ptr->geom_scale);
 
+	rsltmesh_shader.Bind();
 	rsltmesh_shader.setUniform("uDeflScale", visualization_defl_scale);
 
 	float sine_defl_scale = this->geom_param_ptr->modal_sine_defl_scale;
 
 	rsltmesh_shader.setUniform("uDeflAmplitude", sine_defl_scale);
-
+	rsltmesh_shader.UnBind();
 
 }
 

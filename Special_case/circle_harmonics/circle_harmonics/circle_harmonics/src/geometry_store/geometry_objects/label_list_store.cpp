@@ -18,7 +18,9 @@ void label_list_store::init(geom_parameters* geom_param_ptr)
 	label_shader.createShader(shaderSrc.vertex.c_str(), shaderSrc.fragment.c_str());
 
 	// Set texture uniform variables
+	label_shader.Bind();
 	label_shader.setUniform("u_Texture", 0);
+	label_shader.UnBind();
 
 	// Delete all the labels
 	labels.clear();
@@ -81,6 +83,12 @@ void label_list_store::set_buffer()
 
 void label_list_store::paint_text()
 {
+	// Skip if no Character
+	if (total_char_count == 0)
+	{
+		return;
+	}
+
 	// Paint all the labels
 	label_shader.Bind();
 	label_buffers.Bind();
@@ -125,14 +133,15 @@ void label_list_store::update_openGLuniforms()
 		geom_param_ptr->rotateTranslation *
 		geom_param_ptr->modelMatrix;
 
-
+	label_shader.Bind();
 	label_shader.setUniform("uMVP", mvp, false);
 	label_shader.setUniform("uZoomScale", zoomScale);
 
 
 	glm::vec4 labelColor = glm::vec4(geom_param_ptr->geom_colors.load_color, geom_param_ptr->geom_transparency);
 	label_shader.setUniform("uLabelColor", labelColor); // Updating uniforms unBinds shader
-			
+	
+	label_shader.UnBind();
 	
 }
 
