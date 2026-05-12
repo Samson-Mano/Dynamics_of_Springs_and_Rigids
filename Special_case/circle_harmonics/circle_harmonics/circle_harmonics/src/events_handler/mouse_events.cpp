@@ -167,7 +167,11 @@ void mouse_events::zoom_to_fit()
 	// Zoom to fit the model
 	prev_translation = glm::vec2(0);
 	zoom_val = 1.0f;
-	// arcball.setDefault(1);
+
+	// arcball.setDefault(4);
+
+	change_viewport(4);
+
 	geom->update_model_zoomfit();
 	// std::cout << "Zoom val: " << zoom_val << std::endl;
 }

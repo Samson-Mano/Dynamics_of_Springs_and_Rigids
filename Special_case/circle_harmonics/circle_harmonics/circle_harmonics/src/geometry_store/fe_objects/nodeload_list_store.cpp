@@ -118,18 +118,21 @@ void nodeload_list_store::set_buffer()
 			load_max = std::abs(load.load_value);
 		}
 		//__________________________________________________________________________
-	}	
+	}
 
-	
-	// Only show label for the first load
-	bool show_load_label = true;
+
+	// Only show label for the single load value
+	std::unordered_set<double> load_val_set;
 
 	for (auto& loadx : loadMap)
 	{
 		load_data load = loadx.second;
 
-		if (show_load_label == true)
+		// Check whether the load value exists or not
+		if (load_val_set.find(load.load_value) == load_val_set.end())
 		{
+			load_val_set.insert(load.load_value);
+
 			std::stringstream ss;
 			ss << std::fixed << std::setprecision(geom_param_ptr->load_precision) << std::abs(load.load_value);
 
@@ -138,7 +141,7 @@ void nodeload_list_store::set_buffer()
 			double load_angle_rad = 0.0f;
 
 			glm::vec3 load_arrow_endpt = load.load_loc; // +glm::vec3(0.0, 0.0,
-				// -20.0f * (load.load_value / load_max) * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale))); // 1
+			// -20.0f * (load.load_value / load_max) * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale))); // 1
 
 			bool is_load_val_above = false;
 			if (load.load_value < 0)
@@ -148,7 +151,6 @@ void nodeload_list_store::set_buffer()
 
 			load_value_labels.add_text(temp_str, load_arrow_endpt, is_load_val_above, true);
 
-			show_load_label = false;
 		}
 	}
 
@@ -156,10 +158,10 @@ void nodeload_list_store::set_buffer()
 
 	//__________________________________________________________________________
 
-	unsigned int load_vertex_count = 5 * 6 * load_count; // 5 points to draw load (3 position, 3 origin)
+	unsigned int load_vertex_count = 4 * 6 * load_count; // 4 points to draw load (3 position, 3 origin)
 	float* load_vertices = new float[load_vertex_count];
 
-	unsigned int load_indices_count = 14 * load_count;
+	unsigned int load_indices_count = 8 * load_count;
 	unsigned int* load_indices = new unsigned int[load_indices_count];
 
 	unsigned int load_v_index = 0;
@@ -192,7 +194,7 @@ void nodeload_list_store::set_buffer()
 void nodeload_list_store::paint_loads()
 {
 	// Skip if no loads
-	if (load_count == 0) 
+	if (load_count == 0)
 	{
 		return;
 	}
@@ -200,7 +202,7 @@ void nodeload_list_store::paint_loads()
 	// Paint the loads
 	load_shader.Bind();
 	load_buffer.Bind();
-	glDrawElements(GL_LINES, 14 * load_count, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_LINES, 8 * load_count, GL_UNSIGNED_INT, 0);
 	load_buffer.UnBind();
 	load_shader.UnBind();
 }
@@ -238,7 +240,7 @@ void nodeload_list_store::update_openGLuniforms()
 	load_shader.setUniform("uZoomScale", zoomScale);
 
 	glm::vec4 vertexColor = glm::vec4(geom_param_ptr->geom_colors.load_color, geom_param_ptr->geom_transparency);
-	
+
 	load_shader.setUniform("uVertexColor", vertexColor);
 	load_shader.UnBind();
 
@@ -249,93 +251,103 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 {
 	int load_sign = ld.load_value > 0 ? 1 : -1;
 
-	glm::vec3 load_loc = ld.load_loc;
+	glm::vec2 load_loc = glm::vec2(ld.load_loc.x, ld.load_loc.y);
 
-	// Rotate the corner points
-	glm::vec3 load_arrow_startpt = glm::vec3(0.0,0.0, 
-		-1.0f * load_sign * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale))); // 0
-	glm::vec3 load_arrow_endpt = glm::vec3(0.0,0.0,
-		-20.0f * (ld.load_value / load_max) * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale))); // 1
-	glm::vec3 load_arrow_pt1 = glm::vec3(0, -2.0f * load_sign * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale)),
-		-5.0f * load_sign * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale))); // 2
-	glm::vec3 load_arrow_pt2 = glm::vec3(1.732f * load_sign * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale)),
-		 1.0f * load_sign * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale)), 
-		-5.0f * load_sign * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale))); // 3
-	glm::vec3 load_arrow_pt3 = glm::vec3(-1.732f * load_sign * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale)),
-		 1.0f * load_sign * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale)),
-		-5.0f * load_sign * (geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale))); // 4
+	float ld_visualization_factor = load_sign *
+		(geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale));
+	float ld_scale = (ld.load_value / load_max) *
+		(geom_param_ptr->node_circle_radii / static_cast<float>(geom_param_ptr->geom_scale));
+
+	glm::vec2 load_dir;
+
+	if (glm::length(load_loc) > 0.001f)
+	{
+		// Direction from load location towards origin (0,0)
+		load_dir = glm::normalize(-load_loc);  // Simpler: direction from point to origin
+		// Or explicitly: glm::normalize(glm::vec2(0.0f) - load_loc);
+	}
+	else
+	{
+		// Load is already at center, default direction (e.g., upward)
+		load_dir = glm::vec2(0.0f, 1.0f);
+	}
+
+
+	float arrowLength = -20.0f * ld_scale;
+	float arrowheadSize = -5.0f * ld_visualization_factor;
+	float arrowheadAngle = 10.0f;
+
+
+	glm::vec2 load_arrow_startpt = load_loc - load_dir * (0.2f * ld_visualization_factor);  // Start at load location with slight offset
+	glm::vec2 load_arrow_endpt = load_loc + load_dir * arrowLength;
+
+	// Arrowhead wings
+	glm::vec2 backward = -arrowheadSize * load_dir;
+	float angleRad = glm::radians(arrowheadAngle);
+
+	glm::vec2 load_arrow_pt1 = load_arrow_startpt - glm::rotate(backward, angleRad);
+	glm::vec2 load_arrow_pt2 = load_arrow_startpt - glm::rotate(backward, -angleRad);
+
 
 	//__________________________________________________________________________________________________________
 
 	// Load 0th point
 	// Position
-	load_vertices[load_v_index + 0] = load_loc.x + load_arrow_startpt.x;
-	load_vertices[load_v_index + 1] = load_loc.y + load_arrow_startpt.y;
-	load_vertices[load_v_index + 2] = load_loc.z + load_arrow_startpt.z;
+	load_vertices[load_v_index + 0] = load_arrow_startpt.x;
+	load_vertices[load_v_index + 1] = load_arrow_startpt.y;
+	load_vertices[load_v_index + 2] = 0.0f;
 
 	// Load location center
 	load_vertices[load_v_index + 3] = load_loc.x;
 	load_vertices[load_v_index + 4] = load_loc.y;
-	load_vertices[load_v_index + 5] = load_loc.z;
+	load_vertices[load_v_index + 5] = 0.0f;
 
 	load_v_index = load_v_index + 6;
 
-	// Load 1th point
+	// Load Arrow end point
 	// Position
-	load_vertices[load_v_index + 0] = load_loc.x + load_arrow_endpt.x;
-	load_vertices[load_v_index + 1] = load_loc.y + load_arrow_endpt.y;
-	load_vertices[load_v_index + 2] = load_loc.z + load_arrow_endpt.z;
+	load_vertices[load_v_index + 0] = load_arrow_endpt.x;
+	load_vertices[load_v_index + 1] = load_arrow_endpt.y;
+	load_vertices[load_v_index + 2] = 0.0f;
 
 	// Load location center
 	load_vertices[load_v_index + 3] = load_loc.x;
 	load_vertices[load_v_index + 4] = load_loc.y;
-	load_vertices[load_v_index + 5] = load_loc.z;
+	load_vertices[load_v_index + 5] = 0.0f;
 
 	load_v_index = load_v_index + 6;
 
-	// Load 2th point
+	// Load Arrow point 1
 	// Position
-	load_vertices[load_v_index + 0] = load_loc.x + load_arrow_pt1.x;
-	load_vertices[load_v_index + 1] = load_loc.y + load_arrow_pt1.y;
-	load_vertices[load_v_index + 2] = load_loc.z + load_arrow_pt1.z;
+	load_vertices[load_v_index + 0] = load_arrow_pt1.x;
+	load_vertices[load_v_index + 1] = load_arrow_pt1.y;
+	load_vertices[load_v_index + 2] = 0.0f;
 
 	// Load location center
 	load_vertices[load_v_index + 3] = load_loc.x;
 	load_vertices[load_v_index + 4] = load_loc.y;
-	load_vertices[load_v_index + 5] = load_loc.z;
+	load_vertices[load_v_index + 5] = 0.0f;
 
 	load_v_index = load_v_index + 6;
 
-	// Load 3th point
+	// Load Arrow point 2
 	// Position
-	load_vertices[load_v_index + 0] = load_loc.x + load_arrow_pt2.x;
-	load_vertices[load_v_index + 1] = load_loc.y + load_arrow_pt2.y;
-	load_vertices[load_v_index + 2] = load_loc.z + load_arrow_pt2.z;
+	load_vertices[load_v_index + 0] = load_arrow_pt2.x;
+	load_vertices[load_v_index + 1] = load_arrow_pt2.y;
+	load_vertices[load_v_index + 2] = 0.0f;
 
 	// Load location center
 	load_vertices[load_v_index + 3] = load_loc.x;
 	load_vertices[load_v_index + 4] = load_loc.y;
-	load_vertices[load_v_index + 5] = load_loc.z;
+	load_vertices[load_v_index + 5] = 0.0f;
 
 	load_v_index = load_v_index + 6;
 
-	// Load 4th point
-	// Position
-	load_vertices[load_v_index + 0] = load_loc.x + load_arrow_pt3.x;
-	load_vertices[load_v_index + 1] = load_loc.y + load_arrow_pt3.y;
-	load_vertices[load_v_index + 2] = load_loc.z + load_arrow_pt3.z;
-
-	// Load location center
-	load_vertices[load_v_index + 3] = load_loc.x;
-	load_vertices[load_v_index + 4] = load_loc.y;
-	load_vertices[load_v_index + 5] = load_loc.z;
-
-	load_v_index = load_v_index + 6;
 
 	//______________________________________________________________________
 	// 
 	// Set the Load indices
-	unsigned int t_id = ((load_i_index / 14) * 5);
+	unsigned int t_id = ((load_i_index / 8) * 4);
 
 	// Line 0,1
 	load_indices[load_i_index + 0] = t_id + 0;
@@ -349,24 +361,13 @@ void nodeload_list_store::get_load_buffer(load_data& ld, float* load_vertices, u
 	load_indices[load_i_index + 4] = t_id + 0;
 	load_indices[load_i_index + 5] = t_id + 3;
 
-	// Line 0,4
-	load_indices[load_i_index + 6] = t_id + 0;
-	load_indices[load_i_index + 7] = t_id + 4;
-
 	// Line 2,3
-	load_indices[load_i_index + 8] = t_id + 2;
-	load_indices[load_i_index + 9] = t_id + 3;
-
-	// Line 3,4
-	load_indices[load_i_index + 10] = t_id + 3;
-	load_indices[load_i_index + 11] = t_id + 4;
-
-	// Line 4,2
-	load_indices[load_i_index + 12] = t_id + 4;
-	load_indices[load_i_index + 13] = t_id + 2;
+	load_indices[load_i_index + 6] = t_id + 2;
+	load_indices[load_i_index + 7] = t_id + 3;
 
 	// Increment
-	load_i_index = load_i_index + 14;
+	load_i_index = load_i_index + 8;
+
 }
 
 

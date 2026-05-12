@@ -400,8 +400,6 @@ void geom_store::update_model_zoomfit()
 	geom_param.panTranslation = glm::mat4(1.0f);
 
 	// Rotation Matrix
-	geom_param.rotateTranslation = glm::mat4(glm::mat4_cast(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)));
-
 	// geom_param.rotateTranslation = glm::mat4( glm::mat4_cast(0.4402697668541200f, 0.8215545196058330f, 0.2968766167094340f, -0.2075451231915790f));
 
 	// Set the zoom scale

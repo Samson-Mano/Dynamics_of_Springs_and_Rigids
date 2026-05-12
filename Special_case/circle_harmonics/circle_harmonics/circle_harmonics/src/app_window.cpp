@@ -191,11 +191,21 @@ void app_window::initModernOpenGL()
 	//glCullFace(GL_BACK);
 	//glFrontFace(GL_CCW);
 
+	// 3A. Enable transparency (blending)
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// Alternative blend modes:
+	// glBlendFunc(GL_SRC_ALPHA, GL_ONE);  // Additive blending (glowing effect)
+	// glBlendFunc(GL_ONE, GL_ONE);         // Additive blending
+	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Standard transparency
+
 	// 4. Enable seamless cubemaps (OpenGL 3.2+)
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 	// 5. Set anisotropic filtering (if using textures)
-	if (glewIsSupported("GL_EXT_texture_filter_anisotropic")) {
+	if (glewIsSupported("GL_EXT_texture_filter_anisotropic")) 
+	{
 		GLfloat maxAniso;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);

@@ -3,6 +3,8 @@
 #include "../geom_parameters.h"
 #include "../geometry_objects/label_list_store.h"
 
+#include <unordered_set>
+#include <glm/gtx/rotate_vector.hpp> 
 
 struct load_data
 {
