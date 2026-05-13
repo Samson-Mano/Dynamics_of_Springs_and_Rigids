@@ -622,11 +622,11 @@ void geom_store::paint_model()
 		// Show the node initial condition
 		// Initial Displacement
 		node_inldispl.paint_inlcond();
-		// node_inldispl.paint_inlcond_label();
+		node_inldispl.paint_inlcond_label();
 
 		// Initial Velocity
 		node_inlvelo.paint_inlcond();
-		// node_inlvelo.paint_inlcond_label();
+		node_inlvelo.paint_inlcond_label();
 
 	}
 

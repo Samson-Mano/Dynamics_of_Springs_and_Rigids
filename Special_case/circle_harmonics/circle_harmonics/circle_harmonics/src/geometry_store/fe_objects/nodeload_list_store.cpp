@@ -97,7 +97,7 @@ void nodeload_list_store::set_buffer()
 	if (load_count == 0)
 	{
 		// No load to paint
-		// Set the load lables
+		// Clear the load lables
 		load_value_labels.clear_labels();
 		return;
 	}
@@ -105,7 +105,7 @@ void nodeload_list_store::set_buffer()
 	// Set the load max
 	// Load Max
 	load_max = 0.0;
-	// Set the load lables
+	// Clear the load labels
 	load_value_labels.clear_labels();
 
 	// Find the load maximum
@@ -136,7 +136,7 @@ void nodeload_list_store::set_buffer()
 			std::stringstream ss;
 			ss << std::fixed << std::setprecision(geom_param_ptr->load_precision) << std::abs(load.load_value);
 
-			glm::vec3 temp_color = geom_param_ptr->geom_colors.load_color;
+			// glm::vec3 temp_color = geom_param_ptr->geom_colors.load_color;
 			std::string	temp_str = "(" + std::to_string(load.load_id) + ") " + ss.str();
 			double load_angle_rad = 0.0f;
 
@@ -244,6 +244,8 @@ void nodeload_list_store::update_openGLuniforms()
 	load_shader.setUniform("uVertexColor", vertexColor);
 	load_shader.UnBind();
 
+	load_value_labels.update_labelcolor(geom_param_ptr->geom_colors.load_color);
+//
 }
 
 

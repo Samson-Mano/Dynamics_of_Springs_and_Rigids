@@ -1,7 +1,10 @@
 #pragma once
 #include "../geometry_buffers/gBuffers.h"
 #include "../geom_parameters.h"
+#include "../geometry_objects/label_list_store.h"
 
+#include <unordered_set>
+#include <glm/gtx/rotate_vector.hpp> 
 
 struct nodeinl_condition_data
 {
@@ -38,6 +41,7 @@ private:
 	gBuffers inlcond_buffer;
 	Shader inlcond_shader;
 
+	label_list_store inlcond_value_labels;
 
 	void get_inlcond_buffer(nodeinl_condition_data& inlcond, float* inlcond_vertices, unsigned int& inlcond_v_index,
 		unsigned int* inlcond_indices, unsigned int& inlcond_i_index);

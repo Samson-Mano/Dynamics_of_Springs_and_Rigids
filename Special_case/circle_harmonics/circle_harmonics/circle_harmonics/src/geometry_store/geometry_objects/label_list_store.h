@@ -35,6 +35,7 @@ public:
 	void paint_text();
 	void clear_labels();
 	void update_openGLuniforms();
+	void update_labelcolor(glm::vec3 label_color);
 
 private:
 	gBuffers label_buffers;

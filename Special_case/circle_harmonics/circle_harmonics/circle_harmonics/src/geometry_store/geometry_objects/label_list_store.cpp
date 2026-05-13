@@ -137,13 +137,26 @@ void label_list_store::update_openGLuniforms()
 	label_shader.setUniform("uMVP", mvp, false);
 	label_shader.setUniform("uZoomScale", zoomScale);
 
-
-	glm::vec4 labelColor = glm::vec4(geom_param_ptr->geom_colors.load_color, geom_param_ptr->geom_transparency);
-	label_shader.setUniform("uLabelColor", labelColor); // Updating uniforms unBinds shader
+	// Default Label color
+	// glm::vec4 labelColor = glm::vec4(geom_param_ptr->geom_colors.load_color, geom_param_ptr->geom_transparency);
+	// label_shader.setUniform("uLabelColor", labelColor); // Updating uniforms unBinds shader
 	
 	label_shader.UnBind();
 	
 }
+
+
+void label_list_store::update_labelcolor(glm::vec3 label_color)
+{	
+	label_shader.Bind();
+
+	glm::vec4 labelColor = glm::vec4(label_color, geom_param_ptr->geom_transparency);
+	label_shader.setUniform("uLabelColor", labelColor); // Updating uniforms unBinds shader
+
+	label_shader.UnBind();
+
+}
+
 
 
 void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigned int& vertex_index,
@@ -217,7 +230,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 
 		// Texture Glyph coordinate
 		vertices[vertex_index + 6] = ch_data.top_left.x + margin;
-		vertices[vertex_index + 7] = ch_data.bot_right.y;
+		vertices[vertex_index + 7] = ch_data.top_left.y;
 
 		// Iterate
 		vertex_index = vertex_index + 8;
@@ -238,7 +251,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 
 		// Texture Glyph coordinate
 		vertices[vertex_index + 6] = ch_data.top_left.x + margin;
-		vertices[vertex_index + 7] = ch_data.top_left.y;
+		vertices[vertex_index + 7] = ch_data.bot_right.y;
 
 		// Iterate
 		vertex_index = vertex_index + 8;
@@ -259,7 +272,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 
 		// Texture Glyph coordinate
 		vertices[vertex_index + 6] = ch_data.bot_right.x - margin;
-		vertices[vertex_index + 7] = ch_data.top_left.y;
+		vertices[vertex_index + 7] = ch_data.bot_right.y;
 
 		// Iterate
 		vertex_index = vertex_index + 8;
@@ -280,7 +293,7 @@ void label_list_store::get_label_buffer(label_text& lb, float* vertices, unsigne
 
 		// Texture Glyph coordinate
 		vertices[vertex_index + 6] = ch_data.bot_right.x - margin;
-		vertices[vertex_index + 7] = ch_data.bot_right.y;
+		vertices[vertex_index + 7] = ch_data.top_left.y;
 
 		// Iterate
 		vertex_index = vertex_index + 8;
