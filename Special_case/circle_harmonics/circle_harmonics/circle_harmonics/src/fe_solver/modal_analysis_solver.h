@@ -5,20 +5,9 @@
 // FE Objects
 #include "../geometry_store/fe_objects/model_mesh_store.h"
 
-
-//#include "../geometry_store/fe_objects/nodes_list_store.h"
-//#include "../geometry_store/fe_objects/elementline_list_store.h"
-//#include "../geometry_store/fe_objects/elementtri_list_store.h"
-//#include "../geometry_store/fe_objects/elementquad_list_store.h"
-
 // FE Results Modal Analysis
 #include "../geometry_store/result_objects/rslt_modalmesh_store.h"
 
-
-//#include "../geometry_store/result_objects/modal_nodes_list_store.h"
-//#include "../geometry_store/result_objects/modal_elementline_list_store.h"
-//#include "../geometry_store/result_objects/modal_elementtri_list_store.h"
-//#include "../geometry_store/result_objects/modal_elementquad_list_store.h"
 
 // Stop watch
 #include "../events_handler/Stopwatch_events.h"
@@ -105,7 +94,7 @@ public:
 	bool is_modal_analysis_complete = false;
 
 	modal_analysis_solver();
-	~modal_analysis_solver();
+	~modal_analysis_solver() = default;
 	void clear_results();
 
 	void modal_analysis_start(const model_mesh_store& model_mesh,
@@ -129,13 +118,6 @@ private:
 
 	double bessel_eigen_vec(const bessel_function_Frequency& bessel_root_i, const glm::vec3& nodept, const double& c_radius);
 
-	void modal_analysis_model_rectangular(const model_mesh_store& model_mesh,
-		const material_data& mat_data,
-		const double& length_x,
-		const double& length_y,
-		rslt_modalmesh_store& rslt_modalmesh);
-
-	double rect_eigen_vec(const bessel_function_Frequency& rect_freq_i, const glm::vec3& nodept, const double& length_x, const double& length_y);
 
 	int get_or_create_node(int original_node_id,
 		std::unordered_map<int, int>& added_nodes,
