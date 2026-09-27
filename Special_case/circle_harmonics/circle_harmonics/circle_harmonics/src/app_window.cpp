@@ -534,7 +534,8 @@ void app_window::customizeImGuiStyle()
 // Helper function to apply a theme preset
 void app_window::applyTheme(int themeIndex)
 {
-	switch (themeIndex) {
+	switch (themeIndex) 
+	{
 	case 0:
 		ImGui::StyleColorsDark();
 		break;

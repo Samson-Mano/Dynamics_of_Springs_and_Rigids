@@ -4,12 +4,6 @@
 #include "../geometry_store/fe_objects/nodeinlcond_list_store.h"
 #include "../geometry_store/result_objects/rslt_pulsemesh_store.h"
 
-//#include "../geometry_store/result_objects/pulse_node_list_store.h"
-//#include "../geometry_store/result_objects/pulse_elementline_list_store.h"
-//#include "../geometry_store/result_objects/pulse_elementtri_list_store.h"
-//#include "../geometry_store/result_objects/pulse_elementquad_list_store.h"
-
-
 struct pulse_load_data
 {
 	int node_id = 0;
